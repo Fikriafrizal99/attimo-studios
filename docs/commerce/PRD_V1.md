@@ -2,7 +2,7 @@
 
 **Status:** Draft / Baseline
 **Branch:** `develop/commerce-foundation`
-**Version:** 1.0
+**Version:** 1.1
 **Date:** 2026-09-05
 
 ## 1. Product Summary
@@ -11,7 +11,7 @@ Platform ini mengubah basis project Attimo Studios dari wedding SaaS self-servic
 
 Customer tidak perlu membuat akun atau mengedit undangan sendiri pada V1. Customer memilih template, mengirim data, melakukan pembayaran, lalu admin mengelola konten, preview, revisi, dan publikasi undangan.
 
-Satu aplikasi harus mampu mengelola banyak customer/wedding dan ratusan template tanpa membuat aplikasi terpisah untuk setiap pasangan.
+Satu aplikasi harus mampu mengelola banyak customer/wedding dan katalog template yang dapat terus bertambah tanpa membuat aplikasi terpisah untuk setiap pasangan.
 
 ## 2. Product Vision
 
@@ -20,10 +20,13 @@ Membangun mesin undangan digital yang:
 - mudah dioperasikan oleh admin,
 - bisa melayani banyak wedding secara paralel,
 - aman secara multi-tenant,
-- mempunyai template engine yang scalable hingga 100+ template,
+- mempunyai template engine yang **extensible tanpa hard cap jumlah template di core system**,
+- memungkinkan template baru ditambahkan tanpa mengubah renderer inti,
 - mempunyai guest management dan URL tamu terpersonalisasi,
 - mendukung RSVP, wishes, galeri, lokasi, countdown, musik, dan amplop digital,
-- bisa berkembang menjadi self-service, reseller, dan white-label tanpa rewrite total.
+- bisa berkembang menjadi self-service, reseller, white-label, dan marketplace template tanpa rewrite total.
+
+> Jumlah template adalah target pertumbuhan bisnis, bukan batas teknis. Angka seperti 20, 100, atau 500 template hanya boleh dipakai sebagai milestone operasional, bukan asumsi desain sistem.
 
 ## 3. Business Model V1
 
@@ -74,6 +77,7 @@ V1 dianggap berhasil jika platform dapat:
 - membuat wedding baru dari admin dashboard,
 - memilih template dari template catalog,
 - menggunakan satu content schema untuk banyak template,
+- menambahkan template baru melalui kontrak/registry template tanpa mengubah core invitation renderer,
 - edit data pasangan, acara, galeri, story, quote, lokasi, musik, gift, dan pengaturan umum,
 - upload asset wedding,
 - preview sebelum publish,
@@ -84,7 +88,7 @@ V1 dianggap berhasil jika platform dapat:
 - memoderasi wishes,
 - melihat ringkasan RSVP,
 - menjaga data antar wedding tidak bocor,
-- menyediakan fondasi yang dapat menampung 100+ template.
+- menyediakan fondasi katalog template yang dapat terus berkembang tanpa batas numerik buatan.
 
 ## 6. Non-Goals V1
 
@@ -305,6 +309,8 @@ Initial category examples:
 - Floral
 - Luxury
 
+The category list itself must also remain extensible.
+
 ### 7.8 Guest Management
 
 Each wedding can have guest records:
@@ -381,7 +387,7 @@ Use explicit environment configuration such as:
 
 The platform must not import `ClassicTemplate` directly from every invitation route.
 
-Introduce a template registry:
+Introduce a template registry/manifest with a stable contract:
 
 ```ts
 export const templateRegistry = {
@@ -396,7 +402,7 @@ Renderer behavior:
 ```text
 Wedding.template_id
       ↓
-Template Registry
+Template Registry / Manifest
       ↓
 Resolved Template Component
       ↓
@@ -404,6 +410,18 @@ Wedding Content + Section Config + Theme
       ↓
 Rendered Invitation
 ```
+
+### Extensibility rule
+
+Menambah template baru hanya boleh membutuhkan pekerjaan pada layer template, contohnya:
+
+1. buat folder/component template baru,
+2. isi metadata/manifest,
+3. register template,
+4. sediakan thumbnail/demo,
+5. jalankan compatibility test.
+
+Tidak boleh membutuhkan perubahan pada wedding database schema, invitation route, RSVP logic, guest logic, atau renderer inti hanya karena jumlah template bertambah.
 
 A missing or inactive template must fail safely to an admin-visible error/fallback, not silently select an unrelated design.
 
@@ -533,6 +551,7 @@ Business metrics later:
 - template popularity
 - repeat/referral rate
 - gross margin per order
+- active template count and template adoption distribution
 
 ## 14. Launch Acceptance Criteria
 
@@ -546,6 +565,7 @@ V1 cannot be considered launch-ready until all P0 items pass.
 - [ ] RSVP/wishes API cannot return all weddings accidentally
 - [ ] template registry implemented
 - [ ] one production-quality template implemented through registry
+- [ ] adding a second template does not require changing core invitation route
 - [ ] wedding content editor covers required V1 fields
 - [ ] real gallery rendering works
 - [ ] event date drives countdown
@@ -564,7 +584,7 @@ V1 cannot be considered launch-ready until all P0 items pass.
 - [ ] payment status
 - [ ] wishes moderation
 - [ ] admin RSVP analytics
-- [ ] at least 5 production templates
+- [ ] multiple production templates across more than one category
 - [ ] mobile performance validation
 - [ ] basic SEO/social metadata per wedding
 
@@ -580,7 +600,7 @@ Admin creates, edits, previews, and publishes customer invitations.
 - standardized order form
 - automated reminders
 - template analytics
-- 20+ templates
+- continuous expansion of template catalog
 
 ### V2 — Customer Self-Service
 
@@ -589,12 +609,16 @@ Admin creates, edits, previews, and publishes customer invitations.
 - revision workflow
 - billing/subscription or per-event entitlement
 
-### V3 — Template Marketplace
+### V3 — Template Marketplace / Catalog Scale
 
-- 100+ templates
+- continuously growing template catalog
 - designer workflow
 - template versioning
 - categories/tags/search
+- template lifecycle management
+- compatibility validation
+
+No fixed maximum number of templates is part of the architecture contract.
 
 ### V4 — Reseller / WO / White Label
 
@@ -611,10 +635,12 @@ Admin creates, edits, previews, and publishes customer invitations.
 3. Customer login is not required for V1.
 4. Content data is separated from visual template implementation.
 5. One content schema should power many templates.
-6. `template_id` must resolve through a real template registry.
-7. Security/tenant isolation precedes feature expansion.
-8. Path-based URL is preferred for first production release unless subdomain routing is proven before launch.
-9. Main branch remains untouched until the commerce foundation passes review.
+6. `template_id` must resolve through a real template registry/manifest.
+7. Template count has no artificial hard cap in core architecture.
+8. Adding templates must not require modifications to unrelated business/domain logic.
+9. Security/tenant isolation precedes feature expansion.
+10. Path-based URL is preferred for first production release unless subdomain routing is proven before launch.
+11. Main branch remains untouched until the commerce foundation passes review.
 
 ## 17. Open Decisions
 
@@ -628,3 +654,4 @@ To be resolved during implementation planning:
 - invitation expiry/archival policy
 - whether wishes are pre-moderated or post-moderated
 - whether guest URLs use readable query names, opaque tokens, or both
+- whether future template marketplace uses code-deployed templates only or supports separately versioned template packages
