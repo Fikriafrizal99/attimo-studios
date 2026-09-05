@@ -14,6 +14,7 @@ The connected production Supabase project has already passed these gates:
 - `wedding-assets` public bucket created with 5 MB image limit,
 - `supabase/verify-production.sql` passed,
 - Better Auth 1.4.19 core schema applied,
+- `supabase/verify-better-auth.sql` passed,
 - Better Auth tables have RLS enabled,
 - `anon` and `authenticated` direct read privileges are revoked from auth/credential tables.
 
@@ -91,18 +92,37 @@ When upgrading Better Auth, generate/review the new migration first. Do not assu
 
 ## 4. Bootstrap the first operator
 
-V1 is admin-managed, so public signup stays disabled.
+V1 is admin-managed and public HTTP signup must stay disabled.
 
-Safe bootstrap flow:
+The repository includes a private one-shot bootstrap command:
 
-1. choose the operator email,
-2. create the account through Better Auth in a private/local environment,
-3. if signup must temporarily be enabled, set `ALLOW_PUBLIC_SIGNUP=true` only for the private bootstrap session,
-4. immediately restore `ALLOW_PUBLIC_SIGNUP=false`,
-5. confirm `/signup` redirects to `/login`,
-6. confirm `/api/auth/sign-up/*` is blocked publicly.
+```bash
+bun run admin:bootstrap
+```
 
-Do not paste permanent passwords into tickets, chat logs, source control, or deployment logs.
+Requirements before running it:
+
+- `DATABASE_URL` points to the production database,
+- `BETTER_AUTH_SECRET` is configured with at least 32 characters,
+- run it from a trusted local/private terminal.
+
+The command prompts for operator email/name and requests the password twice using hidden terminal input. It sets `ALLOW_PUBLIC_SIGNUP=true` only inside that one-shot CLI process so Better Auth can create the credential account; it does **not** change the deployment setting and never prints the password.
+
+Optional non-secret convenience values may be supplied as environment variables:
+
+```text
+BOOTSTRAP_ADMIN_EMAIL
+BOOTSTRAP_ADMIN_NAME
+```
+
+Do not supply the password as a command-line argument, commit it to `.env`, or paste it into chat/tickets.
+
+After bootstrap:
+
+1. keep deployment `ALLOW_PUBLIC_SIGNUP=false`,
+2. confirm `/signup` redirects to `/login`,
+3. confirm `/api/auth/sign-up/*` is blocked publicly,
+4. sign in with the new operator account.
 
 ## 5. Storage smoke test
 
