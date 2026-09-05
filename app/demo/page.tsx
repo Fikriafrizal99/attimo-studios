@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Hero from "@/components/Hero";
-import Navigation from "@/components/Navigation";
 import CoupleSection from "@/components/CoupleSection";
 import GallerySection from "@/components/GallerySection";
 import DateSection from "@/components/DateSection";
@@ -14,7 +13,6 @@ import LiveStreamingSection from "@/components/LiveStreamingSection";
 import GiftSection from "@/components/GiftSection";
 import WishesSection from "@/components/WishesSection";
 import MusicPlayer from "@/components/MusicPlayer";
-import { defaultSongs } from "@/lib/music";
 import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -61,7 +59,7 @@ export default function DemoPage() {
       <LiveStreamingSection />
       <GiftSection />
       <WishesSection />
-      <MusicPlayer songs={defaultSongs} autoPlay={false} />
+      <MusicPlayer />
     </div>
   );
 }
