@@ -10,25 +10,26 @@ WORKDIR /app
 COPY . .
 
 # NEXT_PUBLIC_* values are compiled into the browser bundle and therefore
-# must be supplied at image build time. No private secrets are accepted here.
+# must be supplied at image build time. Private production secrets are never
+# accepted as build arguments; temporary build-only values live only in this
+# RUN process so they are not persisted in the image configuration.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_APP_URL
 
-ENV NODE_ENV=production \
+RUN NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY} \
-    NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL} \
+    NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+    NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL}" \
     SUPABASE_SERVICE_ROLE_KEY=build-only-service-role-key \
     DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     BETTER_AUTH_SECRET=build-only-secret-012345678901234567890123456789 \
-    BETTER_AUTH_URL=${NEXT_PUBLIC_APP_URL} \
-    PUBLIC_INVITATION_BASE_URL=${NEXT_PUBLIC_APP_URL} \
+    BETTER_AUTH_URL="${NEXT_PUBLIC_APP_URL}" \
+    PUBLIC_INVITATION_BASE_URL="${NEXT_PUBLIC_APP_URL}" \
     PUBLIC_INVITATION_MODE=path \
-    ALLOW_PUBLIC_SIGNUP=false
-
-RUN bun run build
+    ALLOW_PUBLIC_SIGNUP=false \
+    bun run build
 
 FROM oven/bun:1.4.2-alpine AS runner
 WORKDIR /app
@@ -44,7 +45,6 @@ RUN bun install --frozen-lockfile --production
 
 COPY --from=builder --chown=bun:bun /app/.next ./.next
 COPY --from=builder --chown=bun:bun /app/public ./public
-COPY --chown=bun:bun next.config.ts ./next.config.ts
 COPY --chown=bun:bun scripts/p0-preflight.mjs ./scripts/p0-preflight.mjs
 COPY --chown=bun:bun scripts/bootstrap-admin.ts ./scripts/bootstrap-admin.ts
 COPY --chown=bun:bun lib/auth.ts ./lib/auth.ts
