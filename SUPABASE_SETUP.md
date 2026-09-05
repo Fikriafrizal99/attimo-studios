@@ -2,9 +2,11 @@
 
 This branch uses Supabase PostgreSQL + Storage behind server-side Next.js routes.
 
+For the complete production sequence, see `docs/commerce/PRODUCTION_P0_RUNBOOK.md`.
+
 ## 1. Environment
 
-Copy `.env.example` to `.env.local` and configure:
+Copy `.env.example` to `.env.local` and configure real values:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -12,86 +14,125 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 DATABASE_URL=postgresql://...
 BETTER_AUTH_SECRET=...
-BETTER_AUTH_URL=http://localhost:3000
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-PUBLIC_INVITATION_BASE_URL=http://localhost:3000
+BETTER_AUTH_URL=https://yourdomain.id
+NEXT_PUBLIC_APP_URL=https://yourdomain.id
+PUBLIC_INVITATION_BASE_URL=https://yourdomain.id
 PUBLIC_INVITATION_MODE=path
 ALLOW_PUBLIC_SIGNUP=false
+P0_PREFLIGHT_STRICT=true
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY` is intentionally required by server routes. Do not expose it in browser/client code.
+`SUPABASE_SERVICE_ROLE_KEY` is required by server routes and must never be exposed to browser code.
+
+Validate configuration before deploying:
+
+```bash
+bun run p0:preflight
+```
+
+Production deployment must not continue while preflight fails.
 
 ## 2. Run database bootstrap / migration
 
-In Supabase Dashboard -> SQL Editor, run the complete file:
+In Supabase Dashboard -> SQL Editor, run:
 
 ```text
 supabase/run-weddings-migrations.sql
 ```
 
-The script is designed for both the previous Attimo schema and a fresh commerce database. It:
+The consolidated script supports both a previous Attimo schema and a fresh commerce database. It:
 
 - creates/updates `weddings`,
-- migrates legacy template ID `classic` -> `classic-001`,
+- migrates `classic` -> `classic-001`,
 - creates `wedding_collaborators`,
-- creates `guests` with opaque invitation tokens,
+- creates `guests` with opaque tokens,
 - wedding-scopes RSVP and wishes,
+- makes `wedding_id` mandatory,
 - adds wishes moderation status,
 - removes legacy unscoped RSVP/wishes rows,
-- makes `wedding_id` mandatory,
-- removes globally permissive anon policies,
-- enables RLS on tenant tables.
+- removes permissive public policies,
+- enables RLS on tenant tables,
+- adds database-level guest/wedding scope protection,
+- adds database-level RSVP guest-quota protection,
+- configures the public `wedding-assets` bucket when the Supabase storage schema is available,
+- restricts that bucket to 5 MB JPEG/PNG/WebP/GIF assets.
 
-> Backup a real production database before running schema migrations. The P0 script deletes only legacy RSVP/wishes rows where `wedding_id IS NULL`, because those rows cannot safely be assigned to a tenant.
+The script is tested in CI by applying it twice to the same clean PostgreSQL database to verify idempotency.
 
-The timestamped migration is also available at:
+> Back up a real production database before schema changes. The script deletes only legacy RSVP/wishes rows where `wedding_id IS NULL`, because those rows cannot be safely assigned to a tenant.
+
+Incremental migrations live in `supabase/migrations/`.
+
+## 3. Verify the real Supabase project
+
+After bootstrap, run in SQL Editor:
 
 ```text
-supabase/migrations/20260905000100_commerce_p0.sql
+supabase/verify-production.sql
 ```
 
-## 3. Better Auth tables
+Required result:
 
-After `DATABASE_URL` is set:
+```text
+Commerce P0 Supabase production verification passed
+```
+
+If an exception is raised, do not proceed to public deployment.
+
+CI also runs:
+
+```text
+supabase/tests/p0_core_verify.sql
+```
+
+against PostgreSQL and verifies tenant-scope and guest-quota guards.
+
+## 4. Better Auth tables
+
+After the real `DATABASE_URL` is configured:
 
 ```bash
 bunx @better-auth/cli migrate
 ```
 
-For admin-managed V1, public email signup is disabled when:
+For V1 admin-managed operation:
 
 ```env
 ALLOW_PUBLIC_SIGNUP=false
 ```
 
-To bootstrap the first admin account in a controlled environment, temporarily enable signup, create the account, then disable it again before production exposure.
+Bootstrap the first operator account only in a controlled/private environment. Temporarily enable signup, create the account, then immediately disable signup and redeploy before public exposure.
 
-## 4. Storage
+## 5. Storage
 
-Create a Supabase Storage bucket named:
+The consolidated bootstrap creates/updates the Supabase bucket:
 
 ```text
 wedding-assets
 ```
 
-Current P0 returns public asset URLs, so the bucket must be configured to serve invitation images publicly. Uploads themselves go through authenticated server routes and are stored under:
+when the `storage` schema is available.
+
+The bucket is public for invitation asset delivery; uploads still go only through authenticated server routes.
+
+Storage path:
 
 ```text
 weddings/{weddingId}/assets/...
 ```
 
-Allowed upload types:
+Allowed types:
 
 - JPEG
 - PNG
 - WebP
 - GIF
 
-Maximum image size: 5 MB.
+Maximum size: 5 MB.
 
-## 5. Public invitation URL
+## 6. Public invitation URL
 
-P0 default:
+Recommended V1 production mode:
 
 ```env
 PUBLIC_INVITATION_MODE=path
@@ -104,30 +145,31 @@ Result:
 https://yourdomain.id/invite/{slug}?guest={opaque-token}
 ```
 
-Optional future/subdomain mode is already supported by middleware:
+Optional subdomain mode is supported by Next.js `proxy.ts` after wildcard DNS/TLS is configured:
 
 ```env
 PUBLIC_INVITATION_MODE=subdomain
 ```
 
-with wildcard DNS/TLS configured by the hosting provider.
+## 7. Security verification before launch
 
-## 6. Security verification before launch
-
-Confirm all of the following in the deployed environment:
+Confirm in the deployed environment:
 
 - service-role key exists only server-side,
 - public signup is disabled,
-- `/api/rsvp` rejects missing `wedding_id`,
-- `/api/wishes` rejects missing `wedding_id`,
-- a guest token from Wedding A does not resolve in Wedding B,
-- draft weddings return 404 publicly,
-- only released weddings render from `/invite/[slug]`,
-- admin cannot access an unrelated wedding ID,
+- `/api/rsvp` rejects missing/invalid wedding scope,
+- `/api/wishes` rejects missing/invalid wedding scope,
+- Guest A token cannot be used against Wedding B,
+- RSVP count above guest quota is rejected,
+- draft weddings are not public,
+- released invitations expose only their own data,
+- unrelated admins cannot edit/upload to another wedding,
 - storage uploads require wedding membership.
 
-## 7. Rate limiting
+Use the exact smoke-test sequence in `docs/commerce/PRODUCTION_P0_RUNBOOK.md`.
 
-P0 includes an in-memory per-runtime limiter for RSVP/wishes. This is a baseline abuse guard, not the final distributed solution.
+## 8. Rate limiting
 
-Before horizontally scaled/high-volume production, replace or augment it with a shared limiter such as Redis/Upstash or the hosting provider's edge/WAF rate limiting.
+P0 includes an in-memory per-runtime limiter for RSVP/wishes. This is adequate as a baseline abuse guard for early single-runtime operation.
+
+Before horizontal/high-volume scaling, move to shared/edge rate limiting such as Redis/Upstash or hosting-provider WAF/edge controls.
