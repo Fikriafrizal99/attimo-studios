@@ -23,6 +23,7 @@ jobs:
       PUBLIC_INVITATION_MODE: path
       ALLOW_PUBLIC_SIGNUP: "false"
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      P0_PREFLIGHT_ALLOW_PLACEHOLDERS: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,5 +36,42 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Environment preflight
+        run: bun run p0:preflight
+
       - name: Build
         run: bun run build
+
+  database-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Apply commerce bootstrap twice
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/run-weddings-migrations.sql
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/run-weddings-migrations.sql
+
+      - name: Verify tenant isolation and integrity
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/p0_core_verify.sql

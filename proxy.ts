@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const allowPublicSignup = process.env.ALLOW_PUBLIC_SIGNUP === "true";
 
@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
           }
         }
       } catch {
-        // Invalid PUBLIC_INVITATION_BASE_URL will be surfaced by server URL helpers.
+        // Invalid PUBLIC_INVITATION_BASE_URL is surfaced by server URL helpers.
       }
     }
   }

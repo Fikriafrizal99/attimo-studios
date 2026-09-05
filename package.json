@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "p0:preflight": "node scripts/p0-preflight.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
