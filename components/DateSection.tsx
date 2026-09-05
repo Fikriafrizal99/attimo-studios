@@ -1,128 +1,78 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { mainEventDate } from "@/lib/data";
-import { useInvitation } from "@/components/InvitationContext";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { Calendar } from "lucide-react";
-
-gsap.registerPlugin(ScrollTrigger);
-
-interface Countdown {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import { useInvitation } from "@/components/InvitationContext";
+import { getCountdownDate } from "@/lib/commerce/content";
 
 export default function DateSection() {
-  const inv = useInvitation();
-  const mainDate = inv?.content?.mainEventDate
-    ? new Date(inv.content.mainEventDate)
-    : mainEventDate;
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [countdown, setCountdown] = useState<Countdown>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const invitation = useInvitation();
+  const content = invitation?.content;
+  const target = useMemo(() => getCountdownDate(content ?? {}), [content]);
+  const targetTime = target?.getTime() ?? null;
+  const [remaining, setRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(".countdown-item", {
-        scale: 0,
-        rotation: -180,
-        duration: 1,
-        ease: "back.out(1.7)",
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
-
-  useEffect(() => {
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const distance = mainDate.getTime() - now;
-
-      if (distance > 0) {
-        setCountdown({
-          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((distance % (1000 * 60)) / 1000),
-        });
+    if (!targetTime) return;
+    const update = () => {
+      const distance = targetTime - Date.now();
+      if (distance <= 0) {
+        setRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
       }
+      setRemaining({
+        days: Math.floor(distance / 86_400_000),
+        hours: Math.floor((distance % 86_400_000) / 3_600_000),
+        minutes: Math.floor((distance % 3_600_000) / 60_000),
+        seconds: Math.floor((distance % 60_000) / 1000),
+      });
     };
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [targetTime]);
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+  if (!target || !targetTime) return null;
 
-    return () => clearInterval(interval);
-  }, [mainDate]);
+  const bride = content?.couple?.bride?.shortName || content?.couple?.bride?.name || "Bride";
+  const groom = content?.couple?.groom?.shortName || content?.couple?.groom?.name || "Groom";
 
-  const saveToCalendar = () => {
-    const startDate = format(mainDate, "yyyyMMdd'T'HHmmss");
-    const endDate = format(
-      new Date(mainDate.getTime() + 4 * 60 * 60 * 1000),
-      "yyyyMMdd'T'HHmmss"
-    );
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Wedding+Ceremony&dates=${startDate}/${endDate}&details=Join+us+for+our+special+day`;
-    window.open(calendarUrl, "_blank");
-  };
+  function saveToCalendar() {
+    if (!target) return;
+    const start = format(target, "yyyyMMdd'T'HHmmss");
+    const end = format(new Date(target.getTime() + 4 * 60 * 60 * 1000), "yyyyMMdd'T'HHmmss");
+    const url = new URL("https://calendar.google.com/calendar/render");
+    url.searchParams.set("action", "TEMPLATE");
+    url.searchParams.set("text", `Wedding ${bride} & ${groom}`);
+    url.searchParams.set("dates", `${start}/${end}`);
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  }
 
   return (
-    <section
-      id="date"
-      ref={sectionRef}
-      className="py-20 px-4 bg-gradient-to-b from-rose-50/30 to-white"
-    >
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-serif font-bold mb-12 text-gray-800">
-          Save the Date
-        </h2>
-
-        <div className="grid grid-cols-4 gap-4 md:gap-8 mb-12">
+    <section id="date" className="bg-gradient-to-b from-rose-50/30 to-white px-4 py-20">
+      <div className="mx-auto max-w-4xl text-center">
+        <h2 className="mb-10 font-serif text-4xl font-bold text-gray-800 md:text-5xl">Save the Date</h2>
+        <div className="mb-10 grid grid-cols-4 gap-2 md:gap-6">
           {[
-            { label: "days", value: countdown.days },
-            { label: "hours", value: countdown.hours },
-            { label: "minutes", value: countdown.minutes },
-            { label: "seconds", value: countdown.seconds },
-          ].map((item, index) => (
-            <div
-              key={item.label}
-              className="countdown-item bg-white rounded-xl shadow-lg p-6"
-            >
-              <div className="text-4xl md:text-5xl font-bold text-rose-500 mb-2">
-                {item.value}
-              </div>
-              <div className="text-sm md:text-base text-gray-600 uppercase tracking-wide">
-                {item.label}
-              </div>
+            ["Hari", remaining.days],
+            ["Jam", remaining.hours],
+            ["Menit", remaining.minutes],
+            ["Detik", remaining.seconds],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-xl bg-white p-4 shadow-md md:p-6">
+              <div className="text-2xl font-bold text-rose-500 md:text-5xl">{value}</div>
+              <div className="mt-2 text-[10px] uppercase tracking-wider text-gray-500 md:text-sm">{label}</div>
             </div>
           ))}
         </div>
-
-        <div className="mb-8">
-          <p className="text-2xl md:text-3xl font-serif font-semibold text-gray-800 mb-2">
-            {format(mainDate, "EEEE, MMMM do, yyyy")}
-          </p>
-        </div>
-
+        <p className="font-serif text-2xl font-semibold text-gray-800 md:text-3xl">{format(target, "EEEE, d MMMM yyyy")}</p>
         <button
+          type="button"
           onClick={saveToCalendar}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-rose-500 text-white rounded-full font-medium hover:bg-rose-600 transition-colors duration-300 hover:scale-105"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-rose-500 px-6 py-3 font-medium text-white hover:bg-rose-600"
         >
-          <Calendar className="w-5 h-5" />
-          Save event to calendar
+          <Calendar className="size-5" /> Simpan ke Kalender
         </button>
       </div>
     </section>

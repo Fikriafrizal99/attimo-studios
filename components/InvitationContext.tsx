@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { WeddingContent } from "@/lib/wedding-defaults";
+import type { PublicGuestContext } from "@/templates/types";
 
 export interface SectionConfig {
   id: string;
@@ -13,6 +14,7 @@ export interface InvitationContextValue {
   weddingId: string;
   content: WeddingContent;
   sections: SectionConfig[];
+  guest?: PublicGuestContext;
 }
 
 const InvitationContext = createContext<InvitationContextValue | null>(null);

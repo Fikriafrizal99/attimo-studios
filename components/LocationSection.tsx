@@ -1,100 +1,64 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { events } from "@/lib/data";
+import { ExternalLink, MapPin } from "lucide-react";
 import { useInvitation } from "@/components/InvitationContext";
-import { format } from "date-fns";
-import { MapPin, ExternalLink } from "lucide-react";
 
-gsap.registerPlugin(ScrollTrigger);
+function mapEmbedUrl(event: { latitude?: number; longitude?: number; address: string; location: string }) {
+  const query =
+    typeof event.latitude === "number" && typeof event.longitude === "number"
+      ? `${event.latitude},${event.longitude}`
+      : event.address || event.location;
+  return query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : null;
+}
 
 export default function LocationSection() {
-  const inv = useInvitation();
-  const eventsToUse = inv?.content?.events?.length
-    ? inv.content.events.map((ev) => ({ ...ev, date: new Date(ev.date) }))
-    : events;
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>(".event-card").forEach((card, index) => {
-        gsap.from(card, {
-          opacity: 0,
-          y: 50,
-          duration: 0.8,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-          },
-          delay: index * 0.2,
-        });
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  const invitation = useInvitation();
+  const events = invitation?.content.events ?? [];
+  if (events.length === 0) return null;
 
   return (
-    <section
-      id="location"
-      ref={sectionRef}
-      className="py-20 px-4 bg-white"
-    >
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-serif font-bold text-center mb-16 text-gray-800">
-          Event Locations
-        </h2>
-
+    <section id="location" className="bg-white px-4 py-20">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="mb-14 text-center font-serif text-4xl font-bold text-gray-800 md:text-5xl">Detail Acara</h2>
         <div className="space-y-8">
-          {eventsToUse.map((event, index) => (
-            <div
-              key={index}
-              className="event-card bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-300"
-            >
-              <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4 text-gray-800 capitalize">
-                {event.title}
-              </h3>
-
-              <div className="mb-4">
-                <p className="text-lg font-semibold text-gray-700 mb-1">
-                  {format(event.date, "EEEE, MMMM do, yyyy")}
-                </p>
-                <p className="text-gray-600">{event.time}</p>
-              </div>
-
-              <div className="mb-6">
-                <div className="flex items-start gap-3 mb-2">
-                  <MapPin className="w-5 h-5 text-rose-500 mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-gray-800 mb-1">{event.location}</p>
-                    <p className="text-sm text-gray-600">{event.address}</p>
+          {events.map((event, index) => {
+            const embed = mapEmbedUrl(event);
+            return (
+              <article key={event.id ?? index} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
+                <div className="p-7 md:p-9">
+                  <h3 className="font-serif text-3xl font-bold capitalize text-gray-800">{event.title}</h3>
+                  <p className="mt-3 font-medium text-gray-700">{event.date} · {event.time}{event.endTime ? ` – ${event.endTime}` : ""}</p>
+                  <div className="mt-5 flex items-start gap-3">
+                    <MapPin className="mt-1 size-5 shrink-0 text-rose-500" />
+                    <div>
+                      <p className="font-semibold text-gray-800">{event.location}</p>
+                      <p className="mt-1 text-sm leading-6 text-gray-600">{event.address}</p>
+                    </div>
                   </div>
+                  {event.mapsUrl && (
+                    <a
+                      href={event.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-6 inline-flex items-center gap-2 rounded-full bg-rose-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-rose-600"
+                    >
+                      Buka Navigasi <ExternalLink className="size-4" />
+                    </a>
+                  )}
                 </div>
-              </div>
-
-              {event.mapsUrl && (
-                <a
-                  href={event.mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-medium transition-colors"
-                >
-                  See location
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              )}
-
-              {/* Google Maps Embed */}
-              <div className="mt-6 rounded-lg overflow-hidden">
-                <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
-                  <p className="text-gray-500">Google Maps will be embedded here</p>
-                </div>
-              </div>
-            </div>
-          ))}
+                {embed && (
+                  <iframe
+                    src={embed}
+                    title={`Map ${event.location || event.title}`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-72 w-full border-0"
+                    allowFullScreen
+                  />
+                )}
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

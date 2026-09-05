@@ -1,202 +1,120 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/commerce/access";
+import { buildInvitationUrl } from "@/lib/commerce/url";
 import { Button } from "@/components/ui/button";
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-  if (!session?.user) return null;
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
 
   const supabase = createServerClient();
   const { data: memberships } = await supabase
     .from("wedding_collaborators")
     .select("wedding_id")
-    .eq("user_id", session.user.id);
+    .eq("user_id", user.id);
 
-  const weddingIds = (memberships ?? []).map((m) => m.wedding_id);
-  let weddings: { id: string; slug: string | null; status: string; content: unknown }[] = [];
+  const ids = (memberships ?? []).map((item) => item.wedding_id);
+  let weddings: Array<{
+    id: string;
+    slug: string | null;
+    status: string;
+    template_id: string;
+    content: unknown;
+    updated_at: string | null;
+  }> = [];
 
-  if (weddingIds.length > 0) {
+  if (ids.length) {
     const { data } = await supabase
       .from("weddings")
-      .select("id, slug, status, content")
-      .in("id", weddingIds)
+      .select("id, slug, status, template_id, content, updated_at")
+      .in("id", ids)
       .order("created_at", { ascending: false });
     weddings = data ?? [];
   }
 
-  const title = (w: { content: unknown }) => {
-    const c = w.content as { couple?: { bride?: { name?: string }; groom?: { name?: string } } } | undefined;
-    const bride = c?.couple?.bride?.name;
-    const groom = c?.couple?.groom?.name;
+  function title(content: unknown) {
+    const value = content as { couple?: { bride?: { name?: string }; groom?: { name?: string } } } | null;
+    const bride = value?.couple?.bride?.name;
+    const groom = value?.couple?.groom?.name;
     if (bride && groom) return `${bride} & ${groom}`;
-    if (bride || groom) return bride ?? groom ?? "Untitled";
-    return "Untitled";
-  };
+    return bride || groom || "Untitled wedding";
+  }
 
-  const draftCount = weddings.filter((w) => w.status === "draft").length;
-  const releasedCount = weddings.filter((w) => w.status === "released").length;
+  const draftCount = weddings.filter((item) => item.status === "draft").length;
+  const releasedCount = weddings.filter((item) => item.status === "released").length;
 
   return (
     <div className="space-y-6">
-      {/* Page title + primary actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight text-neutral-50 sm:text-2xl">
-          Projects
-        </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="h-8 rounded-md border-white/10 bg-transparent px-3 text-xs text-neutral-200 hover:bg-white/5 hover:text-neutral-50 focus-visible:ring-[#BFA14A]"
-          >
-            <Link href="/dashboard">All projects</Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            className="h-8 rounded-md bg-neutral-100 px-3 text-xs font-medium text-[#0E0E10] hover:bg-neutral-200 focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E10]"
-          >
-            <Link href="/dashboard/new">New Wedding</Link>
-          </Button>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-50">Wedding Projects</h1>
+          <p className="mt-1 text-xs text-neutral-500">Managed-service commerce workspace</p>
         </div>
+        <Button asChild size="sm" className="bg-neutral-100 text-neutral-950 hover:bg-neutral-200">
+          <Link href="/dashboard/new">New Wedding</Link>
+        </Button>
       </div>
 
       {weddings.length === 0 ? (
-        <section className="rounded-md border border-white/6 bg-[#141416] px-6 py-8">
+        <section className="rounded-md border border-white/10 bg-[#141416] p-8">
           <h2 className="text-sm font-semibold text-neutral-50">No projects yet</h2>
-          <p className="mt-1 text-xs text-neutral-500">
-            Create a wedding project to get started.
-          </p>
-          <Button
-            asChild
-            size="sm"
-            className="mt-4 h-8 rounded-md bg-neutral-100 px-3 text-xs font-medium text-[#0E0E10] hover:bg-neutral-200 focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#141416]"
-          >
-            <Link href="/dashboard/new">Create project</Link>
-          </Button>
+          <p className="mt-1 text-xs text-neutral-500">Create the first wedding project to start production.</p>
         </section>
       ) : (
-        <>
-          {/* Main deployment list panel */}
-          <section className="overflow-hidden rounded-md border border-white/6 bg-[#141416]">
-            <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
-              <h2 className="text-sm font-semibold text-neutral-50">All projects</h2>
-              <div className="flex gap-2">
-                <span className="rounded border border-white/6 bg-white/5 px-2 py-0.5 text-[11px] text-neutral-400">
-                  {weddings.length} {weddings.length === 1 ? "project" : "projects"}
-                </span>
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-xs text-neutral-200">
-                <thead className="border-b border-white/6 bg-black/20 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">Project</th>
-                    <th className="px-4 py-3 text-left font-medium">Slug</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Last edited</th>
-                    <th className="px-4 py-3 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {weddings.map((w) => (
-                    <tr
-                      key={w.id}
-                      className="border-b border-white/4 last:border-0 hover:bg-white/2 transition-colors duration-200"
-                    >
-                      <td className="max-w-[220px] px-4 py-3 align-middle">
-                        <div className="truncate font-medium text-neutral-50">
-                          {title(w)}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 align-middle font-mono text-[11px] text-neutral-400">
-                        {w.slug ?? "—"}
-                      </td>
-                      <td className="px-4 py-3 align-middle">
-                        {w.status === "released" ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#BFA14A] px-2 py-0.5 text-[11px] font-medium text-[#BFA14A]">
-                            <span className="size-1.5 rounded-full bg-[#BFA14A]" aria-hidden />
-                            Released
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-medium text-neutral-400">
-                            Draft
-                          </span>
+        <section className="overflow-hidden rounded-md border border-white/10 bg-[#141416]">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs text-neutral-200">
+              <thead className="border-b border-white/10 bg-black/20 text-[11px] uppercase tracking-wider text-neutral-500">
+                <tr>
+                  <th className="px-4 py-3 text-left">Project</th>
+                  <th className="px-4 py-3 text-left">Template</th>
+                  <th className="px-4 py-3 text-left">Slug</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Updated</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weddings.map((wedding) => (
+                  <tr key={wedding.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.025]">
+                    <td className="px-4 py-3 font-medium text-neutral-50">{title(wedding.content)}</td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-neutral-400">{wedding.template_id}</td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-neutral-400">{wedding.slug ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={wedding.status === "released" ? "text-[#BFA14A]" : "text-neutral-400"}>{wedding.status}</span>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500">{wedding.updated_at ? new Date(wedding.updated_at).toLocaleString("id-ID") : "—"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-3">
+                        <Link href={`/dashboard/weddings/${wedding.id}`} className="hover:underline">Edit</Link>
+                        <Link href={`/preview/${wedding.id}`} className="hover:underline">Preview</Link>
+                        {wedding.status === "released" && wedding.slug && (
+                          <a href={buildInvitationUrl({ slug: wedding.slug })} target="_blank" rel="noopener noreferrer" className="font-medium text-neutral-50 hover:underline">Live</a>
                         )}
-                      </td>
-                      <td className="px-4 py-3 align-middle text-[11px] text-neutral-500">
-                        —
-                      </td>
-                      <td className="px-4 py-3 align-middle">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/dashboard/weddings/${w.id}`}
-                            className="rounded px-2 py-1 text-[11px] text-neutral-200 underline-offset-4 hover:text-neutral-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]"
-                          >
-                            Edit
-                          </Link>
-                          <Link
-                            href={`/preview/${w.id}`}
-                            className="rounded px-2 py-1 text-[11px] text-neutral-200 underline-offset-4 hover:text-neutral-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]"
-                          >
-                            Preview
-                          </Link>
-                          {w.status === "released" && w.slug && (
-                            <a
-                              href={`https://${w.slug}.localhost:3000`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="rounded px-2 py-1 text-[11px] font-medium text-neutral-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]"
-                            >
-                              View site
-                            </a>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          {/* Summary cards */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-md border border-white/6 bg-[#141416] px-4 py-3">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
-                Projects
-              </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums text-neutral-50">
-                {weddings.length}
-              </p>
-              <p className="mt-0.5 text-xs text-neutral-500">Total wedding projects</p>
-            </div>
-            <div className="rounded-md border border-white/6 bg-[#141416] px-4 py-3">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
-                Drafts
-              </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums text-neutral-50">
-                {draftCount}
-              </p>
-              <p className="mt-0.5 text-xs text-neutral-500">Not yet released</p>
-            </div>
-            <div className="rounded-md border border-white/6 bg-[#141416] px-4 py-3">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
-                Released
-              </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums text-[#BFA14A]">
-                {releasedCount}
-              </p>
-              <p className="mt-0.5 text-xs text-neutral-500">Live on subdomain</p>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </>
+        </section>
       )}
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          ["Projects", weddings.length],
+          ["Drafts", draftCount],
+          ["Released", releasedCount],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-md border border-white/10 bg-[#141416] px-4 py-3">
+            <p className="text-[11px] uppercase tracking-wider text-neutral-500">{label}</p>
+            <p className="mt-1 text-xl font-semibold text-neutral-50">{value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

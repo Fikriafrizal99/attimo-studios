@@ -1,67 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase";
-import { defaultSections, defaultContent } from "@/lib/wedding-defaults";
+import { getSessionUser } from "@/lib/commerce/access";
+import { normalizeWeddingContent } from "@/lib/commerce/content";
+import { defaultContent, defaultSections } from "@/lib/wedding-defaults";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const body = await request.json().catch(() => ({}));
-    const content = (body.content as Record<string, unknown>) ?? defaultContent;
+    const content = normalizeWeddingContent(body.content ?? defaultContent);
+    const templateId = typeof body.template_id === "string" ? body.template_id : "classic-001";
 
     const supabase = createServerClient();
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
       .insert({
         status: "draft",
-        template_id: "classic",
+        template_id: templateId,
         sections: defaultSections,
         content,
+        theme: {},
       })
-      .select("id, slug")
+      .select("id, slug, template_id")
       .single();
+    if (weddingError || !wedding) throw weddingError ?? new Error("Wedding insert failed");
 
-    if (weddingError || !wedding) {
-      console.error("Create wedding error:", weddingError);
-      return NextResponse.json(
-        { error: "Failed to create wedding" },
-        { status: 500 }
-      );
-    }
-
-    const { error: collabError } = await supabase
+    const { error: collaboratorError } = await supabase
       .from("wedding_collaborators")
-      .insert({
-        wedding_id: wedding.id,
-        user_id: session.user.id,
-        role: "owner",
-      });
-
-    if (collabError) {
-      console.error("Create collaborator error:", collabError);
+      .insert({ wedding_id: wedding.id, user_id: user.id, role: "owner" });
+    if (collaboratorError) {
       await supabase.from("weddings").delete().eq("id", wedding.id);
-      return NextResponse.json(
-        { error: "Failed to create wedding" },
-        { status: 500 }
-      );
+      throw collaboratorError;
     }
 
-    return NextResponse.json(
-      { id: wedding.id, slug: wedding.slug },
-      { status: 201 }
-    );
-  } catch (err) {
-    console.error("POST /api/weddings:", err);
-    return NextResponse.json(
-      { error: "Failed to create wedding" },
-      { status: 500 }
-    );
+    return NextResponse.json(wedding, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/weddings failed", error);
+    return NextResponse.json({ error: "Failed to create wedding" }, { status: 500 });
   }
 }

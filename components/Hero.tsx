@@ -2,105 +2,79 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
-import { coupleData, blessingMessage } from "@/lib/data";
-import { useInvitation } from "@/components/InvitationContext";
 import { Heart } from "lucide-react";
+import { useInvitation } from "@/components/InvitationContext";
 
 export default function Hero() {
-  const inv = useInvitation();
-  const couple = inv?.content?.couple ?? { bride: coupleData.bride, groom: coupleData.groom };
-  const blessing = inv?.content?.blessingMessage ?? blessingMessage;
-  const heroRef = useRef<HTMLDivElement>(null);
+  const invitation = useInvitation();
+  const content = invitation?.content;
+  const guest = invitation?.guest;
+  const bride = content?.couple?.bride;
+  const groom = content?.couple?.groom;
+  const hero = content?.hero;
+  const blessing = content?.blessingMessage;
+  const heroRef = useRef<HTMLElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!heroRef.current) return;
     const ctx = gsap.context(() => {
-      gsap.from(contentRef.current, {
-        opacity: 0,
-        y: 30,
-        duration: 1.5,
-        ease: "power3.out",
-        delay: 0.3,
-      });
-
-      gsap.to(overlayRef.current, {
-        y: -100,
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
-      });
+      gsap.from(contentRef.current, { opacity: 0, y: 28, duration: 1.1, ease: "power3.out", delay: 0.15 });
+      if (overlayRef.current) {
+        gsap.to(overlayRef.current, {
+          y: -70,
+          scrollTrigger: { trigger: heroRef.current, start: "top top", end: "bottom top", scrub: true },
+        });
+      }
     }, heroRef);
-
     return () => ctx.revert();
   }, []);
 
+  const brideName = bride?.shortName || bride?.name || "Bride";
+  const groomName = groom?.shortName || groom?.name || "Groom";
+  const coverImage = hero?.coverImage;
+
   return (
-    <section
-      id="hero"
-      ref={heroRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
-    >
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('/hero-bg.jpg')",
-        }}
-      >
-        <div
-          ref={overlayRef}
-          className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/50"
-        />
+    <section id="hero" ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      <div className="absolute inset-0">
+        {coverImage ? (
+          <img src={coverImage} alt="Wedding cover" className="h-full w-full object-cover" fetchPriority="high" />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-rose-200 via-stone-100 to-amber-100" />
+        )}
+        <div ref={overlayRef} className="absolute -inset-y-20 inset-x-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
       </div>
 
-      <div
-        ref={contentRef}
-        className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto"
-      >
-        <div className="mb-6">
-          <Heart className="w-12 h-12 mx-auto mb-4 fill-rose-400 text-rose-400 animate-pulse" />
+      <div ref={contentRef} className="relative z-10 mx-auto max-w-4xl px-4 text-center text-white">
+        {guest?.displayName && (
+          <div className="mb-8 rounded-full border border-white/25 bg-black/15 px-5 py-2 text-sm backdrop-blur-sm">
+            Kepada Yth. <strong>{guest.displayName}</strong>
+          </div>
+        )}
+        <p className="mb-5 text-sm uppercase tracking-[0.32em] text-white/80">{hero?.greeting || "The Wedding of"}</p>
+        <h1 className="font-serif text-5xl font-bold md:text-7xl">{brideName}</h1>
+        <div className="my-6 flex items-center justify-center gap-4">
+          <div className="h-px w-16 bg-white/50" />
+          <Heart className="size-6 fill-rose-300 text-rose-300" />
+          <div className="h-px w-16 bg-white/50" />
         </div>
-
-        <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6">
-          {couple.bride.name}
-        </h1>
-
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <div className="h-px w-20 bg-white/50" />
-          <Heart className="w-6 h-6 fill-rose-400 text-rose-400" />
-          <div className="h-px w-20 bg-white/50" />
-        </div>
-
-        <h2 className="text-5xl md:text-7xl font-serif font-bold mb-8">
-          {couple.groom.name}
-        </h2>
-
-        <p className="text-lg md:text-xl mb-4 opacity-90">
-          {blessing.translation}
-        </p>
-        <p className="text-sm md:text-base opacity-75 italic">
-          {blessing.source}
-        </p>
-
-        <div className="mt-12">
-          <button
-            onClick={() => {
-              document.getElementById("couple")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="px-8 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-full text-white font-medium hover:bg-white/30 transition-all duration-300 hover:scale-105"
-          >
-            Discover Our Story
-          </button>
-        </div>
-      </div>
-
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex items-start justify-center p-2">
-          <div className="w-1 h-3 bg-white/50 rounded-full" />
-        </div>
+        <h2 className="font-serif text-5xl font-bold md:text-7xl">{groomName}</h2>
+        {hero?.subtitle && <p className="mx-auto mt-7 max-w-2xl text-lg text-white/90">{hero.subtitle}</p>}
+        {hero?.quote && <p className="mx-auto mt-5 max-w-2xl font-serif text-lg italic text-white/80">“{hero.quote}”</p>}
+        {blessing?.translation && (
+          <div className="mx-auto mt-8 max-w-2xl text-sm leading-7 text-white/75">
+            <p>{blessing.translation}</p>
+            {blessing.source && <p className="mt-2 font-medium">{blessing.source}</p>}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => document.getElementById("couple")?.scrollIntoView({ behavior: "smooth" })}
+          className="mt-10 rounded-full border border-white/35 bg-white/15 px-8 py-3 font-medium backdrop-blur-sm transition hover:bg-white/25"
+        >
+          Buka Undangan
+        </button>
       </div>
     </section>
   );

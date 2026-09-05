@@ -1,32 +1,41 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { createServerClient } from "@/lib/supabase";
-import { ClassicTemplate } from "./ClassicTemplate";
-import type { SectionConfig } from "@/components/InvitationContext";
+import { InvitationRenderer } from "@/components/invitation/InvitationRenderer";
+import { resolveTemplate } from "@/templates/registry";
+import type { SectionConfig } from "@/lib/wedding-defaults";
 
+/**
+ * Compatibility route used by optional subdomain middleware.
+ * Path-based production invitations use /invite/[slug].
+ */
 export default async function InvitationPage() {
-  const headersList = await headers();
-  const slug = headersList.get("x-wedding-slug");
+  const requestHeaders = await headers();
+  const slug = requestHeaders.get("x-wedding-slug")?.trim().toLowerCase();
   if (!slug) notFound();
 
   const supabase = createServerClient();
   const { data: wedding, error } = await supabase
     .from("weddings")
-    .select("id, slug, status, template_id, sections, content")
+    .select("id, template_id, sections, content, theme")
     .eq("slug", slug)
     .eq("status", "released")
-    .single();
-
+    .maybeSingle();
   if (error || !wedding) notFound();
 
-  const sections = (Array.isArray(wedding.sections) ? wedding.sections : []) as SectionConfig[];
-  const content = (wedding.content ?? {}) as Parameters<typeof ClassicTemplate>[0]["content"];
+  try {
+    resolveTemplate(wedding.template_id);
+  } catch {
+    notFound();
+  }
 
   return (
-    <ClassicTemplate
+    <InvitationRenderer
       weddingId={wedding.id}
-      content={content}
-      sections={sections}
+      templateId={wedding.template_id}
+      content={wedding.content}
+      sections={Array.isArray(wedding.sections) ? (wedding.sections as SectionConfig[]) : []}
+      theme={(wedding.theme ?? {}) as Record<string, unknown>}
     />
   );
 }

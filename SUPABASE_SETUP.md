@@ -1,127 +1,133 @@
-# Supabase Setup Guide
+# Supabase Setup — Commerce P0
 
-This project uses Supabase as the backend database. Follow these steps to set it up.
+This branch uses Supabase PostgreSQL + Storage behind server-side Next.js routes.
 
-## 1. Create a Supabase Project
+## 1. Environment
 
-1. Go to [supabase.com](https://supabase.com) and sign up/login
-2. Click "New Project"
-3. Fill in your project details:
-   - Name: `wedding-invitation` (or your preferred name)
-   - Database Password: Choose a strong password (save it!)
-   - Region: Choose the closest region to your users
-4. Wait for the project to be created (takes a few minutes)
+Copy `.env.example` to `.env.local` and configure:
 
-## 2. Get Your API Keys
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+DATABASE_URL=postgresql://...
+BETTER_AUTH_SECRET=...
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+PUBLIC_INVITATION_BASE_URL=http://localhost:3000
+PUBLIC_INVITATION_MODE=path
+ALLOW_PUBLIC_SIGNUP=false
+```
 
-1. In your Supabase project dashboard, go to **Settings** → **API**
-2. Copy the following values:
-   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
-   - **anon/public key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - **service_role key** (optional, for admin operations) → `SUPABASE_SERVICE_ROLE_KEY`
+`SUPABASE_SERVICE_ROLE_KEY` is intentionally required by server routes. Do not expose it in browser/client code.
 
-## 3. Set Up Environment Variables
+## 2. Run database bootstrap / migration
 
-1. Copy `.env.example` to `.env.local`:
+In Supabase Dashboard -> SQL Editor, run the complete file:
 
-   ```bash
-   cp .env.example .env.local
-   ```
+```text
+supabase/run-weddings-migrations.sql
+```
 
-2. Edit `.env.local` and add your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-   ```
+The script is designed for both the previous Attimo schema and a fresh commerce database. It:
 
-## 4. Create Database Tables
+- creates/updates `weddings`,
+- migrates legacy template ID `classic` -> `classic-001`,
+- creates `wedding_collaborators`,
+- creates `guests` with opaque invitation tokens,
+- wedding-scopes RSVP and wishes,
+- adds wishes moderation status,
+- removes legacy unscoped RSVP/wishes rows,
+- makes `wedding_id` mandatory,
+- removes globally permissive anon policies,
+- enables RLS on tenant tables.
 
-1. In your Supabase dashboard, go to **SQL Editor**
-2. Click **New Query**
-3. Copy and paste the contents of `supabase/schema.sql`
-4. Click **Run** to execute the SQL
+> Backup a real production database before running schema migrations. The P0 script deletes only legacy RSVP/wishes rows where `wedding_id IS NULL`, because those rows cannot safely be assigned to a tenant.
 
-This will create:
+The timestamped migration is also available at:
 
-- `rsvp` table for RSVP submissions
-- `wishes` table for guest wishes
-- Indexes for better performance
-- Row Level Security (RLS) policies for public access
+```text
+supabase/migrations/20260905000100_commerce_p0.sql
+```
 
-## 5. Verify Tables Are Created
+## 3. Better Auth tables
 
-1. Go to **Table Editor** in your Supabase dashboard
-2. You should see two tables: `rsvp` and `wishes`
-3. Check that the columns match the schema
+After `DATABASE_URL` is set:
 
-## 6. Test the Setup
+```bash
+bunx @better-auth/cli migrate
+```
 
-1. Start your development server:
+For admin-managed V1, public email signup is disabled when:
 
-   ```bash
-   bun dev
-   ```
+```env
+ALLOW_PUBLIC_SIGNUP=false
+```
 
-2. Test the API endpoints:
-   - Submit an RSVP through the website
-   - Submit a wish through the website
-   - Check your Supabase dashboard → Table Editor to see the data
+To bootstrap the first admin account in a controlled environment, temporarily enable signup, create the account, then disable it again before production exposure.
 
-## Database Schema
+## 4. Storage
 
-### RSVP Table
+Create a Supabase Storage bucket named:
 
-- `id` (UUID, Primary Key)
-- `name` (TEXT, Required)
-- `attendance` (TEXT, Required: 'yes' | 'no' | 'maybe')
-- `guest_count` (INTEGER, Default: 0)
-- `message` (TEXT, Optional)
-- `submitted_at` (TIMESTAMP, Auto-generated)
+```text
+wedding-assets
+```
 
-### Wishes Table
+Current P0 returns public asset URLs, so the bucket must be configured to serve invitation images publicly. Uploads themselves go through authenticated server routes and are stored under:
 
-- `id` (UUID, Primary Key)
-- `name` (TEXT, Required)
-- `location` (TEXT, Required)
-- `message` (TEXT, Required)
-- `created_at` (TIMESTAMP, Auto-generated)
+```text
+weddings/{weddingId}/assets/...
+```
 
-## Row Level Security (RLS)
+Allowed upload types:
 
-The tables have RLS enabled with public read/write policies:
+- JPEG
+- PNG
+- WebP
+- GIF
 
-- Anyone can read RSVP and wishes data
-- Anyone can insert RSVP and wishes data
-- No authentication required (suitable for wedding invitations)
+Maximum image size: 5 MB.
 
-For production, consider:
+## 5. Public invitation URL
 
-- Adding rate limiting
-- Adding spam protection
-- Restricting write access to authenticated users only
+P0 default:
 
-## Troubleshooting
+```env
+PUBLIC_INVITATION_MODE=path
+PUBLIC_INVITATION_BASE_URL=https://yourdomain.id
+```
 
-### "Missing Supabase environment variables"
+Result:
 
-- Make sure `.env.local` exists and has the correct variable names
-- Restart your development server after adding environment variables
+```text
+https://yourdomain.id/invite/{slug}?guest={opaque-token}
+```
 
-### "Failed to submit RSVP/Wish"
+Optional future/subdomain mode is already supported by middleware:
 
-- Check that the tables exist in your Supabase dashboard
-- Verify RLS policies are set correctly
-- Check the browser console and server logs for detailed error messages
+```env
+PUBLIC_INVITATION_MODE=subdomain
+```
 
-### "relation does not exist"
+with wildcard DNS/TLS configured by the hosting provider.
 
-- Run the SQL schema from `supabase/schema.sql` in the SQL Editor
-- Make sure you're connected to the correct database
+## 6. Security verification before launch
 
-## Next Steps
+Confirm all of the following in the deployed environment:
 
-- Set up database backups in Supabase dashboard
-- Consider adding email notifications when RSVPs are submitted
-- Add admin dashboard to view/manage submissions
-- Set up database functions for analytics
+- service-role key exists only server-side,
+- public signup is disabled,
+- `/api/rsvp` rejects missing `wedding_id`,
+- `/api/wishes` rejects missing `wedding_id`,
+- a guest token from Wedding A does not resolve in Wedding B,
+- draft weddings return 404 publicly,
+- only released weddings render from `/invite/[slug]`,
+- admin cannot access an unrelated wedding ID,
+- storage uploads require wedding membership.
+
+## 7. Rate limiting
+
+P0 includes an in-memory per-runtime limiter for RSVP/wishes. This is a baseline abuse guard, not the final distributed solution.
+
+Before horizontally scaled/high-volume production, replace or augment it with a shared limiter such as Redis/Upstash or the hosting provider's edge/WAF rate limiting.

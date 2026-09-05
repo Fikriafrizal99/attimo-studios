@@ -1,210 +1,76 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Play, Pause, Volume2, VolumeX, Music } from "lucide-react";
-import { gsap } from "gsap";
+import { useEffect, useRef, useState } from "react";
+import { Music, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useInvitation } from "@/components/InvitationContext";
-import { defaultSongs } from "@/lib/music";
 
-interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  url: string;
-  cover?: string;
-}
-
-interface MusicPlayerProps {
-  songs?: Song[];
-  autoPlay?: boolean;
-}
-
-export default function MusicPlayer({ songs = [], autoPlay = false }: MusicPlayerProps) {
-  const inv = useInvitation();
-  const songsToUse = inv?.content?.music?.length ? inv.content.music : (songs.length ? songs : defaultSongs);
-  const [isPlaying, setIsPlaying] = useState(autoPlay);
-  const [currentSongIndex, setCurrentSongIndex] = useState(0);
-  const [volume, setVolume] = useState(0.5);
-  const [isMuted, setIsMuted] = useState(false);
-  const [showPlaylist, setShowPlaylist] = useState(false);
+export default function MusicPlayer() {
+  const invitation = useInvitation();
+  const songs = invitation?.content.music ?? [];
+  const autoplayRequested = invitation?.content.musicSettings?.autoplayRequested ?? false;
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const playerRef = useRef<HTMLDivElement>(null);
-
-  const currentSong = songsToUse[currentSongIndex] || null;
+  const song = songs[index];
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume;
-    }
-  }, [volume, isMuted]);
+    const audio = audioRef.current;
+    if (!audio || !song) return;
+    audio.src = song.url;
+    audio.muted = muted;
+    if (playing) audio.play().catch(() => setPlaying(false));
+    else audio.pause();
+  }, [song, playing, muted]);
 
   useEffect(() => {
-    if (audioRef.current && currentSong) {
-      if (isPlaying) {
-        audioRef.current.play().catch((err) => {
-          console.error("Error playing audio:", err);
-          setIsPlaying(false);
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying, currentSong]);
+    if (!autoplayRequested || !song) return;
+    const startAfterGesture = () => {
+      setPlaying(true);
+      window.removeEventListener("pointerdown", startAfterGesture);
+      window.removeEventListener("keydown", startAfterGesture);
+    };
+    window.addEventListener("pointerdown", startAfterGesture, { once: true });
+    window.addEventListener("keydown", startAfterGesture, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", startAfterGesture);
+      window.removeEventListener("keydown", startAfterGesture);
+    };
+  }, [autoplayRequested, song]);
 
-  useEffect(() => {
-    if (audioRef.current && currentSong) {
-      audioRef.current.src = currentSong.url;
-      if (isPlaying && autoPlay) {
-        audioRef.current.play().catch(() => setIsPlaying(false));
-      }
-    }
-  }, [currentSongIndex, currentSong]);
-
-  const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (newVolume > 0) {
-      setIsMuted(false);
-    }
-  };
-
-  const nextSong = () => {
-    setCurrentSongIndex((prev) => (prev + 1) % songsToUse.length);
-  };
-
-  const prevSong = () => {
-    setCurrentSongIndex((prev) => (prev - 1 + songsToUse.length) % songsToUse.length);
-  };
-
-  const selectSong = (index: number) => {
-    setCurrentSongIndex(index);
-    setIsPlaying(true);
-  };
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.addEventListener("ended", nextSong);
-      return () => {
-        audioRef.current?.removeEventListener("ended", nextSong);
-      };
-    }
-  }, [currentSongIndex]);
-
-  useEffect(() => {
-    if (playerRef.current) {
-      gsap.from(playerRef.current, {
-        y: 100,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power3.out",
-        delay: 0.5,
-      });
-    }
-  }, []);
-
-  if (!currentSong) return null;
+  if (!song) return null;
 
   return (
-    <>
-      <audio ref={audioRef} preload="auto" />
-      
-      <div
-        ref={playerRef}
-        className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
-      >
-        {/* Main Player */}
-        <div className="flex items-center gap-4 p-4 min-w-[320px]">
-          {/* Album Cover / Icon */}
-          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center flex-shrink-0">
-            {currentSong.cover ? (
-              <img
-                src={currentSong.cover}
-                alt={currentSong.title}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <Music className="w-8 h-8 text-white" />
-            )}
-          </div>
-
-          {/* Song Info */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-800 truncate">
-              {currentSong.title}
-            </p>
-            <p className="text-xs text-gray-500 truncate">{currentSong.artist}</p>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={togglePlayPause}
-              className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center hover:bg-rose-600 transition-colors"
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={toggleMute}
-              className="w-8 h-8 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5" />
-              ) : (
-                <Volume2 className="w-5 h-5" />
-              )}
-            </button>
-
-            {songsToUse.length > 1 && (
-              <button
-                onClick={() => setShowPlaylist(!showPlaylist)}
-                className="w-8 h-8 text-gray-600 hover:text-gray-800 transition-colors text-xs font-semibold"
-              >
-                {songsToUse.length}
-              </button>
-            )}
-          </div>
+    <div className="fixed bottom-5 right-5 z-50 min-w-[260px] rounded-2xl border border-black/10 bg-white/95 p-3 shadow-xl backdrop-blur-md">
+      <audio
+        ref={audioRef}
+        preload="metadata"
+        onEnded={() => songs.length > 1 ? setIndex((current) => (current + 1) % songs.length) : setPlaying(false)}
+      />
+      <div className="flex items-center gap-3">
+        <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-rose-100">
+          {song.cover ? <img src={song.cover} alt="" className="h-full w-full object-cover" /> : <Music className="size-5 text-rose-500" />}
         </div>
-
-        {/* Volume Slider */}
-        <div className="px-4 pb-2">
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={isMuted ? 0 : volume}
-            onChange={handleVolumeChange}
-            className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
-          />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-gray-800">{song.title || "Wedding Music"}</p>
+          <p className="truncate text-xs text-gray-500">{song.artist || ""}</p>
         </div>
-
-        {/* Playlist */}
-        {showPlaylist && songsToUse.length > 1 && (
-          <div className="border-t border-gray-200 max-h-64 overflow-y-auto">
-            {songsToUse.map((song, index) => (
-              <button
-                key={song.id}
-                onClick={() => selectSong(index)}
-                className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                  index === currentSongIndex ? "bg-rose-50" : ""
-                }`}
-              >
-                <p className="text-sm font-medium text-gray-800">{song.title}</p>
-                <p className="text-xs text-gray-500">{song.artist}</p>
-              </button>
-            ))}
-          </div>
-        )}
+        <button type="button" onClick={() => setPlaying((value) => !value)} className="flex size-9 items-center justify-center rounded-full bg-rose-500 text-white" aria-label={playing ? "Pause music" : "Play music"}>
+          {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
+        </button>
+        <button type="button" onClick={() => setMuted((value) => !value)} className="text-gray-600" aria-label={muted ? "Unmute" : "Mute"}>
+          {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+        </button>
       </div>
-    </>
+      {songs.length > 1 && (
+        <div className="mt-2 flex gap-1 overflow-x-auto pt-1">
+          {songs.map((item, itemIndex) => (
+            <button key={item.id} type="button" onClick={() => { setIndex(itemIndex); setPlaying(true); }} className={`rounded px-2 py-1 text-[10px] ${itemIndex === index ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"}`}>
+              {itemIndex + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

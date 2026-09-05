@@ -1,53 +1,70 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Gift } from "lucide-react";
-
-gsap.registerPlugin(ScrollTrigger);
+import { Copy, Gift, MapPin } from "lucide-react";
+import { toast } from "sonner";
+import { useInvitation } from "@/components/InvitationContext";
 
 export default function GiftSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const invitation = useInvitation();
+  const gifts = invitation?.content.gifts;
+  if (!gifts?.enabled) return null;
+  const hasContent = (gifts.bankAccounts?.length ?? 0) > 0 || gifts.qrisImageUrl || gifts.shippingAddress;
+  if (!hasContent) return null;
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(".gift-content", {
-        opacity: 0,
-        y: 30,
-        duration: 1,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-        },
-      });
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  async function copy(value: string) {
+    await navigator.clipboard.writeText(value);
+    toast.success("Nomor rekening disalin.");
+  }
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-20 px-4 bg-gradient-to-b from-white to-rose-50/30"
-    >
-      <div className="max-w-4xl mx-auto">
-        <div className="gift-content bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
-          <div className="mb-6">
-            <Gift className="w-16 h-16 mx-auto mb-4 text-rose-500" />
-          </div>
-          <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4 text-gray-800">
-            Send your gift
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Catatan kado atau kata kata terimakasih untuk yang memberikan hadiah. di menu (Amplop
-            digital)
-          </p>
-          <button className="px-8 py-4 bg-rose-500 text-white rounded-full font-semibold hover:bg-rose-600 transition-colors duration-300 hover:scale-105">
-            Make a gift now
-          </button>
+    <section id="gift" className="bg-gradient-to-b from-white to-rose-50/40 px-4 py-20">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 text-center">
+          <Gift className="mx-auto mb-4 size-12 text-rose-500" />
+          <h2 className="font-serif text-4xl font-bold text-gray-800 md:text-5xl">Amplop Digital</h2>
+          {gifts.intro && <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">{gifts.intro}</p>}
         </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {gifts.bankAccounts.map((account) => (
+            <article key={account.id} className="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm">
+              <p className="text-sm uppercase tracking-[0.18em] text-gray-400">{account.bankName}</p>
+              <p className="mt-4 break-all font-mono text-2xl font-semibold text-gray-800">{account.accountNumber}</p>
+              <p className="mt-2 text-sm text-gray-600">a.n. {account.accountHolder}</p>
+              <button
+                type="button"
+                onClick={() => copy(account.accountNumber)}
+                className="mt-5 inline-flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white"
+              >
+                <Copy className="size-4" /> Salin rekening
+              </button>
+            </article>
+          ))}
+
+          {gifts.qrisImageUrl && (
+            <article className="rounded-2xl border border-rose-100 bg-white p-6 text-center shadow-sm">
+              <p className="mb-4 text-sm uppercase tracking-[0.18em] text-gray-400">QRIS</p>
+              <img
+                src={gifts.qrisImageUrl}
+                alt="QRIS hadiah pernikahan"
+                loading="lazy"
+                className="mx-auto max-h-72 max-w-full rounded-xl object-contain"
+              />
+            </article>
+          )}
+        </div>
+
+        {gifts.shippingAddress && (
+          <div className="mt-6 rounded-2xl border border-rose-100 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-3">
+              <MapPin className="mt-1 size-5 shrink-0 text-rose-500" />
+              <div>
+                <p className="font-semibold text-gray-800">Kirim hadiah fisik</p>
+                <p className="mt-2 whitespace-pre-line leading-7 text-gray-600">{gifts.shippingAddress}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -3,99 +3,91 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { galleryImages, galleryQuote } from "@/lib/data";
-import { useInvitation } from "@/components/InvitationContext";
 import { X } from "lucide-react";
+import { useInvitation } from "@/components/InvitationContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function GallerySection() {
-  const inv = useInvitation();
-  const imagesToUse = inv?.content?.gallery?.length ? inv.content.gallery : galleryImages;
-  const quoteToUse = inv?.content?.galleryQuote ?? galleryQuote;
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const invitation = useInvitation();
+  const images = invitation?.content.gallery ?? [];
+  const quote = invitation?.content.galleryQuote;
+  const sectionRef = useRef<HTMLElement>(null);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; alt: string } | null>(null);
 
   useEffect(() => {
+    if (!sectionRef.current) return;
     const ctx = gsap.context(() => {
       gsap.utils.toArray<HTMLElement>(".gallery-item").forEach((item, index) => {
         gsap.from(item, {
           opacity: 0,
-          scale: 0.8,
-          duration: 0.6,
-          ease: "back.out(1.7)",
-          scrollTrigger: {
-            trigger: item,
-            start: "top 85%",
-          },
-          delay: index * 0.1,
+          y: 24,
+          duration: 0.55,
+          ease: "power3.out",
+          delay: Math.min(index * 0.05, 0.25),
+          scrollTrigger: { trigger: item, start: "top 90%" },
         });
       });
     }, sectionRef);
-
     return () => ctx.revert();
-  }, []);
+  }, [images.length]);
+
+  if (images.length === 0) return null;
 
   return (
-    <section
-      id="gallery"
-      ref={sectionRef}
-      className="py-20 px-4 bg-white"
-    >
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 text-gray-800">
-            {quoteToUse.title}
-          </h2>
-          <p className="text-lg text-gray-600 italic max-w-2xl mx-auto">
-            {quoteToUse.text}
-          </p>
+    <section id="gallery" ref={sectionRef} className="bg-white px-4 py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-12 text-center">
+          <h2 className="font-serif text-4xl font-bold text-gray-800 md:text-5xl">{quote?.title || "Gallery"}</h2>
+          {quote?.text && <p className="mx-auto mt-4 max-w-2xl italic text-gray-600">{quote.text}</p>}
         </div>
 
-        {imagesToUse.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-2xl">
-            <p className="text-gray-500 mb-2">No photos in the gallery yet.</p>
-            <p className="text-sm text-gray-400">
-              Add photos in the dashboard <strong>Gallery</strong> section.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {imagesToUse.map((image) => (
-              <div
-                key={image.id}
-                className="gallery-item aspect-square rounded-lg overflow-hidden cursor-pointer group relative"
-                onClick={() => setSelectedImage(image.url)}
-              >
-                <div className="w-full h-full bg-gradient-to-br from-rose-200 to-pink-300 flex items-center justify-center">
-                  <span className="text-4xl">📸</span>
-                </div>
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Image Modal */}
-        {selectedImage && (
-          <div
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-            onClick={() => setSelectedImage(null)}
-          >
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+          {images.map((image) => (
             <button
-              onClick={() => setSelectedImage(null)}
-              className="absolute top-4 right-4 text-white hover:text-rose-400 transition-colors"
+              type="button"
+              key={image.id}
+              className="gallery-item group relative aspect-square overflow-hidden rounded-xl bg-gray-100 text-left"
+              onClick={() => setSelectedImage(image)}
+              aria-label={`Open ${image.alt}`}
             >
-              <X size={32} />
+              <img
+                src={image.url}
+                alt={image.alt}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+              />
+              <span className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10" />
             </button>
-            <div className="max-w-4xl w-full">
-              <div className="w-full aspect-square bg-gradient-to-br from-rose-200 to-pink-300 rounded-lg flex items-center justify-center">
-                <span className="text-8xl">📸</span>
-              </div>
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
+
+      {selectedImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedImage.alt}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setSelectedImage(null)}
+            className="absolute right-4 top-4 rounded-full bg-black/40 p-2 text-white"
+            aria-label="Close image"
+          >
+            <X className="size-7" />
+          </button>
+          <img
+            src={selectedImage.url}
+            alt={selectedImage.alt}
+            className="max-h-[90vh] max-w-[94vw] rounded-xl object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
     </section>
   );
 }
