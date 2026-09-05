@@ -3,11 +3,11 @@
 
 DO $$
 DECLARE
-  table_name TEXT;
+  auth_table_name TEXT;
 BEGIN
-  FOREACH table_name IN ARRAY ARRAY['user', 'session', 'account', 'verification'] LOOP
-    IF to_regclass(format('public.%I', table_name)) IS NULL THEN
-      RAISE EXCEPTION 'Better Auth verification failed: table % is missing', table_name;
+  FOREACH auth_table_name IN ARRAY ARRAY['user', 'session', 'account', 'verification'] LOOP
+    IF to_regclass(format('public.%I', auth_table_name)) IS NULL THEN
+      RAISE EXCEPTION 'Better Auth verification failed: table % is missing', auth_table_name;
     END IF;
 
     IF NOT EXISTS (
@@ -15,10 +15,10 @@ BEGIN
       FROM pg_class c
       JOIN pg_namespace n ON n.oid = c.relnamespace
       WHERE n.nspname = 'public'
-        AND c.relname = table_name
+        AND c.relname = auth_table_name
         AND c.relrowsecurity = TRUE
     ) THEN
-      RAISE EXCEPTION 'Better Auth verification failed: RLS is not enabled on %', table_name;
+      RAISE EXCEPTION 'Better Auth verification failed: RLS is not enabled on %', auth_table_name;
     END IF;
   END LOOP;
 
@@ -32,9 +32,12 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM information_schema.table_constraints
-    WHERE table_schema = 'public' AND table_name = 'user'
-      AND constraint_type = 'UNIQUE' AND constraint_name ILIKE '%email%'
+    SELECT 1
+    FROM information_schema.table_constraints tc
+    WHERE tc.table_schema = 'public'
+      AND tc.table_name = 'user'
+      AND tc.constraint_type = 'UNIQUE'
+      AND tc.constraint_name ILIKE '%email%'
   ) THEN
     RAISE EXCEPTION 'Better Auth verification failed: unique email constraint missing';
   END IF;
