@@ -1,13 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const rawSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const rawSupabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!rawSupabaseUrl || !rawSupabaseAnonKey) {
   throw new Error(
     "Missing Supabase environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY."
   );
 }
+
+// Copy into explicitly narrowed constants so strict TypeScript keeps the
+// non-null guarantee inside exported functions/closures as well.
+const supabaseUrl: string = rawSupabaseUrl;
+const supabaseAnonKey: string = rawSupabaseAnonKey;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
