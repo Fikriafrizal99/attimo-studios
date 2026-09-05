@@ -1,13 +1,13 @@
 # Commerce P0 Implementation Status
 
 **Branch:** `develop/commerce-foundation`  
-**Date:** 2026-09-05  
+**Date:** 2026-09-06  
 **Goal:** close all technical P0 work that can be completed in-repository and explicitly track external deployment/legal blockers.
 
 ## Status legend
 
-- ✅ Implemented in branch
-- 🧪 Implemented; CI/deployment verification required
+- ✅ Implemented and verified in branch
+- 🧪 Implemented; deployment/device verification required
 - ⚠️ External action required
 - ❌ Not implemented
 
@@ -16,11 +16,11 @@
 | P0 requirement | Status | Implementation / next gate |
 |---|---|---|
 | Upstream commercial usage status resolved | ⚠️ | Not legally resolved. See `UPSTREAM_LICENSE_STATUS.md`. Commercial release remains blocked. |
-| Production auth configured | 🧪 | Better Auth requires production DB/secret, public signup disabled by default, trusted origins + auth rate limit configured. Real deployment secrets still required. |
-| Multi-tenant isolation verified | 🧪 | SQL migration enforces wedding-scoped guests/RSVP/wishes and removes anon policies. Must be applied to the real Supabase project and cross-tenant tests executed. |
+| Production auth configured | 🧪 | Better Auth configuration builds successfully; production DB/secrets and admin bootstrap still required. Public signup remains disabled by default. |
+| Multi-tenant isolation verified | 🧪 | SQL migration enforces wedding-scoped guests/RSVP/wishes and removes anon policies. Must be applied to the real Supabase project and cross-tenant tests executed there. |
 | RSVP/wishes cannot return all weddings accidentally | ✅ | Both APIs require a valid `wedding_id`; RSVP public GET returns aggregate only; wishes returns visible rows for one released wedding only. |
 | Template registry implemented | ✅ | Registry/resolver/contract implemented with `classic-001` and `minimal-001`. |
-| One production-quality template through registry | 🧪 | Classic renderer migrated through registry and core placeholder components replaced; final build/device QA still required. |
+| One production-quality template through registry | 🧪 | Classic renderer builds through registry and core placeholders are replaced; final real-device visual QA remains. |
 | Adding second template does not change core route | ✅ | `minimal-001` is registered without changes to public/preview route logic. |
 | Content editor covers required V1 fields | ✅ | Hero, couple, events, primary countdown event, story, gallery, gift/bank/QRIS, music and blessing supported. |
 | Real gallery rendering | ✅ | Actual uploaded image URLs + lazy loading + lightbox. |
@@ -45,28 +45,45 @@
 - unauthorized default commercial music fallback removed,
 - legacy `classic` template IDs migrate to `classic-001`,
 - old section arrays are normalized so new shared sections can be introduced safely,
-- GitHub Actions build CI workflow is committed for this branch.
+- GitHub Actions build CI is active for this branch.
 
-## CI state
+## CI state — PASS
 
-The `Commerce P0 CI` workflow is present in `.github/workflows/commerce-p0-ci.yml`, but GitHub reported **zero workflow runs** after two pushes to this fork. Therefore CI is **not considered passed**.
+`Commerce P0 CI` is now active and the latest verification run passed.
 
-For a GitHub fork this normally requires Actions/workflows to be explicitly enabled in the repository UI before the first workflow can execute. Once Actions are enabled, a new push (or rerun) must execute `bun run build`; any TypeScript/Next.js failures must be fixed before technical P0 is marked verified.
+### CI fixes found during activation
+
+1. `app/demo/page.tsx` still used the old `MusicPlayer` props (`songs` / `autoPlay`). The demo was updated to the new context-driven `MusicPlayer` contract.
+2. Strict TypeScript did not preserve the top-level Supabase environment narrowing inside `createServerClient()`. `lib/supabase.ts` now copies validated env values into explicitly typed constants.
+
+### Verified run
+
+- Workflow: `Commerce P0 CI`
+- Run: `#5`
+- Commit: `c3b9f12ae0f971fd6feaaa32914a21ceaa6a952c`
+- Result: **success**
+- Install dependencies: success
+- Next.js production compile: success
+- TypeScript: success
+- Overall build job: success
+
+The build still reports a non-blocking Next.js warning that the `middleware` file convention is deprecated in favor of `proxy`; this does not fail the current P0 build and can be migrated separately.
 
 ## External steps before P0 can be called production-verified
 
 1. Resolve upstream commercial license/permission.
-2. Enable GitHub Actions for the fork and obtain a passing `Commerce P0 CI` build.
-3. Create/configure the real Supabase project.
-4. Apply `supabase/run-weddings-migrations.sql`.
-5. Create `wedding-assets` Storage bucket.
-6. Run Better Auth migration.
-7. Create/bootstrap the admin account, then keep `ALLOW_PUBLIC_SIGNUP=false`.
-8. Configure real secrets and public domain env values.
-9. Run cross-tenant security tests against deployed Supabase.
-10. Validate the invitation on low/mid/high-end mobile devices.
-11. Replace the in-memory public submission limiter with a shared/edge limiter before horizontal/high-volume scaling.
+2. Create/configure the real Supabase project.
+3. Apply `supabase/run-weddings-migrations.sql`.
+4. Create `wedding-assets` Storage bucket.
+5. Run Better Auth migration.
+6. Create/bootstrap the admin account, then keep `ALLOW_PUBLIC_SIGNUP=false`.
+7. Configure real secrets and public domain env values.
+8. Run cross-tenant security tests against deployed Supabase.
+9. Validate the invitation on low/mid/high-end mobile devices.
+10. Replace the in-memory public submission limiter with a shared/edge limiter before horizontal/high-volume scaling.
 
 ## P0 completion rule
 
-Technical implementation can be marked complete after CI passes. Production P0 is only complete after the external steps above are verified; commercial release additionally requires the license blocker to be resolved.
+**In-repository technical P0 is complete because CI now passes.**
+
+Production P0 is only complete after the external infrastructure/security/device steps above are verified. Commercial release additionally requires the upstream license blocker to be resolved.
