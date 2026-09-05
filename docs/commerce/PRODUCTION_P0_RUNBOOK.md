@@ -1,27 +1,39 @@
 # Production P0 Runbook
 
-This runbook closes the remaining environment-side work after the repository P0 implementation and CI are green.
+This runbook closes the environment-side work after repository P0 and CI are green.
 
-## 1. Create the Supabase project
+## Current verified state — 2026-09-06
 
-Create one Supabase project for the commerce environment. Keep the database password and service-role key private.
+The connected production Supabase project has already passed these gates:
 
-Required values:
+- commerce P0 migration applied,
+- `weddings`, `wedding_collaborators`, `guests`, `rsvp`, and `wishes` created,
+- tenant tables have RLS enabled and no browser-facing policies,
+- cross-wedding guest integrity triggers installed,
+- RSVP invitation quota trigger installed,
+- `wedding-assets` public bucket created with 5 MB image limit,
+- `supabase/verify-production.sql` passed,
+- Better Auth 1.4.19 core schema applied,
+- Better Auth tables have RLS enabled,
+- `anon` and `authenticated` direct read privileges are revoked from auth/credential tables.
 
-- Project URL
-- anon/public key
-- service-role key
-- direct PostgreSQL connection string for Better Auth migration
+Do not commit project-specific keys, database passwords, service-role keys, or `BETTER_AUTH_SECRET` to this repository.
 
-## 2. Configure environment
+## 1. Environment
 
-Copy `.env.example` to `.env.local` and set real values.
-
-Production must use:
+Configure these values only in the local/deployment environment:
 
 ```env
-ALLOW_PUBLIC_SIGNUP=false
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+DATABASE_URL=...
+BETTER_AUTH_SECRET=...
+BETTER_AUTH_URL=https://your-domain.id
+NEXT_PUBLIC_APP_URL=https://your-domain.id
+PUBLIC_INVITATION_BASE_URL=https://your-domain.id
 PUBLIC_INVITATION_MODE=path
+ALLOW_PUBLIC_SIGNUP=false
 P0_PREFLIGHT_STRICT=true
 ```
 
@@ -31,101 +43,94 @@ Then run:
 bun run p0:preflight
 ```
 
-Do not deploy while this command fails.
+Never expose `SUPABASE_SERVICE_ROLE_KEY`, database credentials, or `BETTER_AUTH_SECRET` in browser code or a public repository.
 
-## 3. Apply the commerce database bootstrap
+## 2. Commerce database
 
-In Supabase SQL Editor run:
+Canonical bootstrap:
 
 ```text
 supabase/run-weddings-migrations.sql
 ```
 
-The script is idempotent and CI runs it twice against a clean PostgreSQL database.
-
-It configures:
-
-- weddings
-- collaborators
-- guests
-- RSVP
-- wishes
-- RLS
-- tenant-scope triggers
-- RSVP quota trigger
-- template ID migration
-- `wedding-assets` storage bucket when the Supabase `storage` schema is present
-
-## 4. Verify the database
-
-In Supabase SQL Editor run:
+Production verifier:
 
 ```text
 supabase/verify-production.sql
 ```
 
-It must end with:
+Required result:
 
 ```text
 Commerce P0 Supabase production verification passed
 ```
 
-Do not continue if it raises an exception.
+The CI database-smoke job also applies the commerce bootstrap twice to verify idempotency and executes cross-tenant/quota checks.
 
-## 5. Better Auth migration
+## 3. Better Auth database
 
-With the real `DATABASE_URL` configured:
+The application is pinned to Better Auth `1.4.19`. Its checked-in production schema is:
 
-```bash
-bunx @better-auth/cli migrate
+```text
+supabase/migrations/20260905180003_better_auth_1_4_19_core.sql
 ```
 
-Do this before starting the production app.
+Verify it with:
 
-## 6. Bootstrap the first operator account
+```text
+supabase/verify-better-auth.sql
+```
 
-The V1 product is admin-managed and public signup must stay disabled in production.
+Required result:
 
-Recommended bootstrap flow:
+```text
+Better Auth 1.4.19 production verification passed
+```
 
-1. use a local/private deployment,
-2. temporarily set `ALLOW_PUBLIC_SIGNUP=true`,
-3. create the operator account,
-4. set `ALLOW_PUBLIC_SIGNUP=false` immediately,
-5. restart/redeploy,
-6. confirm `/signup` redirects to `/login` and `/api/auth/sign-up/*` is blocked.
+When upgrading Better Auth, generate/review the new migration first. Do not assume a newer Better Auth schema is backward-compatible with 1.4.19.
 
-Do not leave public signup enabled on the public production deployment.
+## 4. Bootstrap the first operator
 
-## 7. Storage smoke test
+V1 is admin-managed, so public signup stays disabled.
 
-From the dashboard:
+Safe bootstrap flow:
+
+1. choose the operator email,
+2. create the account through Better Auth in a private/local environment,
+3. if signup must temporarily be enabled, set `ALLOW_PUBLIC_SIGNUP=true` only for the private bootstrap session,
+4. immediately restore `ALLOW_PUBLIC_SIGNUP=false`,
+5. confirm `/signup` redirects to `/login`,
+6. confirm `/api/auth/sign-up/*` is blocked publicly.
+
+Do not paste permanent passwords into tickets, chat logs, source control, or deployment logs.
+
+## 5. Storage smoke test
+
+From the authenticated dashboard:
 
 1. create a draft wedding,
-2. upload a JPEG/WebP image under 5 MB,
-3. confirm the returned URL is public,
-4. confirm the path starts with `weddings/{weddingId}/assets/`,
-5. attempt upload from an unrelated account/wedding and confirm it is rejected.
+2. upload JPEG/PNG/WebP/GIF under 5 MB,
+3. confirm the URL is public,
+4. confirm object path begins with `weddings/{weddingId}/assets/`,
+5. confirm a user without wedding membership cannot upload to that wedding.
 
-## 8. Tenant-isolation smoke test
+## 6. Tenant-isolation smoke test
 
-Create Wedding A and Wedding B.
+Create Wedding A and Wedding B and verify:
 
-Verify:
+- Guest A token cannot resolve on Wedding B,
+- Guest A cannot RSVP to Wedding B,
+- Guest A cannot submit a token-linked wish to Wedding B,
+- RSVP above `max_guests` is rejected,
+- an authenticated user without membership cannot edit/upload to another wedding,
+- draft invitations return 404 publicly,
+- released invitations render only their own wedding data.
 
-- Guest A token does not resolve on Wedding B.
-- Guest A cannot RSVP to Wedding B.
-- Guest A cannot submit a token-linked wish to Wedding B.
-- RSVP quota over `max_guests` is rejected.
-- an authenticated user without membership cannot edit/upload to the other wedding.
-- draft invitations return 404 publicly.
-- released invitations render only their own RSVP/wishes data.
+Database triggers are defense-in-depth if an application route ever sends mismatched IDs.
 
-Database triggers provide an additional defense even if a server route accidentally sends mismatched wedding/guest IDs.
+## 7. Domain and release URL
 
-## 9. Domain and release URL
-
-V1 recommendation:
+Recommended V1:
 
 ```env
 PUBLIC_INVITATION_MODE=path
@@ -142,20 +147,24 @@ https://your-domain.id/invite/{slug}?guest={opaque-token}
 
 Subdomain mode remains optional after wildcard DNS/TLS is configured.
 
-## 10. Final device QA
+## 8. Final device QA
 
 At minimum test:
 
-- iPhone Safari
-- Android Chrome mid-range device
-- desktop Chrome
-- slow network throttling
-- reduced-motion preference
+- iPhone Safari,
+- Android Chrome on a mid-range device,
+- desktop Chrome,
+- slow network throttling,
+- reduced-motion preference.
 
-Check opening, gallery, maps, countdown, RSVP, wishes, gift copy action, QRIS, music controls, and personalized guest greeting.
+Verify opening, gallery, maps, countdown, personalized guest greeting, RSVP, wishes, gift copy action, QRIS, and music controls.
 
-## 11. Commercial release gate
+## 9. Advisors
 
-Technical P0 completion does not remove the upstream license blocker.
+Supabase security/performance advisors should be reviewed after schema changes. For this server-only P0 architecture, `RLS enabled with no policy` INFO notices on tenant/auth tables are intentional. `Unused index` notices are expected while the database has no traffic; do not remove planned indexes based solely on a fresh-project advisory.
 
-Do not sell/distribute the fork as a commercial product until upstream commercial-use permission/license is clearly established, or the inherited implementation has been replaced with independently licensed/owned code.
+## 10. Commercial release gate
+
+Technical readiness does not resolve upstream licensing.
+
+Do not sell or distribute the inherited fork commercially until commercial-use rights are clearly established, or inherited implementation has been replaced with independently owned/licensed code.

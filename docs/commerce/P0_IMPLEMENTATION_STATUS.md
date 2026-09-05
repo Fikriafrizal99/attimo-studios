@@ -1,97 +1,94 @@
 # Commerce P0 Implementation Status
 
 **Branch:** `develop/commerce-foundation`  
-**Date:** 2026-09-06  
-**Goal:** close all technical P0 work that can be completed in-repository and explicitly track external deployment/legal blockers.
+**Date:** 2026-09-06
 
 ## Status legend
 
-- ✅ Implemented and verified in branch/CI
-- 🧪 Implemented; real deployment/device verification required
-- ⚠️ External action required
-- ❌ Not implemented
+- ✅ implemented and verified
+- 🧪 implementation complete; deployed/device verification still required
+- ⚠️ external/legal action required
 
 ## P0 matrix
 
-| P0 requirement | Status | Implementation / next gate |
+| Requirement | Status | Current state |
 |---|---|---|
-| Upstream commercial usage status resolved | ⚠️ | Not legally resolved. See `UPSTREAM_LICENSE_STATUS.md`. Commercial release remains blocked. |
-| Production auth configured | 🧪 | Better Auth config/preflight/build pass; real DB migration, secrets, and first operator bootstrap still require the production environment. Public signup is disabled by default. |
-| Multi-tenant isolation verified | ✅ | CI database-smoke verifies schema bootstrap, RLS posture, cross-wedding guest blocking, and RSVP quota enforcement. Repeat verification is still required after applying it to the real Supabase project. |
-| RSVP/wishes cannot return all weddings accidentally | ✅ | Both APIs require a valid `wedding_id`; RSVP public GET returns aggregate only; wishes returns visible rows for one released wedding only. |
-| Template registry implemented | ✅ | Registry/resolver/contract implemented with `classic-001` and `minimal-001`. |
-| One production-quality template through registry | 🧪 | Classic renderer builds through registry and core placeholders are replaced; final real-device visual QA remains. |
-| Adding second template does not change core route | ✅ | `minimal-001` is registered without changes to public/preview route logic. |
-| Content editor covers required V1 fields | ✅ | Hero, couple, events, primary countdown event, story, gallery, gift/bank/QRIS, music and blessing supported. |
-| Real gallery rendering | ✅ | Actual uploaded image URLs + lazy loading + lightbox. |
-| Event date drives countdown | ✅ | Countdown resolves explicit event, primary event, then first event; no demo hard-coded date. |
-| Maps link/embed works | ✅ | Navigation URL plus address/coordinate Google Maps embed. |
-| Gift/bank/QRIS works | ✅ | Multiple bank accounts, copy account number, QRIS, physical gift address. |
-| Guest management works | ✅ | Admin CRUD, opaque tokens, quota, active/inactive, personalized URL copy. |
-| Personalized invitation URL works | ✅ | `/invite/{slug}?guest={opaque-token}`; token is resolved server-side and scoped to wedding. |
-| Preview works | ✅ | Preview and public route share `InvitationRenderer`. |
-| Publish routing has no localhost hard-code | ✅ | Central `buildInvitationUrl()` uses explicit env; path baseline + optional subdomain mode. |
-| Rate limiting / spam baseline | ✅ | Public RSVP/wishes per-IP+wedding limiter, payload limits, guest RSVP deduplication, wishes moderation status. |
+| Upstream commercial-use rights | ⚠️ | Still unresolved; commercial release remains blocked. |
+| Repository build / TypeScript | ✅ | Commerce P0 CI passes. |
+| Database bootstrap idempotency | ✅ | CI applies consolidated bootstrap twice successfully. |
+| Real Supabase commerce migration | ✅ | Applied to connected production Supabase. |
+| Real Supabase production verifier | ✅ | `supabase/verify-production.sql` passed. |
+| RLS / server-only tenant posture | ✅ | Tenant tables have RLS enabled; public permissive policies removed. |
+| Cross-wedding guest defense | ✅ | Database triggers installed and CI smoke-tested. |
+| RSVP invitation quota defense | ✅ | Database trigger installed and CI smoke-tested. |
+| `wedding-assets` storage bucket | ✅ | Public bucket exists with 5 MB image limit and allowed image MIME types. |
+| Better Auth schema | ✅ | Better Auth 1.4.19 core schema applied to production and checked into repo. |
+| Better Auth direct browser access | ✅ | Auth tables use RLS and direct `anon`/`authenticated` read privileges are revoked. |
+| First operator/admin account | 🧪 | Waiting only for operator email/bootstrap execution. Public signup remains disabled by default. |
+| Real deployment secrets/env | 🧪 | Project URL/publishable values are available; service role, DB credential, and auth secret must remain in deployment secrets. |
+| Domain/HTTPS | 🧪 | Requires chosen production hostname/provider. |
+| End-to-end deployed tenant/storage test | 🧪 | Requires authenticated deployed app. |
+| Real-device visual QA | 🧪 | Requires deployed app. |
+| Shared/edge rate limiter for scale | 🧪 | In-memory baseline is acceptable for P0/single runtime; upgrade before horizontal/high-volume operation. |
 
-## Additional P0 hardening included
+## Repository P0 features complete
 
-- server Supabase client no longer falls back to anon key,
-- production Better Auth fails closed when DB/secret are absent,
-- public sign-up disabled in auth config and Next.js `proxy.ts` by default,
-- Next.js 16 middleware deprecation removed by migrating `middleware.ts` -> `proxy.ts`,
-- central slug/UUID/text validation,
-- new wedding creation rejects unavailable template IDs,
-- release gate validates slug/template/content/event/section compatibility,
-- storage upload requires wedding membership and tenant-scoped paths,
-- `wedding-assets` bucket is configured by the consolidated Supabase bootstrap when the storage schema exists,
-- bucket file size/MIME configuration is aligned with the upload endpoint,
-- database triggers reject cross-wedding guest references even if application code makes a mistake,
-- database trigger enforces RSVP guest quota,
-- unauthorized default commercial music fallback removed,
-- legacy `classic` template IDs migrate to `classic-001`,
-- legacy permissive `supabase/schema.sql` policies removed,
-- environment preflight command added: `bun run p0:preflight`,
-- production SQL verifier added: `supabase/verify-production.sql`,
-- production runbook added: `docs/commerce/PRODUCTION_P0_RUNBOOK.md`.
+- extensible template registry with `classic-001` and `minimal-001`,
+- shared public/preview renderer,
+- real content editor, gallery, maps, countdown, gifts/QRIS and music,
+- guest management with opaque personalized links,
+- wedding-scoped RSVP and wishes,
+- publish/release gate,
+- tenant-scoped uploads,
+- central URL and input validation,
+- public signup disabled by default,
+- Next.js 16 `proxy.ts`,
+- environment preflight,
+- CI build + PostgreSQL database-smoke,
+- production database verifier and runbook.
 
 ## CI state — PASS
 
-Latest P0 verification:
+Latest final repository verification before production Supabase setup:
 
 - Workflow: `Commerce P0 CI`
-- Run: `#7`
-- Commit: `8731ad252811ec7645d40b9d09e9d6eec73221a6`
-- Build job: **success**
-- Environment preflight: **success**
-- Next.js production build + TypeScript: **success**
-- Database-smoke job: **success**
-- Consolidated bootstrap first application: **success**
-- Consolidated bootstrap second application/idempotency: **success**
-- Tenant-scope + guest quota SQL verification: **success**
+- Run: `#8`
+- Commit: `883154c04502dc8abb1dac685fddf59611d5646a`
+- build: **success**
+- environment preflight: **success**
+- database-smoke: **success**
+- bootstrap applied twice: **success**
+- tenant/quota integrity checks: **success**
 
-The repository-level P0 foundation is therefore technically verified.
+The new production-state documentation/migration commit must remain CI-green before merging.
 
-## External steps before production P0 is verified
+## Production Supabase verification
 
-These require the real hosting/Supabase environment and cannot be completed from repository CI alone:
+Completed on 2026-09-06:
 
-1. Create/configure the real Supabase project.
-2. Configure real application/database/auth secrets.
-3. Run `bun run p0:preflight` with `P0_PREFLIGHT_STRICT=true`.
-4. Apply `supabase/run-weddings-migrations.sql` to real Supabase.
-5. Run `supabase/verify-production.sql` and require a passing result.
-6. Run `bunx @better-auth/cli migrate` against the production database.
-7. Bootstrap the first operator account in a controlled/private environment, then keep `ALLOW_PUBLIC_SIGNUP=false`.
-8. Configure production domain/HTTPS values.
-9. Perform deployed tenant-isolation/storage smoke tests from `PRODUCTION_P0_RUNBOOK.md`.
-10. Validate the invitation on low/mid/high-end mobile devices.
-11. Before horizontal/high-volume scaling, replace the in-memory limiter with a shared/edge limiter.
-12. Resolve upstream commercial license/permission before selling/distributing the product.
+1. commerce P0 migration applied,
+2. production commerce verifier passed,
+3. storage bucket verified,
+4. Better Auth 1.4.19 schema applied,
+5. auth tables verified with RLS,
+6. browser roles verified without direct auth-table read privilege,
+7. Supabase security advisor reviewed — only intentional INFO notices for RLS-without-policy,
+8. performance advisor reviewed — only unused-index INFO notices on a fresh/empty database.
 
-## P0 completion rule
+## Remaining production gates
 
-**In-repository technical P0: COMPLETE.**
+1. Bootstrap first operator account using the chosen admin email.
+2. Configure service-role key, database connection, and `BETTER_AUTH_SECRET` directly in the deployment provider; do not paste them into source control/chat.
+3. Choose/configure production domain and HTTPS.
+4. Run `bun run p0:preflight` against real deployment env.
+5. Execute authenticated storage and tenant-isolation end-to-end smoke tests.
+6. Complete mobile/device QA.
+7. Resolve upstream licensing before any commercial sale/distribution.
 
-**Production-environment P0:** pending real Supabase/auth/domain/device execution.
+## Completion state
 
-**Commercial release:** blocked until upstream commercial-use rights are resolved.
+**In-repository technical P0:** COMPLETE.  
+**Supabase database P0:** COMPLETE.  
+**Auth schema P0:** COMPLETE.  
+**Production application P0:** pending operator bootstrap + deployment/domain/device gates.  
+**Commercial release:** blocked by upstream commercial-use rights.
