@@ -22,9 +22,12 @@ Baca dalam urutan berikut:
    Current implementation/CI/deployment status for launch-blocking P0 requirements.
 
 6. **`PRODUCTION_P0_RUNBOOK.md`**  
-   Exact Supabase, Better Auth, domain, tenant-isolation, storage, and device verification steps for a real deployment.
+   Supabase, Better Auth, tenant-isolation, storage, domain, and device verification steps.
 
-7. **`UPSTREAM_LICENSE_STATUS.md`**  
+7. **`SELF_HOST_DOCKER.md`**  
+   Self-host deployment on a single Ubuntu/Docker server, starting with LAN-only access before HTTPS/domain exposure.
+
+8. **`UPSTREAM_LICENSE_STATUS.md`**  
    Tracks the commercial-use/license blocker inherited from the upstream repository.
 
 ## Current Product Decisions
@@ -45,16 +48,19 @@ Baca dalam urutan berikut:
 - Color/font-only changes are theme variants, not fake additional templates.
 - RSVP, guest, wishes, security, and publishing logic remain shared across templates.
 - Package capability and template capability are resolved independently.
+- Initial hosting uses a self-managed Docker server while PostgreSQL and assets remain on Supabase Cloud.
+- LAN validation comes before public HTTPS/domain exposure.
 - Upstream commercial license status remains a commercial launch blocker until resolved.
 
 ## P0 Technical State
 
-Repository-level P0 is verified by `Commerce P0 CI` with two required jobs:
+Repository-level P0 is verified by `Commerce P0 CI` with:
 
 - production Next.js build + TypeScript + environment preflight,
-- PostgreSQL database smoke test with bootstrap idempotency, tenant-scope protection, and RSVP guest quota verification.
+- PostgreSQL database smoke test with bootstrap idempotency, tenant-scope protection, and RSVP guest quota verification,
+- self-host Docker image build + container health smoke test.
 
-Real Supabase/auth/domain/device execution is tracked separately in `PRODUCTION_P0_RUNBOOK.md`.
+Supabase commerce schema and Better Auth schema have also been applied and verified on the connected production Supabase project. Server deployment, operator bootstrap, final HTTPS/domain setup, and device QA remain environment-side execution steps.
 
 ## Documentation Status
 
@@ -64,8 +70,9 @@ Real Supabase/auth/domain/device execution is tracked separately in `PRODUCTION_
 | Technical Architecture V1 | Baseline / evolving |
 | Template Experience Strategy | Approved direction |
 | ADR-001 Template Experience Model | Accepted |
-| P0 Implementation Status | Verified in repository / production execution pending |
+| P0 Implementation Status | Repository/Supabase verified; host deployment pending |
 | Production P0 Runbook | Ready |
+| Self-Host Docker Runbook | Ready |
 | Upstream License Status | External blocker |
 
 ## Change Rule

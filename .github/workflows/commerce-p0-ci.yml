@@ -75,3 +75,57 @@ jobs:
 
       - name: Verify tenant isolation and integrity
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/p0_core_verify.sql
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build self-host image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key-for-build-only \
+            --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000 \
+            -t attimo-wedding:ci .
+
+      - name: Start self-host image
+        run: |
+          docker run -d --name attimo-wedding-ci -p 3100:3000 \
+            -e NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
+            -e NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key-for-build-only \
+            -e SUPABASE_SERVICE_ROLE_KEY=dummy-service-role-key-for-runtime-only \
+            -e DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres \
+            -e BETTER_AUTH_SECRET=dummy-build-secret-012345678901234567890123456789 \
+            -e BETTER_AUTH_URL=http://localhost:3000 \
+            -e NEXT_PUBLIC_APP_URL=http://localhost:3000 \
+            -e PUBLIC_INVITATION_BASE_URL=http://localhost:3000 \
+            -e PUBLIC_INVITATION_MODE=path \
+            -e ALLOW_PUBLIC_SIGNUP=false \
+            -e P0_PREFLIGHT_ALLOW_PLACEHOLDERS=true \
+            attimo-wedding:ci
+
+      - name: Verify container health endpoint
+        run: |
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:3100/api/health | grep -q '"status":"ok"'; then
+              exit 0
+            fi
+            if ! docker inspect -f '{{.State.Running}}' attimo-wedding-ci 2>/dev/null | grep -q true; then
+              docker logs attimo-wedding-ci || true
+              exit 1
+            fi
+            sleep 3
+          done
+          docker logs attimo-wedding-ci || true
+          exit 1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs attimo-wedding-ci || true
+
+      - name: Cleanup container
+        if: always()
+        run: docker rm -f attimo-wedding-ci >/dev/null 2>&1 || true
