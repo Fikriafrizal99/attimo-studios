@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { createServerClient } from "@/lib/supabase";
+import { createServiceRoleClient } from "@/lib/supabase";
 import { InvitationRenderer } from "@/components/invitation/InvitationRenderer";
 import { resolveTemplate } from "@/templates/registry";
 import type { SectionConfig } from "@/lib/wedding-defaults";
@@ -22,7 +22,7 @@ export default async function InvitationPage({
   const query = await searchParams;
   const guestToken = typeof query.guest === "string" ? query.guest.trim() : "";
 
-  const supabase = createServerClient();
+  const supabase = createServiceRoleClient();
   const { data: wedding, error } = await supabase
     .from("weddings")
     .select("id, slug, template_id, sections, content, theme")
