@@ -93,6 +93,9 @@ jobs:
       - name: Verify Phase 1.4 Better Auth tenant RLS
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase1_4_rls_verify.sql
 
+      - name: Verify Phase 1.5 owner collaborator permissions
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase1_5_permissions_verify.sql
+
   docker-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -113,7 +116,7 @@ jobs:
           docker run -d --name attimo-wedding-ci -p 3100:3000 \
             -e APP_ENV=development \
             -e NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co \
-            -e NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key-for-build-only \
+            -e NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key-for-runtime-only \
             -e SUPABASE_SERVICE_ROLE_KEY=dummy-service-role-key-for-runtime-only \
             -e DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres \
             -e BETTER_AUTH_SECRET=dummy-build-secret-012345678901234567890123456789 \
