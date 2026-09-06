@@ -92,7 +92,8 @@ export interface WeddingGiftContent {
 }
 
 export interface WeddingContent {
-  schemaVersion: typeof WEDDING_CONTENT_SCHEMA_VERSION;
+  /** Compatibility surface for existing editor state. Normalized content always has version 1. */
+  schemaVersion?: typeof WEDDING_CONTENT_SCHEMA_VERSION;
   couple: {
     bride: WeddingPersonContent;
     groom: WeddingPersonContent;
@@ -119,13 +120,17 @@ export interface WeddingContent {
   mainEventDate?: string;
 }
 
+/** Canonical result emitted by normalization and consumed by renderers. */
+export type CanonicalWeddingContent = Omit<WeddingContent, "schemaVersion"> & {
+  schemaVersion: typeof WEDDING_CONTENT_SCHEMA_VERSION;
+};
+
 /**
  * Product-level invariant:
- * - WeddingContent is shared by every visual tier/template.
+ * - canonical wedding content is shared by every visual tier/template.
  * - template_id/theme are presentation config and must not be embedded here.
  * - RSVP, wishes and guests are operational tenant data, not content JSON.
  */
-export type CanonicalWeddingContent = WeddingContent;
 
 // Backward-compatible aliases while existing editor/renderer imports are migrated.
 export type WeddingContentCouple = WeddingPersonContent;
