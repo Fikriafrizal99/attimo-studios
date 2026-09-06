@@ -1,11 +1,12 @@
 import { redirect, notFound } from "next/navigation";
 import { withTenantDb } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
+import { evaluatePublishReadiness } from "@/lib/commerce/publish-readiness";
 import { buildInvitationUrl } from "@/lib/commerce/url";
 import { getActiveTemplates } from "@/templates/registry";
 import { SettingsForm } from "./SettingsForm";
 
-export const metadata = { title: "Settings | Wedding" };
+export const metadata = { title: "Settings | ENDRIYA" };
 
 export default async function SettingsPage({
   params,
@@ -25,8 +26,10 @@ export default async function SettingsPage({
       slug: string | null;
       status: string;
       template_id: string;
+      sections: unknown;
+      content: unknown;
     }>(
-      `SELECT slug, status, template_id
+      `SELECT slug, status, template_id, sections, content
          FROM public.weddings
         WHERE id = $1
         LIMIT 1`,
@@ -49,6 +52,12 @@ export default async function SettingsPage({
     visualTier: item.visualTier,
     motionLevel: item.performance.motionLevel,
   }));
+  const readiness = evaluatePublishReadiness({
+    slug: wedding.slug,
+    templateId: wedding.template_id,
+    content: wedding.content,
+    sections: wedding.sections,
+  });
 
   return (
     <div className="space-y-6">
@@ -58,6 +67,7 @@ export default async function SettingsPage({
         initialStatus={wedding.status}
         initialTemplateId={wedding.template_id}
         initialPublicUrl={wedding.slug ? buildInvitationUrl({ slug: wedding.slug }) : null}
+        initialReadiness={readiness}
         templates={templates}
       />
     </div>
