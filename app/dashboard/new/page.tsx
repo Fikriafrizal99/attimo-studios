@@ -1,70 +1,34 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { CreateWeddingButton } from "../CreateWeddingButton";
 
 export default function NewWeddingPage() {
-  const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setStatus("loading");
-      setError(null);
-      const res = await fetch("/api/weddings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-        credentials: "include",
-      });
-      if (cancelled) return;
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const msg = data.error ?? "Failed to create wedding";
-        setError(msg);
-        toast.error(msg);
-        setStatus("error");
-        return;
-      }
-      const data = (await res.json()) as { id: string };
-      toast.success("Project created.");
-      router.replace(`/dashboard/weddings/${data.id}`);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  if (status === "loading") {
-    return (
-      <div className="rounded-md border border-white/6 bg-[#141416] px-6 py-6">
-        <h2 className="text-lg font-semibold text-neutral-50">New wedding</h2>
-        <p className="text-sm text-neutral-400 mt-1">Creating your wedding…</p>
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className="rounded-md border border-white/6 bg-[#141416] px-6 py-6 space-y-4">
-        <h2 className="text-lg font-semibold text-neutral-50">New wedding</h2>
-        <p className="text-sm text-red-300" role="alert">{error}</p>
-        <Button variant="outline" asChild className="border-white/10 text-neutral-200 hover:bg-white/5 focus-visible:ring-[#BFA14A]">
-          <Link href="/dashboard">← Back to dashboard</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-md border border-white/6 bg-[#141416] px-6 py-6">
-      <h2 className="text-lg font-semibold text-neutral-50">New wedding</h2>
-      <p className="text-sm text-neutral-400 mt-1">Redirecting…</p>
+    <div className="mx-auto max-w-2xl">
+      <section className="rounded-md border border-white/10 bg-[#141416] p-6 sm:p-8">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#BFA14A]">
+          New project
+        </p>
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-neutral-50">
+          Create a wedding project
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-neutral-400">
+          ENDRIYA will create a private draft with the default wedding structure. Nothing is
+          published until you release it from project settings.
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <CreateWeddingButton
+            label="Create Wedding Project"
+            className="bg-neutral-100 text-neutral-950 hover:bg-neutral-200"
+          />
+          <Link
+            href="/dashboard"
+            className="inline-flex h-8 items-center rounded-md border border-white/10 px-3 text-xs text-neutral-300 hover:bg-white/5 hover:text-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#141416]"
+          >
+            Cancel
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
