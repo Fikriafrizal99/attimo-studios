@@ -53,16 +53,16 @@ export default function SignUpPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[#0E0E10] px-4 py-8 text-neutral-200">
       <div className="flex justify-center">
-        <BrandMark />
+        <BrandMark showTagline />
       </div>
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md border border-white/10 bg-neutral-900/80 text-neutral-100 backdrop-blur-sm shadow-[0_18px_60px_rgba(0,0,0,0.65)]">
           <CardHeader className="space-y-3">
             <CardTitle className="font-serif text-3xl tracking-tight text-neutral-50">
-              Create an account.
+              Create your Endriya account.
             </CardTitle>
             <CardDescription className="text-sm text-neutral-300">
-              Access structured systems for digital moments.
+              Build and manage complete digital wedding experiences from one studio.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
