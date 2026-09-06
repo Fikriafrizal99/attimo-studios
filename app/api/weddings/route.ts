@@ -21,26 +21,21 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServerClient();
-    const { data: wedding, error: weddingError } = await supabase
-      .from("weddings")
-      .insert({
-        status: "draft",
-        template_id: templateId,
-        sections: defaultSections,
-        content,
-        theme: {},
-      })
-      .select("id, slug, template_id")
-      .single();
-    if (weddingError || !wedding) throw weddingError ?? new Error("Wedding insert failed");
+    const { data, error } = await supabase.rpc("create_wedding_with_owner", {
+      p_owner_user_id: user.id,
+      p_template_id: templateId,
+      p_sections: defaultSections,
+      p_content: content,
+      p_theme: {},
+    });
 
-    const { error: collaboratorError } = await supabase
-      .from("wedding_collaborators")
-      .insert({ wedding_id: wedding.id, user_id: user.id, role: "owner" });
-    if (collaboratorError) {
-      await supabase.from("weddings").delete().eq("id", wedding.id);
-      throw collaboratorError;
-    }
+    if (error || !data) throw error ?? new Error("Atomic wedding creation failed");
+
+    const wedding = data as {
+      id: string;
+      slug: string | null;
+      template_id: string;
+    };
 
     return NextResponse.json(wedding, { status: 201 });
   } catch (error) {
