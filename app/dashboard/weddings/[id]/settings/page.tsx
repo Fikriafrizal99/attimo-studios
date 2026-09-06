@@ -5,6 +5,7 @@ import { evaluatePublishReadiness } from "@/lib/commerce/publish-readiness";
 import { buildInvitationUrl } from "@/lib/commerce/url";
 import { getActiveTemplates } from "@/templates/registry";
 import { SettingsForm } from "./SettingsForm";
+import { UnpublishButton } from "./UnpublishButton";
 
 export const metadata = { title: "Settings | ENDRIYA" };
 
@@ -74,6 +75,7 @@ export default async function SettingsPage({
         initialReadiness={readiness}
         templates={templates}
       />
+      {wedding.status === "released" && <UnpublishButton weddingId={id} />}
     </div>
   );
 }
