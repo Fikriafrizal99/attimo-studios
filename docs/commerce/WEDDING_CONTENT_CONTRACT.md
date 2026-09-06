@@ -36,7 +36,7 @@ Every normalized content object has `schemaVersion: 1`. Future incompatible chan
 
 - `couple.bride` / `couple.groom`: name, short name, username, parent information, origin/location, image.
 - `hero`: greeting, title, subtitle, quote, cover image/video, countdown event reference.
-- `events[]`: stable id, title, date/time, venue, address, maps URL, coordinates, primary-event flag.
+- `events[]`: stable id, title, date/time, IANA timezone, venue, address, maps URL, coordinates, primary-event flag.
 - `story[]`: stable id, date/year, title, description, image.
 - `gallery[]`: stable id, URL, alt text.
 - `gifts`: intro, bank accounts, QRIS image, shipping address.
@@ -46,6 +46,12 @@ Every normalized content object has `schemaVersion: 1`. Future incompatible chan
 - `galleryQuote`: title and text.
 
 `mainEventDate` remains compatibility-only. New code resolves the countdown from `events[]`.
+
+### Event timezone
+
+Every normalized event has a valid IANA timezone such as `Asia/Jakarta`, `Asia/Makassar`, or `Asia/Jayapura`. This timezone represents the physical event location and is used to calculate countdown and calendar timestamps independently of the guest's browser timezone.
+
+Legacy events without a timezone normalize to `Asia/Jakarta` for backward compatibility. New/edited events should store their actual event timezone explicitly.
 
 ## Shared section contract
 
