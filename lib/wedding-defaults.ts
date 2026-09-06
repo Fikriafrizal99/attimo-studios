@@ -1,8 +1,8 @@
-export interface SectionConfig {
-  id: string;
-  enabled: boolean;
-  order: number;
-}
+import {
+  WEDDING_CONTENT_SCHEMA_VERSION,
+  type SectionConfig,
+  type WeddingContent,
+} from "@/lib/wedding-contract";
 
 export type InvitationExperienceLevel =
   | "standard-2d"
@@ -10,96 +10,19 @@ export type InvitationExperienceLevel =
   | "2.5d"
   | "immersive-3d";
 
-export interface WeddingContentCouple {
-  name: string;
-  username: string;
-  parentInfo: string;
-  location: string;
-  shortName?: string;
-  image?: string;
-}
-
-export interface WeddingContentHero {
-  greeting?: string;
-  title?: string;
-  subtitle?: string;
-  quote?: string;
-  coverImage?: string;
-  coverVideo?: string;
-  countdownEventId?: string;
-}
-
-export interface WeddingContentEvent {
-  id?: string;
-  title: string;
-  date: string;
-  time: string;
-  endTime?: string;
-  location: string;
-  address: string;
-  mapsUrl?: string;
-  latitude?: number;
-  longitude?: number;
-  isPrimary?: boolean;
-}
-
-export interface WeddingContentStoryItem {
-  id: string;
-  date?: string;
-  title: string;
-  description: string;
-  image?: string;
-}
-
-export interface WeddingContentGalleryImage {
-  id: string;
-  url: string;
-  alt: string;
-}
-
-export interface WeddingContentSong {
-  id: string;
-  title: string;
-  artist: string;
-  url: string;
-  cover?: string;
-}
-
-export interface WeddingGiftAccount {
-  id: string;
-  bankName: string;
-  accountNumber: string;
-  accountHolder: string;
-}
-
-export interface WeddingGiftContent {
-  enabled: boolean;
-  intro?: string;
-  bankAccounts: WeddingGiftAccount[];
-  qrisImageUrl?: string;
-  shippingAddress?: string;
-}
-
-export interface WeddingContent {
-  schemaVersion?: 1;
-  couple?: {
-    bride: WeddingContentCouple;
-    groom: WeddingContentCouple;
-  };
-  hero?: WeddingContentHero;
-  events?: WeddingContentEvent[];
-  story?: WeddingContentStoryItem[];
-  gallery?: WeddingContentGalleryImage[];
-  gifts?: WeddingGiftContent;
-  music?: WeddingContentSong[];
-  musicSettings?: {
-    autoplayRequested?: boolean;
-  };
-  /** Legacy field; normalizer keeps compatibility but new UI uses event references. */
-  mainEventDate?: string;
-  blessingMessage?: { arabic?: string; translation: string; source?: string };
-  galleryQuote?: { title: string; text: string };
-}
+export type {
+  SectionConfig,
+  WeddingContent,
+  WeddingContentCouple,
+  WeddingContentHero,
+  WeddingContentEvent,
+  WeddingContentStoryItem,
+  WeddingContentGalleryImage,
+  WeddingContentSong,
+  WeddingGiftAccount,
+  WeddingGiftContent,
+  WeddingSectionId,
+} from "@/lib/wedding-contract";
 
 export const defaultSections: SectionConfig[] = [
   { id: "hero", enabled: true, order: 0 },
@@ -115,10 +38,11 @@ export const defaultSections: SectionConfig[] = [
 ];
 
 export const defaultContent: WeddingContent = {
-  schemaVersion: 1,
+  schemaVersion: WEDDING_CONTENT_SCHEMA_VERSION,
   couple: {
     bride: {
       name: "",
+      shortName: "",
       username: "",
       parentInfo: "",
       location: "",
@@ -126,6 +50,7 @@ export const defaultContent: WeddingContent = {
     },
     groom: {
       name: "",
+      shortName: "",
       username: "",
       parentInfo: "",
       location: "",
@@ -138,6 +63,7 @@ export const defaultContent: WeddingContent = {
     subtitle: "",
     quote: "",
     coverImage: "",
+    coverVideo: "",
     countdownEventId: "",
   },
   events: [],
