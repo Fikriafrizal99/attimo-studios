@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 
-/** Placeholder that matches the profile trigger size so layout is stable until dropdown mounts (avoids hydration mismatch with Radix IDs and session). */
 function ProfileDropdownPlaceholder() {
   return (
     <span
@@ -32,17 +31,17 @@ export function DashboardHeader() {
     pathname !== "/dashboard/new";
 
   return (
-    <header className="sticky top-0 z-10 flex min-h-[52px] items-center justify-between gap-4 border-b border-white/6 bg-[#0E0E10] px-4 sm:px-6">
+    <header className="sticky top-0 z-10 flex min-h-[56px] items-center justify-between gap-4 border-b border-white/6 bg-[#0E0E10]/95 px-4 backdrop-blur sm:px-6">
       <div className="flex min-w-0 items-center gap-4">
         <Link
           href="/dashboard"
-          className="shrink-0 transition-colors hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E10] rounded"
-          aria-label="Attimo dashboard"
+          className="shrink-0 rounded transition-colors hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E10]"
+          aria-label="Endriya dashboard"
         >
-          <BrandMark className="h-5" />
+          <BrandMark />
         </Link>
         <span className="hidden truncate text-sm text-neutral-500 sm:inline" aria-hidden>
-          {isWeddingRoute ? "Project" : "Projects"}
+          {isWeddingRoute ? "Wedding Studio" : "Projects"}
         </span>
       </div>
 
@@ -51,7 +50,7 @@ export function DashboardHeader() {
           <span className="sr-only">Search</span>
           <input
             type="search"
-            placeholder="Find…"
+            placeholder="Find project…"
             autoComplete="off"
             className="h-8 min-w-[140px] max-w-[200px] rounded border border-white/6 bg-white/5 px-2.5 py-1 text-xs text-neutral-200 placeholder:text-neutral-500 outline-none transition-colors focus:border-white/10 focus:bg-white/5 focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E10]"
           />
