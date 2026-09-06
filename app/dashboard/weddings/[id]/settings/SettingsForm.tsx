@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import type { PublishReadiness } from "@/lib/commerce/publish-readiness";
 
 const SLUG_REGEX = /^[a-z0-9-]+$/;
 
@@ -20,6 +21,7 @@ export function SettingsForm({
   initialStatus,
   initialTemplateId,
   initialPublicUrl,
+  initialReadiness,
   templates,
 }: {
   weddingId: string;
@@ -27,6 +29,7 @@ export function SettingsForm({
   initialStatus: string;
   initialTemplateId: string;
   initialPublicUrl: string | null;
+  initialReadiness: PublishReadiness;
   templates: TemplateOption[];
 }) {
   const router = useRouter();
@@ -34,12 +37,15 @@ export function SettingsForm({
   const [templateId, setTemplateId] = useState(initialTemplateId);
   const [released, setReleased] = useState(initialStatus === "released");
   const [publicUrl, setPublicUrl] = useState(initialPublicUrl);
+  const [readiness, setReadiness] = useState(initialReadiness);
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(initialSlug ? true : null);
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<string[]>([]);
+
+  useEffect(() => setReadiness(initialReadiness), [initialReadiness]);
 
   const normalizedSlug = slug.trim().toLowerCase();
   const slugValid = normalizedSlug.length >= 2 && normalizedSlug.length <= 63 && SLUG_REGEX.test(normalizedSlug);
@@ -86,9 +92,18 @@ export function SettingsForm({
     if (!response.ok) {
       setError(payload.error ?? "Failed to update wedding");
       setDetails(Array.isArray(payload.details) ? payload.details : []);
+      if (Array.isArray(payload.checks)) {
+        setReadiness({
+          ready: false,
+          errors: Array.isArray(payload.details) ? payload.details : [],
+          warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+          checks: payload.checks,
+        });
+      }
       throw new Error(payload.error ?? "Failed to update wedding");
     }
     if (payload.public_url) setPublicUrl(payload.public_url);
+    if (payload.readiness) setReadiness(payload.readiness);
     return payload;
   }
 
@@ -138,7 +153,7 @@ export function SettingsForm({
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-neutral-50">Settings & Publish</h2>
-        <p className="mt-1 text-sm text-neutral-400">Pilih visual experience ENDRIYA, tetapkan slug, lalu release setelah validasi lolos.</p>
+        <p className="mt-1 text-sm text-neutral-400">Pilih visual experience ENDRIYA, tetapkan slug, lalu release setelah readiness validator lolos.</p>
       </div>
 
       {error && (
@@ -147,6 +162,31 @@ export function SettingsForm({
           {details.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{details.map((item) => <li key={item}>{item}</li>)}</ul>}
         </div>
       )}
+
+      <section className="space-y-4 rounded-md border border-white/10 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-neutral-100">Publish readiness</h3>
+            <p className="mt-1 text-xs text-neutral-500">Fail harus diperbaiki. Warning tidak memblokir release.</p>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${readiness.ready ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
+            {readiness.ready ? "Ready to release" : `${readiness.errors.length} blocking issue(s)`}
+          </span>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          {readiness.checks.map((check) => (
+            <div key={check.id} className="rounded-md border border-white/10 bg-white/[0.025] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-neutral-200">{check.label}</p>
+                <span className={`text-[11px] font-semibold uppercase tracking-wider ${check.status === "pass" ? "text-emerald-300" : check.status === "warn" ? "text-amber-300" : "text-red-300"}`}>
+                  {check.status}
+                </span>
+              </div>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">{check.message}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="space-y-3 rounded-md border border-white/10 p-4">
         <label className="text-sm font-medium text-neutral-300">Template</label>
