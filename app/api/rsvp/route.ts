@@ -3,8 +3,8 @@ import { createServerClient } from "@/lib/supabase";
 import {
   cleanText,
   isAttendance,
-  isUuid,
   parseGuestCount,
+  validateSlug,
 } from "@/lib/commerce/validation";
 import {
   checkRateLimit,
@@ -12,16 +12,68 @@ import {
   PUBLIC_SUBMISSION_LIMIT,
 } from "@/lib/commerce/rate-limit";
 
+async function resolveReleasedGuest(input: {
+  slug: unknown;
+  token: unknown;
+}) {
+  const validatedSlug = validateSlug(input.slug);
+  if (!validatedSlug.ok) {
+    return { error: validatedSlug.error, status: 400 as const };
+  }
+
+  const guestToken = cleanText(input.token, 128, true);
+  if (!guestToken) {
+    return { error: "Personal guest token is required", status: 400 as const };
+  }
+
+  const supabase = createServerClient();
+  const { data: wedding } = await supabase
+    .from("weddings")
+    .select("id, slug")
+    .eq("slug", validatedSlug.value)
+    .eq("status", "released")
+    .maybeSingle();
+  if (!wedding) {
+    return { error: "Wedding not found", status: 404 as const };
+  }
+
+  const { data: guest } = await supabase
+    .from("guests")
+    .select("id, display_name, max_guests")
+    .eq("wedding_id", wedding.id)
+    .eq("token", guestToken)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!guest) {
+    return { error: "Guest link is invalid or inactive", status: 404 as const };
+  }
+
+  return {
+    supabase,
+    wedding,
+    guest,
+    guestToken,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => null);
-    if (!body || !isUuid(body.wedding_id)) {
-      return NextResponse.json({ error: "Valid wedding_id is required" }, { status: 400 });
+    if (!body) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const weddingId = body.wedding_id as string;
+    const resolved = await resolveReleasedGuest({
+      slug: body.wedding_slug,
+      token: body.guest_token,
+    });
+    if ("error" in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+    }
+
+    const { supabase, wedding, guest } = resolved;
     const rate = checkRateLimit(
-      `${getClientIp(request)}:rsvp:${weddingId}`,
+      `${getClientIp(request)}:rsvp:${wedding.id}:${guest.id}`,
       PUBLIC_SUBMISSION_LIMIT
     );
     if (!rate.allowed) {
@@ -35,53 +87,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid attendance value" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
-    const { data: wedding } = await supabase
-      .from("weddings")
-      .select("id")
-      .eq("id", weddingId)
-      .eq("status", "released")
-      .maybeSingle();
-    if (!wedding) return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
-
-    const guestToken = cleanText(body.guest_token, 128, false) || "";
-    let guest: { id: string; display_name: string; max_guests: number } | null = null;
-    if (guestToken) {
-      const { data } = await supabase
-        .from("guests")
-        .select("id, display_name, max_guests")
-        .eq("wedding_id", weddingId)
-        .eq("token", guestToken)
-        .eq("is_active", true)
-        .maybeSingle();
-      if (!data) {
-        return NextResponse.json({ error: "Guest link is invalid or inactive" }, { status: 400 });
-      }
-      guest = data;
-    }
-
-    const name = guest?.display_name ?? cleanText(body.name, 120, true);
-    if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
-
-    const parsedGuestCount = parseGuestCount(body.guestCount, guest?.max_guests ?? 20);
+    const parsedGuestCount = parseGuestCount(body.guestCount, guest.max_guests);
     const guestCount = body.attendance === "yes" ? (parsedGuestCount ?? 0) : 0;
     if (body.attendance === "yes" && guestCount < 1) {
       return NextResponse.json({ error: "Guest count must be at least 1" }, { status: 400 });
     }
-    if (guest && guestCount > guest.max_guests) {
-      return NextResponse.json({ error: `Maximum guest quota is ${guest.max_guests}` }, { status: 400 });
-    }
 
     const message = cleanText(body.message, 500, false) || null;
     const payload = {
-      wedding_id: weddingId,
-      guest_id: guest?.id ?? null,
-      name,
+      wedding_id: wedding.id,
+      guest_id: guest.id,
+      name: guest.display_name,
       attendance: body.attendance,
       guest_count: guestCount,
       message,
       updated_at: new Date().toISOString(),
     };
+
+    const { data: existing } = await supabase
+      .from("rsvp")
+      .select("id")
+      .eq("wedding_id", wedding.id)
+      .eq("guest_id", guest.id)
+      .maybeSingle();
 
     let saved: {
       id: string;
@@ -91,35 +119,27 @@ export async function POST(request: NextRequest) {
       message: string | null;
       submitted_at: string;
       updated_at: string;
-    } | null = null;
+    };
+    let created = false;
 
-    if (guest) {
-      const { data: existing } = await supabase
+    if (existing) {
+      const { data, error } = await supabase
         .from("rsvp")
-        .select("id")
-        .eq("wedding_id", weddingId)
-        .eq("guest_id", guest.id)
-        .maybeSingle();
-      if (existing) {
-        const { data, error } = await supabase
-          .from("rsvp")
-          .update(payload)
-          .eq("id", existing.id)
-          .select("id, name, attendance, guest_count, message, submitted_at, updated_at")
-          .single();
-        if (error) throw error;
-        saved = data;
-      }
-    }
-
-    if (!saved) {
+        .update(payload)
+        .eq("id", existing.id)
+        .select("id, name, attendance, guest_count, message, submitted_at, updated_at")
+        .single();
+      if (error || !data) throw error ?? new Error("RSVP update failed");
+      saved = data;
+    } else {
       const { data, error } = await supabase
         .from("rsvp")
         .insert(payload)
         .select("id, name, attendance, guest_count, message, submitted_at, updated_at")
         .single();
-      if (error) throw error;
+      if (error || !data) throw error ?? new Error("RSVP insert failed");
       saved = data;
+      created = true;
     }
 
     return NextResponse.json(
@@ -134,7 +154,7 @@ export async function POST(request: NextRequest) {
           submittedAt: saved.submitted_at,
         },
       },
-      { status: 201 }
+      { status: created ? 201 : 200 }
     );
   } catch (error) {
     console.error("POST /api/rsvp failed", error);
@@ -142,27 +162,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/** Public GET only returns aggregate statistics for one explicitly scoped wedding. */
+/**
+ * Public but only for a valid personal guest link. Returns aggregate attendance
+ * plus that guest's own current response so the same link can edit RSVP later.
+ */
 export async function GET(request: NextRequest) {
   try {
-    const weddingId = request.nextUrl.searchParams.get("wedding_id");
-    if (!isUuid(weddingId)) {
-      return NextResponse.json({ error: "Valid wedding_id is required" }, { status: 400 });
+    const resolved = await resolveReleasedGuest({
+      slug: request.nextUrl.searchParams.get("slug"),
+      token: request.nextUrl.searchParams.get("guest_token"),
+    });
+    if ("error" in resolved) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
     }
 
-    const supabase = createServerClient();
-    const { data: wedding } = await supabase
-      .from("weddings")
-      .select("id")
-      .eq("id", weddingId)
-      .eq("status", "released")
-      .maybeSingle();
-    if (!wedding) return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
-
+    const { supabase, wedding, guest } = resolved;
     const { data, error } = await supabase
       .from("rsvp")
-      .select("attendance, guest_count")
-      .eq("wedding_id", weddingId);
+      .select("guest_id, attendance, guest_count, message, submitted_at")
+      .eq("wedding_id", wedding.id);
     if (error) throw error;
 
     const rows = data ?? [];
@@ -172,6 +190,7 @@ export async function GET(request: NextRequest) {
     const totalGuests = rows
       .filter((row) => row.attendance === "yes")
       .reduce((sum, row) => sum + (row.guest_count || 0), 0);
+    const ownResponse = rows.find((row) => row.guest_id === guest.id) ?? null;
 
     return NextResponse.json({
       success: true,
@@ -182,9 +201,17 @@ export async function GET(request: NextRequest) {
         maybe,
         totalGuests,
       },
+      response: ownResponse
+        ? {
+            attendance: ownResponse.attendance,
+            guestCount: ownResponse.guest_count,
+            message: ownResponse.message,
+            submittedAt: ownResponse.submitted_at,
+          }
+        : null,
     });
   } catch (error) {
     console.error("GET /api/rsvp failed", error);
-    return NextResponse.json({ error: "Failed to fetch RSVP statistics" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch RSVP" }, { status: 500 });
   }
 }
