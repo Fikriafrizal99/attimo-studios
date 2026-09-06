@@ -7,7 +7,11 @@ import {
   type WeddingContentStoryItem,
   type WeddingGiftAccount,
 } from "@/lib/wedding-defaults";
-import type { CanonicalWeddingContent } from "@/lib/wedding-contract";
+import {
+  DEFAULT_EVENT_TIME_ZONE,
+  type CanonicalWeddingContent,
+} from "@/lib/wedding-contract";
+import { getCountdownTargetDate } from "@/lib/commerce/countdown";
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -59,6 +63,7 @@ function normalizeEvents(raw: unknown): WeddingContentEvent[] {
       date: text(value.date),
       time: text(value.time),
       endTime: optionalText(value.endTime),
+      timezone: text(value.timezone, DEFAULT_EVENT_TIME_ZONE),
       location: text(value.location),
       address: text(value.address),
       mapsUrl: optionalText(value.mapsUrl),
@@ -177,24 +182,7 @@ export function normalizeWeddingContent(raw: unknown): CanonicalWeddingContent {
   };
 }
 
+/** Backward-compatible helper. New countdown code should use lib/commerce/countdown directly. */
 export function getCountdownDate(content: WeddingContent): Date | null {
-  const events = content.events ?? [];
-  const requestedId = content.hero?.countdownEventId;
-  const selected =
-    (requestedId ? events.find((event) => event.id === requestedId) : undefined) ??
-    events.find((event) => event.isPrimary) ??
-    events[0];
-
-  if (selected?.date) {
-    const time = selected.time?.match(/^(\d{1,2}):(\d{2})/);
-    const date = new Date(`${selected.date}T${time ? `${time[1].padStart(2, "0")}:${time[2]}:00` : "00:00:00"}`);
-    if (!Number.isNaN(date.getTime())) return date;
-  }
-
-  if (content.mainEventDate) {
-    const legacy = new Date(content.mainEventDate);
-    if (!Number.isNaN(legacy.getTime())) return legacy;
-  }
-
-  return null;
+  return getCountdownTargetDate(content);
 }
