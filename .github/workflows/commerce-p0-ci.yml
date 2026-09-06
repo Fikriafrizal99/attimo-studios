@@ -73,6 +73,9 @@ jobs:
       - name: Verify Phase 3.11 publish readiness
         run: bun scripts/phase3_11_publish_readiness_verify.ts
 
+      - name: Verify Phase 4.2 public routing
+        run: bun scripts/phase4_2_public_routing_verify.ts
+
       - name: Build
         run: bun run build
 
