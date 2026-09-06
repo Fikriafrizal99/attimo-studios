@@ -1,4 +1,4 @@
-import { ClassicTemplate } from "@/app/invitation/ClassicTemplate";
+import { Classic001Template } from "@/templates/classic-001/Classic001Template";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
 import type { TemplateDefinition, TemplateVisualTier } from "@/templates/types";
@@ -51,7 +51,7 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
       mobileProfile: "full",
       reducedMotionFallback: true,
     },
-    render: ClassicTemplate,
+    render: Classic001Template,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001",
