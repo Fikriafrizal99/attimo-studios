@@ -34,7 +34,7 @@ Every normalized content object has `schemaVersion: 1`. Future incompatible chan
 
 `WeddingContent` contains:
 
-- `couple.br ide` / `couple.groom`: name, short name, username, parent information, origin/location, image.
+- `couple.bride` / `couple.groom`: name, short name, username, parent information, origin/location, image.
 - `hero`: greeting, title, subtitle, quote, cover image/video, countdown event reference.
 - `events[]`: stable id, title, date/time, venue, address, maps URL, coordinates, primary-event flag.
 - `story[]`: stable id, date/year, title, description, image.
@@ -86,6 +86,8 @@ All tiers receive the same product features and canonical content. A higher visu
 
 ## Normalization boundary
 
-Persisted/legacy JSON is passed through `normalizeWeddingContent()` before being used by the editor or renderer. The result must satisfy the canonical `WeddingContent` v1 shape.
+Persisted/legacy JSON is passed through `normalizeWeddingContent()` before being used by the editor or renderer. The normalized result is `CanonicalWeddingContent`, which always includes `schemaVersion: 1` and all canonical groups.
+
+The existing editor-facing `WeddingContent` type keeps only a narrow compatibility allowance for `schemaVersion` while old editor code is migrated. Renderers should consume normalized content, not arbitrary persisted JSON.
 
 Server-side validation is a separate Phase 3.2 concern. The content contract in this document defines shape and ownership boundaries; validation defines what input is accepted.
