@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 import { buildInvitationUrl } from "@/lib/commerce/url";
 import { getActiveTemplates } from "@/templates/registry";
@@ -15,18 +15,33 @@ export default async function SettingsPage({
   const { id } = await params;
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  const supabase = createServerClient();
-  const role = await getWeddingRole(supabase, id, user.id);
-  if (!role) redirect("/dashboard");
-  if (role !== "owner") redirect(`/dashboard/weddings/${id}/content`);
 
-  const { data: wedding, error } = await supabase
-    .from("weddings")
-    .select("slug, status, template_id")
-    .eq("id", id)
-    .maybeSingle();
-  if (error || !wedding) notFound();
+  const result = await withTenantDb(user.id, async (db) => {
+    const role = await getWeddingRole(db, id, user.id);
+    if (!role) return { kind: "forbidden" } as const;
+    if (role !== "owner") return { kind: "collaborator" } as const;
 
+    const query = await db.query<{
+      slug: string | null;
+      status: string;
+      template_id: string;
+    }>(
+      `SELECT slug, status, template_id
+         FROM public.weddings
+        WHERE id = $1
+        LIMIT 1`,
+      [id]
+    );
+    return query.rows[0]
+      ? { kind: "ok", wedding: query.rows[0] } as const
+      : { kind: "missing" } as const;
+  });
+
+  if (result.kind === "forbidden") redirect("/dashboard");
+  if (result.kind === "collaborator") redirect(`/dashboard/weddings/${id}/content`);
+  if (result.kind === "missing") notFound();
+
+  const wedding = result.wedding;
   const templates = getActiveTemplates().map((item) => ({
     id: item.id,
     name: item.name,
