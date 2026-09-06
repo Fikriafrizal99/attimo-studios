@@ -10,7 +10,7 @@ DECLARE
   owner_user_id TEXT := 'phase13-owner-' || gen_random_uuid()::text;
   collaborator_user_id TEXT := 'phase13-collab-' || gen_random_uuid()::text;
   created JSONB;
-  wedding_id UUID;
+  v_wedding_id UUID;
   blocked BOOLEAN;
 BEGIN
   INSERT INTO public."user" (id, name, email, "emailVerified")
@@ -37,12 +37,12 @@ BEGIN
     '{}'::jsonb
   ) INTO created;
 
-  wedding_id := (created ->> 'id')::uuid;
+  v_wedding_id := (created ->> 'id')::uuid;
 
   IF (
     SELECT COUNT(*)
     FROM public.wedding_collaborators
-    WHERE wedding_collaborators.wedding_id = phase1_3_invariants_verify.wedding_id
+    WHERE wedding_id = v_wedding_id
       AND role = 'owner'
   ) <> 1 THEN
     RAISE EXCEPTION 'Phase 1.3 verification failed: atomic create did not create exactly one owner';
@@ -51,7 +51,7 @@ BEGIN
   blocked := FALSE;
   BEGIN
     INSERT INTO public.wedding_collaborators (wedding_id, user_id, role)
-    VALUES (wedding_id, collaborator_user_id, 'owner');
+    VALUES (v_wedding_id, collaborator_user_id, 'owner');
   EXCEPTION WHEN unique_violation THEN
     blocked := TRUE;
   END;
@@ -62,7 +62,7 @@ BEGIN
   blocked := FALSE;
   BEGIN
     DELETE FROM public.wedding_collaborators
-    WHERE wedding_collaborators.wedding_id = phase1_3_invariants_verify.wedding_id
+    WHERE wedding_id = v_wedding_id
       AND role = 'owner';
     SET CONSTRAINTS ALL IMMEDIATE;
   EXCEPTION WHEN check_violation THEN
@@ -76,7 +76,7 @@ BEGIN
   blocked := FALSE;
   BEGIN
     INSERT INTO public.wedding_collaborators (wedding_id, user_id, role)
-    VALUES (wedding_id, 'missing-user-' || gen_random_uuid()::text, 'collaborator');
+    VALUES (v_wedding_id, 'missing-user-' || gen_random_uuid()::text, 'collaborator');
   EXCEPTION WHEN foreign_key_violation THEN
     blocked := TRUE;
   END;
@@ -88,7 +88,7 @@ BEGIN
   BEGIN
     UPDATE public.weddings
     SET slug = 'INVALID SLUG'
-    WHERE id = wedding_id;
+    WHERE id = v_wedding_id;
   EXCEPTION WHEN check_violation THEN
     blocked := TRUE;
   END;
@@ -100,7 +100,7 @@ BEGIN
   BEGIN
     UPDATE public.weddings
     SET status = 'released'
-    WHERE id = wedding_id;
+    WHERE id = v_wedding_id;
   EXCEPTION WHEN check_violation THEN
     blocked := TRUE;
   END;
