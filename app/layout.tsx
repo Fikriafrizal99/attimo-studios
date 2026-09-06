@@ -14,8 +14,12 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Wedding Invitation - Our Special Day",
-  description: "Join us in celebrating our special day",
+  title: {
+    default: "ENDRIYA — Digital Wedding Experience",
+    template: "%s | ENDRIYA",
+  },
+  description:
+    "Create, manage, and publish digital wedding invitations across 2D, 2.5D, and 3D experiences.",
 };
 
 export default function RootLayout({
@@ -24,10 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${inter.variable} ${playfair.variable} antialiased`}
-      >
+    <html lang="id">
+      <body className={`${inter.variable} ${playfair.variable} antialiased`}>
         {children}
         <Toaster />
       </body>
