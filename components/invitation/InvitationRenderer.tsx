@@ -5,6 +5,7 @@ import type { PublicGuestContext, ThemeConfig } from "@/templates/types";
 
 export function InvitationRenderer({
   weddingId,
+  publicSlug,
   templateId,
   content,
   sections,
@@ -12,6 +13,7 @@ export function InvitationRenderer({
   guest,
 }: {
   weddingId: string;
+  publicSlug?: string;
   templateId: string;
   content: unknown;
   sections: unknown;
@@ -23,6 +25,7 @@ export function InvitationRenderer({
   return (
     <Template
       weddingId={weddingId}
+      publicSlug={publicSlug}
       content={normalizeWeddingContent(content)}
       sections={normalizeSections(sections)}
       theme={theme}
