@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { createServiceRoleClient } from "@/lib/supabase";
 import { cleanText, isUuid } from "@/lib/commerce/validation";
 import {
   checkRateLimit,
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const location = cleanText(body.location, 120, false) || "";
     if (!message) return NextResponse.json({ error: "Message is required" }, { status: 400 });
 
-    const supabase = createServerClient();
+    const supabase = createServiceRoleClient();
     const { data: wedding } = await supabase
       .from("weddings")
       .select("id")
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Valid wedding_id is required" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const supabase = createServiceRoleClient();
     const { data: wedding } = await supabase
       .from("weddings")
       .select("id")
