@@ -43,6 +43,9 @@ jobs:
       - name: Verify service-role boundary
         run: node scripts/check-service-role-boundary.mjs
 
+      - name: Verify Phase 3.2 wedding validation
+        run: bun scripts/phase3_2_validation_verify.ts
+
       - name: Build
         run: bun run build
 
