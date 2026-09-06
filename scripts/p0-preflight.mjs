@@ -1,4 +1,5 @@
 const required = [
+  'APP_ENV',
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -20,6 +21,12 @@ if (missing.length) {
 const allowPlaceholders = process.env.P0_PREFLIGHT_ALLOW_PLACEHOLDERS === 'true';
 const strict = process.env.P0_PREFLIGHT_STRICT === 'true';
 const mode = process.env.PUBLIC_INVITATION_MODE;
+const appEnv = process.env.APP_ENV;
+
+if (!['development', 'staging', 'production'].includes(appEnv)) {
+  console.error('P0 preflight failed: APP_ENV must be development, staging, or production');
+  process.exit(1);
+}
 
 if (!['path', 'subdomain'].includes(mode)) {
   console.error('P0 preflight failed: PUBLIC_INVITATION_MODE must be path or subdomain');
@@ -45,23 +52,28 @@ if (!allowPlaceholders && process.env.BETTER_AUTH_SECRET.length < 32) {
   process.exit(1);
 }
 
+if (appEnv === 'production' && !strict) {
+  console.error('P0 preflight failed: production requires P0_PREFLIGHT_STRICT=true');
+  process.exit(1);
+}
+
 if (strict) {
   if (process.env.ALLOW_PUBLIC_SIGNUP !== 'false') {
-    console.error('P0 preflight failed: production requires ALLOW_PUBLIC_SIGNUP=false');
+    console.error(`P0 preflight failed: ${appEnv} requires ALLOW_PUBLIC_SIGNUP=false in strict mode`);
     process.exit(1);
   }
 
   for (const key of ['BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'PUBLIC_INVITATION_BASE_URL', 'NEXT_PUBLIC_SUPABASE_URL']) {
     const url = new URL(process.env[key]);
     if (url.protocol !== 'https:') {
-      console.error(`P0 preflight failed: production ${key} must use https`);
+      console.error(`P0 preflight failed: strict ${appEnv} ${key} must use https`);
       process.exit(1);
     }
     if (['localhost', '127.0.0.1', 'example.supabase.co'].includes(url.hostname)) {
-      console.error(`P0 preflight failed: production ${key} still uses a placeholder/local host`);
+      console.error(`P0 preflight failed: strict ${appEnv} ${key} still uses a placeholder/local host`);
       process.exit(1);
     }
   }
 }
 
-console.log('Commerce P0 environment preflight passed');
+console.log(`Commerce P0 environment preflight passed (${appEnv})`);
