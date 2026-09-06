@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import type { createServerClient } from "@/lib/supabase";
+import type { TenantDbClient } from "@/lib/db";
 
 export type WeddingRole = "owner" | "collaborator";
 
@@ -10,29 +10,34 @@ export async function getSessionUser() {
 }
 
 export async function hasWeddingAccess(
-  supabase: ReturnType<typeof createServerClient>,
+  db: TenantDbClient,
   weddingId: string,
   userId: string
 ): Promise<boolean> {
-  const { data } = await supabase
-    .from("wedding_collaborators")
-    .select("wedding_id")
-    .eq("wedding_id", weddingId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  return Boolean(data);
+  const result = await db.query(
+    `SELECT 1
+       FROM public.wedding_collaborators
+      WHERE wedding_id = $1
+        AND user_id = $2
+      LIMIT 1`,
+    [weddingId, userId]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function getWeddingRole(
-  supabase: ReturnType<typeof createServerClient>,
+  db: TenantDbClient,
   weddingId: string,
   userId: string
 ): Promise<WeddingRole | null> {
-  const { data } = await supabase
-    .from("wedding_collaborators")
-    .select("role")
-    .eq("wedding_id", weddingId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  return data?.role === "owner" || data?.role === "collaborator" ? data.role : null;
+  const result = await db.query<{ role: string }>(
+    `SELECT role
+       FROM public.wedding_collaborators
+      WHERE wedding_id = $1
+        AND user_id = $2
+      LIMIT 1`,
+    [weddingId, userId]
+  );
+  const role = result.rows[0]?.role;
+  return role === "owner" || role === "collaborator" ? role : null;
 }
