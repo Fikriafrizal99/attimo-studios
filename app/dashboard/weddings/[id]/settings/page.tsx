@@ -46,7 +46,8 @@ export default async function SettingsPage({
     id: item.id,
     name: item.name,
     category: item.category,
-    experienceLevel: item.experienceLevel,
+    visualTier: item.visualTier,
+    motionLevel: item.performance.motionLevel,
   }));
 
   return (
