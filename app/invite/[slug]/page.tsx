@@ -1,9 +1,35 @@
-import { notFound } from "next/navigation";
-import { createServiceRoleClient } from "@/lib/supabase";
+import type { Metadata } from "next";
+import { notFound, permanentRedirect } from "next/navigation";
 import { InvitationRenderer } from "@/components/invitation/InvitationRenderer";
-import { resolveTemplate } from "@/templates/registry";
-import type { SectionConfig } from "@/lib/wedding-defaults";
-import type { PublicGuestContext } from "@/templates/types";
+import {
+  loadPublicInvitation,
+  loadReleasedWeddingBySlug,
+} from "@/lib/commerce/public-invitation";
+import { buildPublicInvitationMetadata } from "@/lib/commerce/public-metadata";
+import {
+  buildInvitationUrl,
+  getInvitationMode,
+} from "@/lib/commerce/url";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const wedding = await loadReleasedWeddingBySlug(slug);
+  if (!wedding) {
+    return {
+      title: "Invitation not found",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  return buildPublicInvitationMetadata({
+    slug: wedding.slug,
+    content: wedding.content,
+  });
+}
 
 export default async function PublicInvitationPage({
   params,
@@ -14,57 +40,29 @@ export default async function PublicInvitationPage({
 }) {
   const { slug } = await params;
   const query = await searchParams;
-  const guestToken = typeof query.guest === "string" ? query.guest.trim() : "";
+  const guestToken = typeof query.guest === "string" ? query.guest : undefined;
 
-  const supabase = createServiceRoleClient();
-  const { data: wedding, error } = await supabase
-    .from("weddings")
-    .select("id, slug, status, template_id, sections, content, theme")
-    .eq("slug", slug.toLowerCase())
-    .eq("status", "released")
-    .maybeSingle();
+  const invitation = await loadPublicInvitation(slug, guestToken);
+  if (!invitation) notFound();
 
-  if (error || !wedding) notFound();
-
-  try {
-    resolveTemplate(wedding.template_id);
-  } catch {
-    notFound();
+  if (getInvitationMode() === "subdomain") {
+    permanentRedirect(
+      buildInvitationUrl({
+        slug: invitation.slug,
+        guestToken: invitation.guest?.token,
+      })
+    );
   }
-
-  let guest: PublicGuestContext | undefined;
-  if (guestToken && guestToken.length <= 128) {
-    const { data: guestRow } = await supabase
-      .from("guests")
-      .select("id, token, display_name, max_guests")
-      .eq("wedding_id", wedding.id)
-      .eq("token", guestToken)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (guestRow) {
-      guest = {
-        id: guestRow.id,
-        token: guestRow.token,
-        displayName: guestRow.display_name,
-        maxGuests: guestRow.max_guests,
-      };
-    }
-  }
-
-  const sections = Array.isArray(wedding.sections)
-    ? (wedding.sections as SectionConfig[])
-    : [];
 
   return (
     <InvitationRenderer
-      weddingId={wedding.id}
-      publicSlug={wedding.slug}
-      templateId={wedding.template_id}
-      content={wedding.content}
-      sections={sections}
-      theme={(wedding.theme ?? {}) as Record<string, unknown>}
-      guest={guest}
+      weddingId={invitation.id}
+      publicSlug={invitation.slug}
+      templateId={invitation.templateId}
+      content={invitation.content}
+      sections={invitation.sections}
+      theme={invitation.theme}
+      guest={invitation.guest}
     />
   );
 }
