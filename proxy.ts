@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { resolveWeddingSubdomainSlug } from "@/lib/commerce/subdomain";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,32 +17,27 @@ export function proxy(request: NextRequest) {
   if (process.env.PUBLIC_INVITATION_MODE === "subdomain") {
     const configuredBase = process.env.PUBLIC_INVITATION_BASE_URL;
     if (configuredBase) {
-      try {
-        const baseHostname = new URL(configuredBase).hostname.toLowerCase();
-        const requestHostname = (request.headers.get("host") ?? "")
-          .split(":")[0]
-          .toLowerCase();
-        const suffix = `.${baseHostname}`;
+      const forwardedHost = request.headers.get("x-forwarded-host") ?? "";
+      const requestHost = forwardedHost || request.headers.get("host") || "";
+      const slug = resolveWeddingSubdomainSlug({
+        requestHost,
+        baseUrl: configuredBase,
+      });
 
-        if (
-          requestHostname.endsWith(suffix) &&
-          requestHostname !== baseHostname &&
-          !pathname.startsWith("/api") &&
-          !pathname.startsWith("/_next")
-        ) {
-          const slug = requestHostname.slice(0, -suffix.length);
-          if (slug && !slug.includes(".")) {
-            const url = request.nextUrl.clone();
-            url.pathname = "/invitation";
-            const requestHeaders = new Headers(request.headers);
-            requestHeaders.set("x-wedding-slug", slug);
-            return NextResponse.rewrite(url, {
-              request: { headers: requestHeaders },
-            });
-          }
+      if (slug) {
+        if (pathname !== "/") {
+          const canonical = request.nextUrl.clone();
+          canonical.pathname = "/";
+          return NextResponse.redirect(canonical, 308);
         }
-      } catch {
-        // Invalid PUBLIC_INVITATION_BASE_URL is surfaced by server URL helpers.
+
+        const url = request.nextUrl.clone();
+        url.pathname = "/invitation";
+        const requestHeaders = new Headers(request.headers);
+        requestHeaders.set("x-wedding-slug", slug);
+        return NextResponse.rewrite(url, {
+          request: { headers: requestHeaders },
+        });
       }
     }
   }
@@ -53,6 +49,6 @@ export const config = {
   matcher: [
     "/api/auth/sign-up/:path*",
     "/signup",
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3)$).*)",
   ],
 };
