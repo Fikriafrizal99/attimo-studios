@@ -1,16 +1,20 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-import { getSessionUser, hasWeddingAccess } from "@/lib/commerce/access";
+import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 import { buildInvitationUrl } from "@/lib/commerce/url";
 import { cleanText, isUuid, parseGuestCount } from "@/lib/commerce/validation";
 
-async function getContext(weddingId: string) {
+async function getOwnerContext(weddingId: string) {
   const user = await getSessionUser();
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   const supabase = createServerClient();
-  if (!(await hasWeddingAccess(supabase, weddingId, user.id))) {
+  const role = await getWeddingRole(supabase, weddingId, user.id);
+  if (!role) {
     return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  if (role !== "owner") {
+    return { error: NextResponse.json({ error: "Only the owner can manage guests" }, { status: 403 }) };
   }
   const { data: wedding } = await supabase
     .from("weddings")
@@ -30,7 +34,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const result = await getContext(id);
+  const result = await getOwnerContext(id);
   if ("error" in result) return result.error;
   const { supabase, wedding } = result;
 
@@ -62,7 +66,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const result = await getContext(id);
+  const result = await getOwnerContext(id);
   if ("error" in result) return result.error;
   const { supabase, wedding } = result;
 
@@ -113,7 +117,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const result = await getContext(id);
+  const result = await getOwnerContext(id);
   if ("error" in result) return result.error;
   const { supabase, wedding } = result;
   const body = await request.json().catch(() => null);
@@ -162,7 +166,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const result = await getContext(id);
+  const result = await getOwnerContext(id);
   if ("error" in result) return result.error;
   const { supabase } = result;
   const body = await request.json().catch(() => null);
