@@ -10,7 +10,8 @@ type TemplateOption = {
   id: string;
   name: string;
   category: string;
-  experienceLevel: string;
+  visualTier: "2d" | "2.5d" | "3d";
+  motionLevel: "light" | "rich" | "immersive";
 };
 
 export function SettingsForm({
@@ -137,7 +138,7 @@ export function SettingsForm({
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-neutral-50">Settings & Publish</h2>
-        <p className="mt-1 text-sm text-neutral-400">Pilih renderer template, tetapkan slug, lalu release setelah validasi P0 lolos.</p>
+        <p className="mt-1 text-sm text-neutral-400">Pilih visual experience ENDRIYA, tetapkan slug, lalu release setelah validasi lolos.</p>
       </div>
 
       {error && (
@@ -152,11 +153,11 @@ export function SettingsForm({
         <select value={templateId} onChange={(event) => setTemplateId(event.target.value)} disabled={released} className={input}>
           {templates.map((template) => (
             <option key={template.id} value={template.id} className="bg-neutral-900">
-              {template.name} · {template.category} · {template.experienceLevel}
+              {template.name} · {template.visualTier.toUpperCase()} · {template.category} · {template.motionLevel}
             </option>
           ))}
         </select>
-        <p className="text-xs text-neutral-500">Template dapat berbeda total secara visual; data wedding tetap memakai semantic core yang sama.</p>
+        <p className="text-xs text-neutral-500">Semua template memiliki fitur wedding yang sama. 2D, 2.5D, dan 3D hanya membedakan pengalaman visual dan kompleksitas render.</p>
       </section>
 
       <section className="space-y-3 rounded-md border border-white/10 p-4">
