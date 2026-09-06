@@ -1,56 +1,79 @@
 import { ClassicTemplate } from "@/app/invitation/ClassicTemplate";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
-import type { TemplateDefinition } from "@/templates/types";
+import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
+import type { TemplateDefinition, TemplateVisualTier } from "@/templates/types";
 
-export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
-  "classic-001": {
+const TEMPLATE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d{3}$/;
+const FULL_SECTION_CONTRACT = [...WEDDING_SECTION_IDS] as const;
+
+function hasFullSectionContract(sectionContract: readonly WeddingSectionId[]): boolean {
+  return (
+    sectionContract.length === WEDDING_SECTION_IDS.length &&
+    WEDDING_SECTION_IDS.every((sectionId) => sectionContract.includes(sectionId))
+  );
+}
+
+function defineTemplate(definition: TemplateDefinition): TemplateDefinition {
+  if (!TEMPLATE_ID_PATTERN.test(definition.id)) {
+    throw new Error(`Invalid template id: ${definition.id}`);
+  }
+  if (!Number.isInteger(definition.version) || definition.version < 1) {
+    throw new Error(`Invalid template version: ${definition.id}`);
+  }
+  if (definition.contentSchemaVersion !== 1) {
+    throw new Error(`Unsupported content schema for template: ${definition.id}`);
+  }
+  if (definition.status === "active" && !hasFullSectionContract(definition.sectionContract)) {
+    throw new Error(`Active template must implement the full wedding section contract: ${definition.id}`);
+  }
+  if (!definition.performance.reducedMotionFallback) {
+    throw new Error(`Template must provide a reduced-motion fallback: ${definition.id}`);
+  }
+  return Object.freeze(definition);
+}
+
+export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = Object.freeze({
+  "classic-001": defineTemplate({
     id: "classic-001",
-    name: "Classic 001",
+    name: "Endriya Classic 001",
     family: "classic",
     category: "Classic",
     tags: ["classic", "romantic", "motion"],
     version: 1,
     status: "active",
-    experienceLevel: "motion-2d",
-    supportedSections: [
-      "hero",
-      "couple",
-      "date",
-      "location",
-      "story",
-      "gallery",
-      "rsvp",
-      "wishes",
-      "gift",
-      "music",
-    ],
-    requiredSections: ["hero", "couple", "location"],
+    visualTier: "2d",
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    previewPath: "/demo",
+    performance: {
+      renderingMode: "dom",
+      motionLevel: "rich",
+      mobileProfile: "full",
+      reducedMotionFallback: true,
+    },
     render: ClassicTemplate,
-  },
-  "minimal-001": {
+  }),
+  "minimal-001": defineTemplate({
     id: "minimal-001",
-    name: "Minimal Editorial 001",
+    name: "Endriya Minimal 001",
     family: "minimal-editorial",
     category: "Modern",
     tags: ["modern", "editorial", "minimal"],
     version: 1,
-    status: "active",
-    experienceLevel: "standard-2d",
-    supportedSections: [
-      "hero",
-      "couple",
-      "location",
-      "story",
-      "gallery",
-      "rsvp",
-      "wishes",
-      "gift",
-      "music",
-    ],
-    requiredSections: ["hero", "couple", "location"],
+    status: "draft",
+    visualTier: "2d",
+    contentSchemaVersion: 1,
+    // Kept draft until the renderer implements the full canonical contract.
+    sectionContract: ["hero", "couple", "location", "story", "gallery", "rsvp", "wishes", "gift", "music"],
+    performance: {
+      renderingMode: "dom",
+      motionLevel: "light",
+      mobileProfile: "full",
+      reducedMotionFallback: true,
+    },
     render: Minimal001Template,
-  },
-};
+  }),
+});
 
 export class TemplateNotAvailableError extends Error {
   constructor(public readonly templateId: string) {
@@ -71,12 +94,27 @@ export function getActiveTemplates(): TemplateDefinition[] {
   return Object.values(TEMPLATE_REGISTRY).filter((item) => item.status === "active");
 }
 
+export function getActiveTemplatesByTier(visualTier: TemplateVisualTier): TemplateDefinition[] {
+  return getActiveTemplates().filter((item) => item.visualTier === visualTier);
+}
+
+/**
+ * Wedding sections are product features, not template entitlements.
+ * Every active renderer must implement the full canonical section contract.
+ * This function only guards unknown/non-canonical section ids at runtime.
+ */
 export function validateTemplateCompatibility(templateId: string, sectionIds: string[]) {
   const template = resolveTemplate(templateId);
-  const supported = new Set(template.supportedSections);
-  const unsupported = sectionIds.filter((id) => !supported.has(id));
-  const missingRequired = (template.requiredSections ?? []).filter(
-    (id) => !sectionIds.includes(id)
-  );
-  return { template, unsupported, missingRequired, ok: unsupported.length === 0 && missingRequired.length === 0 };
+  const canonical = new Set<string>(WEDDING_SECTION_IDS);
+  const unsupported = sectionIds.filter((id) => !canonical.has(id));
+  return {
+    template,
+    unsupported,
+    missingRequired: [] as string[],
+    ok: unsupported.length === 0,
+  };
+}
+
+export function getTemplateRegistrySnapshot() {
+  return Object.values(TEMPLATE_REGISTRY).map(({ render: _render, ...definition }) => definition);
 }
