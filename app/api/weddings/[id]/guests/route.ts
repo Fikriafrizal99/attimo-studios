@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { withTenantDb, type TenantDbClient } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 import { buildInvitationUrl } from "@/lib/commerce/url";
-import { cleanText, isUuid, parseGuestCount } from "@/lib/commerce/validation";
+import { isUuid } from "@/lib/commerce/validation";
+import {
+  guestStats,
+  validateGuestInput,
+  validateGuestPatch,
+} from "@/lib/commerce/guest-management";
 
 type GuestRow = {
   id: string;
@@ -16,6 +21,8 @@ type GuestRow = {
   created_at?: string;
   updated_at?: string;
 };
+
+type SerializedGuest = ReturnType<typeof serializeGuest>;
 
 async function loadOwnerWedding(db: TenantDbClient, weddingId: string, userId: string) {
   const role = await getWeddingRole(db, weddingId, userId);
@@ -50,6 +57,10 @@ function serializeGuest(guest: GuestRow, slug: string | null) {
   };
 }
 
+function token() {
+  return randomBytes(18).toString("base64url");
+}
+
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -68,12 +79,11 @@ export async function GET(
                 is_active, created_at, updated_at
            FROM public.guests
           WHERE wedding_id = $1
-          ORDER BY created_at DESC`,
+          ORDER BY lower(display_name), created_at DESC`,
         [id]
       );
-      return NextResponse.json({
-        data: result.rows.map((guest) => serializeGuest(guest, owner.wedding.slug)),
-      });
+      const data: SerializedGuest[] = result.rows.map((guest) => serializeGuest(guest, owner.wedding.slug));
+      return NextResponse.json({ data, stats: guestStats(data) });
     });
   } catch (error) {
     console.error("GET wedding guests failed", error);
@@ -90,25 +100,23 @@ export async function POST(
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const body = await request.json().catch(() => null);
-    const displayName = cleanText(body?.displayName, 120, true);
-    const phone = cleanText(body?.phone, 40, false) || null;
-    const groupName = cleanText(body?.groupName, 80, false) || null;
-    const maxGuests = parseGuestCount(body?.maxGuests ?? 1, 20);
-    if (!displayName || !maxGuests || maxGuests < 1) {
-      return NextResponse.json({ error: "Display name and valid guest quota are required" }, { status: 400 });
+    const validation = validateGuestInput(body);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     return await withTenantDb(user.id, async (db) => {
       const owner = await loadOwnerWedding(db, id, user.id);
       if (owner.status !== 200) return NextResponse.json({ error: owner.error }, { status: owner.status });
 
-      const token = randomBytes(18).toString("base64url");
+      const guestToken = token();
+      const { displayName, phone, groupName, maxGuests } = validation.value;
       const result = await db.query<GuestRow>(
         `INSERT INTO public.guests (
            wedding_id, display_name, phone, group_name, max_guests, token, is_active
          ) VALUES ($1, $2, $3, $4, $5, $6, TRUE)
          RETURNING id, display_name, phone, group_name, max_guests, token, is_active`,
-        [id, displayName, phone, groupName, maxGuests, token]
+        [id, displayName, phone, groupName, maxGuests, guestToken]
       );
       return NextResponse.json(
         { data: serializeGuest(result.rows[0], owner.wedding.slug) },
@@ -130,38 +138,39 @@ export async function PATCH(
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const body = await request.json().catch(() => null);
-    if (!isUuid(body?.guestId)) {
+    if (!body || typeof body !== "object" || Array.isArray(body) || !isUuid((body as Record<string, unknown>).guestId)) {
       return NextResponse.json({ error: "Valid guestId is required" }, { status: 400 });
     }
 
-    const updates: Array<[string, unknown]> = [["updated_at", new Date().toISOString()]];
-    if (body.displayName !== undefined) {
-      const value = cleanText(body.displayName, 120, true);
-      if (!value) return NextResponse.json({ error: "Display name is required" }, { status: 400 });
-      updates.push(["display_name", value]);
+    const validation = validateGuestPatch(body);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-    if (body.phone !== undefined) updates.push(["phone", cleanText(body.phone, 40, false) || null]);
-    if (body.groupName !== undefined) updates.push(["group_name", cleanText(body.groupName, 80, false) || null]);
-    if (body.maxGuests !== undefined) {
-      const maxGuests = parseGuestCount(body.maxGuests, 20);
-      if (!maxGuests || maxGuests < 1) return NextResponse.json({ error: "Invalid guest quota" }, { status: 400 });
-      updates.push(["max_guests", maxGuests]);
-    }
-    if (body.isActive !== undefined) updates.push(["is_active", Boolean(body.isActive)]);
 
     return await withTenantDb(user.id, async (db) => {
       const owner = await loadOwnerWedding(db, id, user.id);
       if (owner.status !== 200) return NextResponse.json({ error: owner.error }, { status: owner.status });
 
+      const patch = validation.value;
+      const updates: Array<[string, unknown]> = [["updated_at", new Date().toISOString()]];
+      if (patch.displayName !== undefined) updates.push(["display_name", patch.displayName]);
+      if (patch.phone !== undefined) updates.push(["phone", patch.phone]);
+      if (patch.groupName !== undefined) updates.push(["group_name", patch.groupName]);
+      if (patch.maxGuests !== undefined) updates.push(["max_guests", patch.maxGuests]);
+      if (patch.isActive !== undefined) updates.push(["is_active", patch.isActive]);
+      if (patch.regenerateToken === true) updates.push(["token", token()]);
+
       const values = updates.map(([, value]) => value);
       const setClause = updates.map(([column], index) => `${column} = $${index + 1}`).join(", ");
-      values.push(body.guestId, id);
+      const guestId = (body as Record<string, unknown>).guestId as string;
+      values.push(guestId, id);
       const result = await db.query<GuestRow>(
         `UPDATE public.guests
             SET ${setClause}
           WHERE id = $${values.length - 1}
             AND wedding_id = $${values.length}
-          RETURNING id, display_name, phone, group_name, max_guests, token, is_active`,
+          RETURNING id, display_name, phone, group_name, max_guests, token, is_active,
+                    created_at, updated_at`,
         values
       );
       const guest = result.rows[0];
@@ -183,7 +192,13 @@ export async function DELETE(
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
     const body = await request.json().catch(() => null);
-    if (!isUuid(body?.guestId)) {
+    if (
+      !body ||
+      typeof body !== "object" ||
+      Array.isArray(body) ||
+      Object.keys(body as Record<string, unknown>).some((key) => key !== "guestId") ||
+      !isUuid((body as Record<string, unknown>).guestId)
+    ) {
       return NextResponse.json({ error: "Valid guestId is required" }, { status: 400 });
     }
 
@@ -193,7 +208,7 @@ export async function DELETE(
 
       const result = await db.query(
         `DELETE FROM public.guests WHERE id = $1 AND wedding_id = $2`,
-        [body.guestId, id]
+        [(body as Record<string, unknown>).guestId, id]
       );
       if ((result.rowCount ?? 0) === 0) {
         return NextResponse.json({ error: "Guest not found" }, { status: 404 });
