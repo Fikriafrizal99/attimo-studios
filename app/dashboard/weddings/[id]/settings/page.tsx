@@ -66,7 +66,11 @@ export default async function SettingsPage({
         initialSlug={wedding.slug}
         initialStatus={wedding.status}
         initialTemplateId={wedding.template_id}
-        initialPublicUrl={wedding.slug ? buildInvitationUrl({ slug: wedding.slug }) : null}
+        initialPublicUrl={
+          wedding.status === "released" && wedding.slug
+            ? buildInvitationUrl({ slug: wedding.slug })
+            : null
+        }
         initialReadiness={readiness}
         templates={templates}
       />
