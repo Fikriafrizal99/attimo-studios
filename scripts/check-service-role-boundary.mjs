@@ -6,8 +6,7 @@ const allowedServiceRoleFiles = new Set([
   "app/api/rsvp/route.ts",
   "app/api/wishes/route.ts",
   "app/api/weddings/[id]/upload/route.ts",
-  "app/invite/[slug]/page.tsx",
-  "app/invitation/page.tsx",
+  "lib/commerce/public-invitation.ts",
   "lib/supabase.ts",
 ]);
 
