@@ -58,6 +58,9 @@ jobs:
       - name: Verify Phase 3.6 gallery engine
         run: bun scripts/phase3_6_gallery_verify.ts
 
+      - name: Verify Phase 3.7 storage isolation
+        run: bun scripts/phase3_7_storage_isolation_verify.ts
+
       - name: Build
         run: bun run build
 
