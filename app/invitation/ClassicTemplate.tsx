@@ -28,6 +28,7 @@ const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
 
 export function ClassicTemplate({
   weddingId,
+  publicSlug,
   content,
   sections,
   guest,
@@ -37,7 +38,7 @@ export function ClassicTemplate({
     .sort((a, b) => a.order - b.order);
 
   return (
-    <InvitationProvider value={{ weddingId, content, sections, guest }}>
+    <InvitationProvider value={{ weddingId, publicSlug, content, sections, guest }}>
       <div className="min-h-screen bg-white">
         {sorted.map((section) => {
           const Component = SECTION_COMPONENTS[section.id];
