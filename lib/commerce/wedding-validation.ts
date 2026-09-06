@@ -6,6 +6,7 @@ import {
   type WeddingSectionId,
 } from "@/lib/wedding-contract";
 import { normalizeWeddingContent } from "@/lib/commerce/content";
+import { isValidIanaTimeZone } from "@/lib/commerce/countdown";
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -96,6 +97,13 @@ function validateDate(value: unknown, path: string, errors: string[]) {
 function validateTime(value: unknown, path: string, errors: string[]) {
   if (value === undefined || value === "") return;
   if (typeof value !== "string" || !TIME_RE.test(value)) errors.push(`${path} must use HH:MM`);
+}
+
+function validateTimeZone(value: unknown, path: string, errors: string[]) {
+  if (value === undefined || value === "") return;
+  if (typeof value !== "string" || !isValidIanaTimeZone(value)) {
+    errors.push(`${path} must be a valid IANA time zone`);
+  }
 }
 
 function validateNumberRange(
@@ -232,7 +240,7 @@ export function validateWeddingContentInput(raw: unknown): ValidationResult<Cano
   validateObjectArray(raw.events, "content.events", errors, 20, (item, path) => {
     rejectUnknownKeys(
       item,
-      ["id", "title", "date", "time", "endTime", "location", "address", "mapsUrl", "latitude", "longitude", "isPrimary"],
+      ["id", "title", "date", "time", "endTime", "timezone", "location", "address", "mapsUrl", "latitude", "longitude", "isPrimary"],
       path,
       errors
     );
@@ -241,6 +249,7 @@ export function validateWeddingContentInput(raw: unknown): ValidationResult<Cano
     validateDate(item.date, `${path}.date`, errors);
     validateTime(item.time, `${path}.time`, errors);
     validateTime(item.endTime, `${path}.endTime`, errors);
+    validateTimeZone(item.timezone, `${path}.timezone`, errors);
     validateString(item.location, `${path}.location`, errors, 240, { allowEmpty: true });
     validateString(item.address, `${path}.address`, errors, 1200, { allowEmpty: true });
     validateHttpUrl(item.mapsUrl, `${path}.mapsUrl`, errors);
