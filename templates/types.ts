@@ -16,6 +16,7 @@ export type ThemeConfig = Record<string, unknown>;
 
 export type TemplateRenderProps = {
   weddingId: string;
+  publicSlug?: string;
   content: WeddingContent;
   sections: SectionConfig[];
   theme?: ThemeConfig;
