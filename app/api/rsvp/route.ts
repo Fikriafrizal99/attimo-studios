@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { createServiceRoleClient } from "@/lib/supabase";
 import {
   cleanText,
   isAttendance,
@@ -26,7 +26,7 @@ async function resolveReleasedGuest(input: {
     return { error: "Personal guest token is required", status: 400 as const };
   }
 
-  const supabase = createServerClient();
+  const supabase = createServiceRoleClient();
   const { data: wedding } = await supabase
     .from("weddings")
     .select("id, slug")
