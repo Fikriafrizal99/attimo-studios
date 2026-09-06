@@ -59,6 +59,7 @@ export default async function PublicInvitationPage({
   return (
     <InvitationRenderer
       weddingId={wedding.id}
+      publicSlug={wedding.slug}
       templateId={wedding.template_id}
       content={wedding.content}
       sections={sections}
