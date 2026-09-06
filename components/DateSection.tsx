@@ -1,59 +1,63 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
 import { Calendar } from "lucide-react";
 import { useInvitation } from "@/components/InvitationContext";
-import { getCountdownDate } from "@/lib/commerce/content";
+import {
+  buildGoogleCalendarUrl,
+  calculateCountdownRemaining,
+  formatWeddingEventDate,
+  getCountdownTarget,
+} from "@/lib/commerce/countdown";
+
+const ZERO_REMAINING = {
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
+  completed: true,
+};
 
 export default function DateSection() {
   const invitation = useInvitation();
   const content = invitation?.content;
-  const target = useMemo(() => (content ? getCountdownDate(content) : null), [content]);
-  const targetTime = target?.getTime() ?? null;
-  const [remaining, setRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const target = useMemo(() => (content ? getCountdownTarget(content) : null), [content]);
+  const targetTime = target?.date.getTime() ?? null;
+  const [remaining, setRemaining] = useState(ZERO_REMAINING);
 
   useEffect(() => {
-    if (!targetTime) return;
-    const update = () => {
-      const distance = targetTime - Date.now();
-      if (distance <= 0) {
-        setRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setRemaining({
-        days: Math.floor(distance / 86_400_000),
-        hours: Math.floor((distance % 86_400_000) / 3_600_000),
-        minutes: Math.floor((distance % 3_600_000) / 60_000),
-        seconds: Math.floor((distance % 60_000) / 1000),
-      });
-    };
+    if (!targetTime) {
+      setRemaining(ZERO_REMAINING);
+      return;
+    }
+
+    const update = () => setRemaining(calculateCountdownRemaining(targetTime));
     update();
     const timer = window.setInterval(update, 1000);
     return () => window.clearInterval(timer);
   }, [targetTime]);
 
-  if (!target || !targetTime) return null;
+  if (!content || !target || !targetTime) return null;
 
-  const bride = content?.couple?.bride?.shortName || content?.couple?.bride?.name || "Bride";
-  const groom = content?.couple?.groom?.shortName || content?.couple?.groom?.name || "Groom";
+  const event = target.event;
+  const eventDate = formatWeddingEventDate(target);
+  const eventTime = event?.time || null;
 
   function saveToCalendar() {
-    if (!target) return;
-    const start = format(target, "yyyyMMdd'T'HHmmss");
-    const end = format(new Date(target.getTime() + 4 * 60 * 60 * 1000), "yyyyMMdd'T'HHmmss");
-    const url = new URL("https://calendar.google.com/calendar/render");
-    url.searchParams.set("action", "TEMPLATE");
-    url.searchParams.set("text", `Wedding ${bride} & ${groom}`);
-    url.searchParams.set("dates", `${start}/${end}`);
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    window.open(buildGoogleCalendarUrl(content, target), "_blank", "noopener,noreferrer");
   }
 
   return (
     <section id="date" className="bg-gradient-to-b from-rose-50/30 to-white px-4 py-20">
       <div className="mx-auto max-w-4xl text-center">
-        <h2 className="mb-10 font-serif text-4xl font-bold text-gray-800 md:text-5xl">Save the Date</h2>
-        <div className="mb-10 grid grid-cols-4 gap-2 md:gap-6">
+        <p className="mb-3 text-xs font-medium uppercase tracking-[0.25em] text-rose-400">
+          {event?.title || "Wedding Day"}
+        </p>
+        <h2 className="mb-10 font-serif text-4xl font-bold text-gray-800 md:text-5xl">
+          {remaining.completed ? "Hari Bahagia Telah Tiba" : "Menuju Hari Bahagia"}
+        </h2>
+
+        <div className="mb-10 grid grid-cols-4 gap-2 md:gap-6" aria-live="polite">
           {[
             ["Hari", remaining.days],
             ["Jam", remaining.hours],
@@ -66,7 +70,14 @@ export default function DateSection() {
             </div>
           ))}
         </div>
-        <p className="font-serif text-2xl font-semibold text-gray-800 md:text-3xl">{format(target, "EEEE, d MMMM yyyy")}</p>
+
+        <p className="font-serif text-2xl font-semibold text-gray-800 md:text-3xl">{eventDate}</p>
+        {eventTime && (
+          <p className="mt-2 text-sm text-gray-500">
+            {eventTime}{event?.endTime ? ` – ${event.endTime}` : ""} · {target.timeZone}
+          </p>
+        )}
+
         <button
           type="button"
           onClick={saveToCalendar}
