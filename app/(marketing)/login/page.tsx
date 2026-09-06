@@ -51,16 +51,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[#0E0E10] px-4 py-8 text-neutral-200">
       <div className="flex justify-center">
-        <BrandMark />
+        <BrandMark showTagline />
       </div>
       <div className="flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md border border-white/10 bg-neutral-900/80 text-neutral-100 backdrop-blur-sm shadow-[0_18px_60px_rgba(0,0,0,0.65)]">
           <CardHeader className="space-y-3">
             <CardTitle className="font-serif text-3xl tracking-tight text-neutral-50">
-              Access the Platform.
+              Welcome back.
             </CardTitle>
             <CardDescription className="text-sm text-neutral-300">
-              Structured systems for digital moments.
+              Sign in to manage your Endriya wedding projects.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -106,7 +106,7 @@ export default function LoginPage() {
                 className="w-full bg-neutral-100 text-[#0E0E10] transition-colors duration-250 ease-out hover:bg-neutral-200 disabled:opacity-70 disabled:hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E10]"
                 disabled={loading}
               >
-                {loading ? "Signing in…" : "Enter Attimo"}
+                {loading ? "Signing in…" : "Enter Endriya"}
               </Button>
               <div className="flex items-center justify-between text-xs text-neutral-500">
                 <Link
