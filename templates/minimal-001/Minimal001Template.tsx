@@ -9,6 +9,7 @@ import type { TemplateRenderProps } from "@/templates/types";
 
 export function Minimal001Template({
   weddingId,
+  publicSlug,
   content,
   sections,
   guest,
@@ -19,7 +20,7 @@ export function Minimal001Template({
   const heroImage = content.hero?.coverImage;
 
   return (
-    <InvitationProvider value={{ weddingId, content, sections, guest }}>
+    <InvitationProvider value={{ weddingId, publicSlug, content, sections, guest }}>
       <main className="min-h-screen bg-[#f8f7f3] text-[#1f1f1d]">
         {enabled.has("hero") && (
           <section className="relative flex min-h-[92vh] items-end overflow-hidden px-6 pb-16 pt-24 md:px-12">
