@@ -9,22 +9,27 @@ if (!rawSupabaseUrl || !rawSupabaseAnonKey) {
   );
 }
 
-// Copy into explicitly narrowed constants so strict TypeScript keeps the
-// non-null guarantee inside exported functions/closures as well.
 const supabaseUrl: string = rawSupabaseUrl;
 const supabaseAnonKey: string = rawSupabaseAnonKey;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
- * Privileged server client. Commerce P0 intentionally requires the service role
- * instead of silently falling back to the public anon key.
+ * Explicit privileged client for narrowly-scoped server operations that need
+ * to bypass tenant RLS (for example public invitation resolution or Storage
+ * after application/RLS authorization has already succeeded).
+ *
+ * Dashboard data access must use withTenantDb() instead.
  */
-export function createServerClient() {
+export function createServiceRoleClient() {
+  if (typeof window !== "undefined") {
+    throw new Error("Service-role Supabase client is server-only.");
+  }
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY. Server routes require an explicit service role key."
+      "Missing SUPABASE_SERVICE_ROLE_KEY for an explicitly privileged server operation."
     );
   }
 
