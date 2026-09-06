@@ -1,4 +1,5 @@
 export const WEDDING_CONTENT_SCHEMA_VERSION = 1 as const;
+export const DEFAULT_EVENT_TIME_ZONE = "Asia/Jakarta" as const;
 
 export const WEDDING_SECTION_IDS = [
   "hero",
@@ -46,6 +47,8 @@ export interface WeddingEventContent {
   date: string;
   time: string;
   endTime?: string;
+  /** IANA time-zone identifier for the physical event, e.g. Asia/Jakarta. */
+  timezone: string;
   location: string;
   address: string;
   mapsUrl?: string;
