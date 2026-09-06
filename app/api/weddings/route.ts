@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantDb } from "@/lib/db";
 import { getSessionUser } from "@/lib/commerce/access";
-import { normalizeWeddingContent } from "@/lib/commerce/content";
 import { defaultContent, defaultSections } from "@/lib/wedding-defaults";
+import { validateWeddingContentInput } from "@/lib/commerce/wedding-validation";
 import { resolveTemplate } from "@/templates/registry";
+
+const CREATE_FIELDS = new Set(["content", "template_id"]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +13,31 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json().catch(() => ({}));
-    const content = normalizeWeddingContent(body.content ?? defaultContent);
-    const templateId = typeof body.template_id === "string" ? body.template_id : "classic-001";
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
+    const unknownFields = Object.keys(body).filter((key) => !CREATE_FIELDS.has(key));
+    if (unknownFields.length) {
+      return NextResponse.json(
+        { error: "Unsupported create fields", fields: unknownFields },
+        { status: 400 }
+      );
+    }
+
+    const contentValidation = validateWeddingContentInput(body.content ?? defaultContent);
+    if (!contentValidation.ok) {
+      return NextResponse.json(
+        { error: "Invalid wedding content", details: contentValidation.errors },
+        { status: 400 }
+      );
+    }
+    const content = contentValidation.value;
+
+    if (body.template_id !== undefined && typeof body.template_id !== "string") {
+      return NextResponse.json({ error: "Invalid template" }, { status: 400 });
+    }
+    const templateId = body.template_id ?? "classic-001";
 
     try {
       resolveTemplate(templateId);
