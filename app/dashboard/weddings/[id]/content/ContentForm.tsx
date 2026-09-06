@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { DEFAULT_EVENT_TIME_ZONE } from "@/lib/wedding-contract";
 import type {
   WeddingContent,
   WeddingContentEvent,
@@ -91,7 +92,7 @@ export function ContentForm({ weddingId, initialContent }: { weddingId: string; 
       ...current,
       events: [
         ...(current.events ?? []),
-        { id: uid("event"), title: "", date: "", time: "", endTime: "", location: "", address: "", mapsUrl: "", isPrimary: first },
+        { id: uid("event"), title: "", date: "", time: "", endTime: "", timezone: DEFAULT_EVENT_TIME_ZONE, location: "", address: "", mapsUrl: "", isPrimary: first },
       ],
     }));
   }
@@ -212,6 +213,19 @@ export function ContentForm({ weddingId, initialContent }: { weddingId: string; 
               <label className="flex items-center gap-2 pt-6 text-sm text-neutral-300"><input type="radio" name="primary-event" checked={Boolean(event.isPrimary)} onChange={() => setPrimary(index)} /> Primary event</label>
               <div><label className={label}>Date</label><input type="date" className={input} value={event.date} onChange={(e) => updateEvent(index, { date: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-2"><div><label className={label}>Start</label><input type="time" className={input} value={event.time} onChange={(e) => updateEvent(index, { time: e.target.value })} /></div><div><label className={label}>End</label><input type="time" className={input} value={event.endTime ?? ""} onChange={(e) => updateEvent(index, { endTime: e.target.value })} /></div></div>
+              <div className="md:col-span-2">
+                <label className={label}>Event timezone</label>
+                <input list={`event-timezones-${index}`} className={input} value={event.timezone || DEFAULT_EVENT_TIME_ZONE} onChange={(e) => updateEvent(index, { timezone: e.target.value })} placeholder="Asia/Jakarta" />
+                <datalist id={`event-timezones-${index}`}>
+                  <option value="Asia/Jakarta">WIB · Jakarta</option>
+                  <option value="Asia/Makassar">WITA · Makassar</option>
+                  <option value="Asia/Jayapura">WIT · Jayapura</option>
+                  <option value="Asia/Singapore">Singapore</option>
+                  <option value="Asia/Kuala_Lumpur">Kuala Lumpur</option>
+                  <option value="Australia/Perth">Perth</option>
+                </datalist>
+                <p className="mt-1 text-xs text-neutral-500">Gunakan nama IANA timezone. Ini membuat countdown tetap benar walau tamu membuka undangan dari zona waktu berbeda.</p>
+              </div>
               <div><label className={label}>Venue</label><input className={input} value={event.location} onChange={(e) => updateEvent(index, { location: e.target.value })} /></div>
               <div><label className={label}>Maps URL</label><input type="url" className={input} value={event.mapsUrl ?? ""} onChange={(e) => updateEvent(index, { mapsUrl: e.target.value })} /></div>
               <div className="md:col-span-2"><label className={label}>Address</label><textarea className={textarea} value={event.address} onChange={(e) => updateEvent(index, { address: e.target.value })} /></div>
