@@ -49,6 +49,9 @@ jobs:
       - name: Verify Phase 3.3 template registry
         run: bun scripts/phase3_3_template_registry_verify.ts
 
+      - name: Verify Phase 3.4 Template 001
+        run: bun scripts/phase3_4_template001_verify.ts
+
       - name: Build
         run: bun run build
 
