@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { reorderGalleryItems } from "@/lib/commerce/gallery";
 import { DEFAULT_EVENT_TIME_ZONE } from "@/lib/wedding-contract";
 import type {
   WeddingContent,
@@ -128,6 +129,13 @@ export function ContentForm({ weddingId, initialContent }: { weddingId: string; 
     setContent((current) => ({ ...current, gallery: (current.gallery ?? []).map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) }));
   }
 
+  function moveGallery(index: number, offset: -1 | 1) {
+    setContent((current) => ({
+      ...current,
+      gallery: reorderGalleryItems(current.gallery ?? [], index, index + offset),
+    }));
+  }
+
   function addAccount() {
     setContent((current) => ({
       ...current,
@@ -250,12 +258,30 @@ export function ContentForm({ weddingId, initialContent }: { weddingId: string; 
       </section>
 
       <section className={card}>
-        <div className="flex items-center justify-between"><h3 className="text-base font-semibold text-neutral-100">Gallery</h3><button type="button" className={button} onClick={addGallery}>+ Add photo</button></div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-neutral-100">Gallery</h3>
+            <p className="mt-1 text-xs text-neutral-500">Urutan foto di sini adalah urutan canonical yang dipakai semua template 2D, 2.5D, dan 3D.</p>
+          </div>
+          <button type="button" className={button} onClick={addGallery}>+ Add photo</button>
+        </div>
+        {gallery.length === 0 && <p className="text-sm text-neutral-500">Tambahkan foto prewedding atau momen pilihan untuk mulai membuat galeri.</p>}
         <div className="grid gap-4 md:grid-cols-2">
           {gallery.map((image, index) => (
             <div key={image.id} className="space-y-3 rounded-md border border-white/10 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <strong className="text-sm text-neutral-300">Foto {index + 1}</strong>
+                <div className="flex items-center gap-1">
+                  <button type="button" className={`${button} disabled:cursor-not-allowed disabled:opacity-40`} disabled={index === 0} onClick={() => moveGallery(index, -1)} aria-label={`Pindahkan foto ${index + 1} ke atas`}>↑</button>
+                  <button type="button" className={`${button} disabled:cursor-not-allowed disabled:opacity-40`} disabled={index === gallery.length - 1} onClick={() => moveGallery(index, 1)} aria-label={`Pindahkan foto ${index + 1} ke bawah`}>↓</button>
+                </div>
+              </div>
               <ImageUpload id={`gallery-${image.id}`} value={image.url} onChange={(url) => updateGallery(index, { url })} uploadUrl={`/api/weddings/${weddingId}/upload`} />
-              <input className={input} placeholder="Alt / description" value={image.alt} onChange={(e) => updateGallery(index, { alt: e.target.value })} />
+              <div>
+                <label className={label}>Alt text / deskripsi foto</label>
+                <input className={input} placeholder={`Contoh: ${couple.bride.shortName || couple.bride.name || "Bride"} & ${couple.groom.shortName || couple.groom.name || "Groom"} saat prewedding`} value={image.alt} onChange={(e) => updateGallery(index, { alt: e.target.value })} />
+                <p className="mt-1 text-xs text-neutral-500">Dipakai untuk aksesibilitas dan saat gambar tidak dapat dimuat.</p>
+              </div>
               <button type="button" className="text-xs text-red-300" onClick={() => setContent({ ...content, gallery: gallery.filter((_, i) => i !== index) })}>Remove photo</button>
             </div>
           ))}
