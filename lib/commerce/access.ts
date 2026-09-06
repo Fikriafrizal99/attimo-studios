@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import type { createServerClient } from "@/lib/supabase";
 
+export type WeddingRole = "owner" | "collaborator";
+
 export async function getSessionUser() {
   const session = await auth.api.getSession({ headers: await headers() });
   return session?.user ?? null;
@@ -25,7 +27,7 @@ export async function getWeddingRole(
   supabase: ReturnType<typeof createServerClient>,
   weddingId: string,
   userId: string
-): Promise<"owner" | "collaborator" | null> {
+): Promise<WeddingRole | null> {
   const { data } = await supabase
     .from("wedding_collaborators")
     .select("role")
