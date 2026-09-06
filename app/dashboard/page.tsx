@@ -42,8 +42,9 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-50">Wedding Projects</h1>
-          <p className="mt-1 text-xs text-neutral-500">Managed-service commerce workspace</p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#BFA14A]">ENDRIYA Studio</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-50">Wedding Projects</h1>
+          <p className="mt-1 text-xs text-neutral-500">One complete wedding platform · 2D, 2.5D, and 3D visual experiences</p>
         </div>
         <Button asChild size="sm" className="bg-neutral-100 text-neutral-950 hover:bg-neutral-200">
           <Link href="/dashboard/new">New Wedding</Link>
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
       {weddings.length === 0 ? (
         <section className="rounded-md border border-white/10 bg-[#141416] p-8">
           <h2 className="text-sm font-semibold text-neutral-50">No projects yet</h2>
-          <p className="mt-1 text-xs text-neutral-500">Create the first wedding project to start production.</p>
+          <p className="mt-1 text-xs text-neutral-500">Create your first Endriya wedding project and choose its visual experience.</p>
         </section>
       ) : (
         <section className="overflow-hidden rounded-md border border-white/10 bg-[#141416]">
