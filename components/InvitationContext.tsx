@@ -12,6 +12,7 @@ export interface SectionConfig {
 
 export interface InvitationContextValue {
   weddingId: string;
+  publicSlug?: string;
   content: WeddingContent;
   sections: SectionConfig[];
   guest?: PublicGuestContext;
