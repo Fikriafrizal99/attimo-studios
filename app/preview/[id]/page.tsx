@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser, hasWeddingAccess } from "@/lib/commerce/access";
 import { InvitationRenderer } from "@/components/invitation/InvitationRenderer";
 import { resolveTemplate } from "@/templates/registry";
@@ -14,15 +14,25 @@ export default async function PreviewPage({
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const supabase = createServerClient();
-  if (!(await hasWeddingAccess(supabase, id, user.id))) notFound();
+  const wedding = await withTenantDb(user.id, async (db) => {
+    if (!(await hasWeddingAccess(db, id, user.id))) return null;
+    const result = await db.query<{
+      id: string;
+      template_id: string;
+      sections: unknown;
+      content: unknown;
+      theme: unknown;
+    }>(
+      `SELECT id, template_id, sections, content, theme
+         FROM public.weddings
+        WHERE id = $1
+        LIMIT 1`,
+      [id]
+    );
+    return result.rows[0] ?? null;
+  });
 
-  const { data: wedding, error } = await supabase
-    .from("weddings")
-    .select("id, template_id, sections, content, theme")
-    .eq("id", id)
-    .maybeSingle();
-  if (error || !wedding) notFound();
+  if (!wedding) notFound();
 
   try {
     resolveTemplate(wedding.template_id);
