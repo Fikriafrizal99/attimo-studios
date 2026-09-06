@@ -12,6 +12,7 @@ import { resolveTemplate } from "@/templates/registry";
 
 const OWNER_ONLY_PATCH_FIELDS = ["theme", "template_id", "slug", "status"] as const;
 const PATCH_FIELDS = new Set(["content", "theme", "sections", "template_id", "slug", "status"]);
+const RELEASED_MUTATION_FIELDS = ["content", "theme", "sections", "template_id", "slug"] as const;
 
 type WeddingRow = {
   id: string;
@@ -89,7 +90,10 @@ export async function GET(
       return NextResponse.json({
         ...wedding,
         role,
-        public_url: wedding.slug ? buildInvitationUrl({ slug: wedding.slug }) : null,
+        public_url:
+          wedding.status === "released" && wedding.slug
+            ? buildInvitationUrl({ slug: wedding.slug })
+            : null,
       });
     });
   } catch (error) {
@@ -126,6 +130,26 @@ export async function PATCH(
 
       const wedding = await loadWedding(db, id);
       if (!wedding) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+      if (wedding.status === "released") {
+        const mutationFields = RELEASED_MUTATION_FIELDS.filter(
+          (field) => requestBody[field] !== undefined
+        );
+        const isUnpublishOnly =
+          requestBody.status === "draft" &&
+          mutationFields.length === 0 &&
+          Object.keys(requestBody).every((key) => key === "status");
+
+        if (!isUnpublishOnly) {
+          return NextResponse.json(
+            {
+              error: "Unpublish the wedding before editing released content or settings",
+              fields: mutationFields,
+            },
+            { status: 409 }
+          );
+        }
+      }
 
       if (role === "collaborator") {
         const forbiddenFields = OWNER_ONLY_PATCH_FIELDS.filter(
@@ -233,7 +257,10 @@ export async function PATCH(
       return NextResponse.json({
         ...updated,
         role,
-        public_url: updated.slug ? buildInvitationUrl({ slug: updated.slug }) : null,
+        public_url:
+          updated.status === "released" && updated.slug
+            ? buildInvitationUrl({ slug: updated.slug })
+            : null,
         ...(publishReadiness ? { readiness: publishReadiness } : {}),
       });
     });
