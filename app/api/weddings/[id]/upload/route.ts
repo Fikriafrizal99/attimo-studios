@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { createServiceRoleClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser, hasWeddingAccess } from "@/lib/commerce/access";
 
 const BUCKET = "wedding-assets";
@@ -15,10 +16,9 @@ export async function POST(
     const user = await getSessionUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id: weddingId } = await context.params;
-    const supabase = createServerClient();
-    if (!(await hasWeddingAccess(supabase, weddingId, user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+
+    const allowed = await withTenantDb(user.id, (db) => hasWeddingAccess(db, weddingId, user.id));
+    if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -30,6 +30,9 @@ export async function POST(
       return NextResponse.json({ error: "Image must be between 1 byte and 5MB" }, { status: 400 });
     }
 
+    // Storage isolation policies are Phase 3.7. Until then, the service-role
+    // client is intentionally scoped to the upload itself, after tenant authz.
+    const supabase = createServiceRoleClient();
     const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1] || "img";
     const path = `weddings/${weddingId}/assets/${Date.now()}-${randomBytes(8).toString("hex")}.${extension}`;
     const { data, error } = await supabase.storage
