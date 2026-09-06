@@ -46,6 +46,9 @@ jobs:
       - name: Verify Phase 3.2 wedding validation
         run: bun scripts/phase3_2_validation_verify.ts
 
+      - name: Verify Phase 3.3 template registry
+        run: bun scripts/phase3_3_template_registry_verify.ts
+
       - name: Build
         run: bun run build
 
