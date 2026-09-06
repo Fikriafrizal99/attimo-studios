@@ -17,7 +17,7 @@ export default async function InvitationPage() {
   const supabase = createServerClient();
   const { data: wedding, error } = await supabase
     .from("weddings")
-    .select("id, template_id, sections, content, theme")
+    .select("id, slug, template_id, sections, content, theme")
     .eq("slug", slug)
     .eq("status", "released")
     .maybeSingle();
@@ -32,6 +32,7 @@ export default async function InvitationPage() {
   return (
     <InvitationRenderer
       weddingId={wedding.id}
+      publicSlug={wedding.slug}
       templateId={wedding.template_id}
       content={wedding.content}
       sections={Array.isArray(wedding.sections) ? (wedding.sections as SectionConfig[]) : []}
