@@ -9,7 +9,7 @@ import { getCountdownDate } from "@/lib/commerce/content";
 export default function DateSection() {
   const invitation = useInvitation();
   const content = invitation?.content;
-  const target = useMemo(() => getCountdownDate(content ?? {}), [content]);
+  const target = useMemo(() => getCountdownDate(content), [content]);
   const targetTime = target?.getTime() ?? null;
   const [remaining, setRemaining] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
