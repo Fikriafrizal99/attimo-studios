@@ -46,6 +46,9 @@ export const auth = betterAuth({
     process.env.NEXT_PUBLIC_APP_URL ||
     (process.env.NODE_ENV === "development" ? "http://localhost:3000" : undefined),
   trustedOrigins: [
+    ...(process.env.NODE_ENV === "development"
+      ? ["http://localhost:3000", "http://localhost:3001"]
+      : []),
     process.env.BETTER_AUTH_URL,
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.PUBLIC_INVITATION_BASE_URL,
