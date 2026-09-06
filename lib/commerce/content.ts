@@ -7,6 +7,7 @@ import {
   type WeddingContentStoryItem,
   type WeddingGiftAccount,
 } from "@/lib/wedding-defaults";
+import type { CanonicalWeddingContent } from "@/lib/wedding-contract";
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -125,7 +126,7 @@ function normalizeGiftAccounts(raw: unknown): WeddingGiftAccount[] {
   });
 }
 
-export function normalizeWeddingContent(raw: unknown): WeddingContent {
+export function normalizeWeddingContent(raw: unknown): CanonicalWeddingContent {
   const source = record(raw);
   const couple = record(source.couple);
   const hero = record(source.hero);
@@ -141,7 +142,7 @@ export function normalizeWeddingContent(raw: unknown): WeddingContent {
       groom: normalizePerson(couple.groom),
     },
     hero: {
-      greeting: text(hero.greeting, defaultContent.hero?.greeting ?? "The Wedding of"),
+      greeting: text(hero.greeting, defaultContent.hero.greeting),
       title: text(hero.title),
       subtitle: text(hero.subtitle),
       quote: text(hero.quote),
@@ -154,7 +155,7 @@ export function normalizeWeddingContent(raw: unknown): WeddingContent {
     gallery: normalizeGallery(source.gallery),
     gifts: {
       enabled: booleanValue(gifts.enabled, true),
-      intro: text(gifts.intro, defaultContent.gifts?.intro ?? ""),
+      intro: text(gifts.intro, defaultContent.gifts.intro),
       bankAccounts: normalizeGiftAccounts(gifts.bankAccounts),
       qrisImageUrl: text(gifts.qrisImageUrl),
       shippingAddress: text(gifts.shippingAddress),
