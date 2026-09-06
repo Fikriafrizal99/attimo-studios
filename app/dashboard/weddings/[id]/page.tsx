@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 
 export default async function WeddingEditPage({
@@ -11,8 +11,8 @@ export default async function WeddingEditPage({
   const { id } = await params;
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  const supabase = createServerClient();
-  const role = await getWeddingRole(supabase, id, user.id);
+
+  const role = await withTenantDb(user.id, (db) => getWeddingRole(db, id, user.id));
   if (!role) redirect("/dashboard");
 
   return (
