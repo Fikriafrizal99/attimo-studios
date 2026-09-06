@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { AttimoLanding } from "@/components/landing/AttimoLanding";
+import { EndriyaLanding } from "@/components/landing/EndriyaLanding";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Attimo Studios — Digital experience systems",
+  title: "ENDRIYA — Digital Wedding Experience",
   description:
-    "Structured digital experiences. Modular systems. Built to scale. Engineer your moment.",
+    "One complete wedding platform with 2D, 2.5D, and 3D visual experiences.",
 };
 
 export default async function HomePage() {
@@ -16,5 +16,5 @@ export default async function HomePage() {
   });
   if (session?.user) redirect("/dashboard");
 
-  return <AttimoLanding />;
+  return <EndriyaLanding />;
 }
