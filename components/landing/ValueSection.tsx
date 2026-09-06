@@ -1,20 +1,19 @@
 export function ValueSection() {
   return (
     <section
-      className="px-6 md:px-12 py-20 md:py-28 max-w-[1400px] mx-auto"
+      className="mx-auto max-w-[1400px] px-6 py-20 md:px-12 md:py-28"
       aria-labelledby="value-heading"
     >
-      <div className="max-w-2xl">
+      <div className="max-w-3xl">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#BFA14A]">One platform, three visual classes</p>
         <h2
           id="value-heading"
-          className="font-serif text-3xl md:text-4xl tracking-tight text-foreground mb-6"
+          className="mb-6 mt-3 font-serif text-3xl tracking-tight text-foreground md:text-4xl"
         >
-          Structured for ceremony. Designed to scale.
+          Every wedding gets the complete feature set.
         </h2>
-        <p className="text-muted-foreground text-lg leading-relaxed">
-          We build digital experience systems—modular, tenant-scoped, and
-          deployable in minutes. No lock-in. Your subdomain, your content, full
-          control.
+        <p className="text-lg leading-relaxed text-muted-foreground">
+          Couple profiles, events, gallery, countdown, maps, gifts, guest links, RSVP, wishes, and publishing stay available across every experience. What changes is the visual language: elegant 2D, layered 2.5D, or immersive 3D.
         </p>
       </div>
     </section>
