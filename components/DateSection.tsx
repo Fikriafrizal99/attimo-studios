@@ -39,12 +39,18 @@ export default function DateSection() {
 
   if (!content || !target || !targetTime) return null;
 
+  const calendarContent = content;
+  const calendarTarget = target;
   const event = target.event;
   const eventDate = formatWeddingEventDate(target);
   const eventTime = event?.time || null;
 
   function saveToCalendar() {
-    window.open(buildGoogleCalendarUrl(content, target), "_blank", "noopener,noreferrer");
+    window.open(
+      buildGoogleCalendarUrl(calendarContent, calendarTarget),
+      "_blank",
+      "noopener,noreferrer"
+    );
   }
 
   return (
