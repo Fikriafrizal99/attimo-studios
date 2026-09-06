@@ -1,38 +1,31 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser } from "@/lib/commerce/access";
 import { buildInvitationUrl } from "@/lib/commerce/url";
 import { Button } from "@/components/ui/button";
+
+type WeddingListRow = {
+  id: string;
+  slug: string | null;
+  status: string;
+  template_id: string;
+  content: unknown;
+  updated_at: string | null;
+};
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const supabase = createServerClient();
-  const { data: memberships } = await supabase
-    .from("wedding_collaborators")
-    .select("wedding_id")
-    .eq("user_id", user.id);
-
-  const ids = (memberships ?? []).map((item) => item.wedding_id);
-  let weddings: Array<{
-    id: string;
-    slug: string | null;
-    status: string;
-    template_id: string;
-    content: unknown;
-    updated_at: string | null;
-  }> = [];
-
-  if (ids.length) {
-    const { data } = await supabase
-      .from("weddings")
-      .select("id, slug, status, template_id, content, updated_at")
-      .in("id", ids)
-      .order("created_at", { ascending: false });
-    weddings = data ?? [];
-  }
+  const weddings = await withTenantDb(user.id, async (db) => {
+    const result = await db.query<WeddingListRow>(
+      `SELECT id, slug, status, template_id, content, updated_at
+         FROM public.weddings
+        ORDER BY created_at DESC`
+    );
+    return result.rows;
+  });
 
   function title(content: unknown) {
     const value = content as { couple?: { bride?: { name?: string }; groom?: { name?: string } } } | null;
