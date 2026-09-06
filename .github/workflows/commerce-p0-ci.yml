@@ -55,6 +55,9 @@ jobs:
       - name: Verify Phase 3.5 real countdown
         run: bun scripts/phase3_5_countdown_verify.ts
 
+      - name: Verify Phase 3.6 gallery engine
+        run: bun scripts/phase3_6_gallery_verify.ts
+
       - name: Build
         run: bun run build
 
