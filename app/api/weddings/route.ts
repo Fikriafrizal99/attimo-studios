@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser } from "@/lib/commerce/access";
 import { normalizeWeddingContent } from "@/lib/commerce/content";
 import { defaultContent, defaultSections } from "@/lib/wedding-defaults";
@@ -20,23 +20,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Template is not available" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
-    const { data, error } = await supabase.rpc("create_wedding_with_owner", {
-      p_owner_user_id: user.id,
-      p_template_id: templateId,
-      p_sections: defaultSections,
-      p_content: content,
-      p_theme: {},
+    const wedding = await withTenantDb(user.id, async (db) => {
+      const result = await db.query<{ wedding: { id: string; slug: string | null; template_id: string } }>(
+        `SELECT app_private.create_wedding_for_current_user(
+           $1,
+           $2::jsonb,
+           $3::jsonb,
+           $4::jsonb
+         ) AS wedding`,
+        [
+          templateId,
+          JSON.stringify(defaultSections),
+          JSON.stringify(content),
+          JSON.stringify({}),
+        ]
+      );
+      return result.rows[0]?.wedding;
     });
 
-    if (error || !data) throw error ?? new Error("Atomic wedding creation failed");
-
-    const wedding = data as {
-      id: string;
-      slug: string | null;
-      template_id: string;
-    };
-
+    if (!wedding) throw new Error("Atomic wedding creation failed");
     return NextResponse.json(wedding, { status: 201 });
   } catch (error) {
     console.error("POST /api/weddings failed", error);
