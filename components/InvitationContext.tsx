@@ -1,20 +1,18 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { WeddingContent } from "@/lib/wedding-defaults";
-import type { PublicGuestContext } from "@/templates/types";
-
-export interface SectionConfig {
-  id: string;
-  enabled: boolean;
-  order: number;
-}
+import type {
+  CanonicalWeddingContent,
+  SectionConfig,
+} from "@/lib/wedding-contract";
+import type { PublicGuestContext, ThemeConfig } from "@/templates/types";
 
 export interface InvitationContextValue {
   weddingId: string;
   publicSlug?: string;
-  content: WeddingContent;
+  content: CanonicalWeddingContent;
   sections: SectionConfig[];
+  theme?: ThemeConfig;
   guest?: PublicGuestContext;
 }
 
