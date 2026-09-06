@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withTenantDb, type TenantDbClient } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
-import { normalizeWeddingContent } from "@/lib/commerce/content";
-import { normalizeSections } from "@/lib/commerce/sections";
+import { evaluatePublishReadiness } from "@/lib/commerce/publish-readiness";
 import { validateSlug } from "@/lib/commerce/validation";
 import {
   validateWeddingContentInput,
   validateWeddingSectionsInput,
 } from "@/lib/commerce/wedding-validation";
 import { buildInvitationUrl } from "@/lib/commerce/url";
-import { resolveTemplate, validateTemplateCompatibility } from "@/templates/registry";
-import type { SectionConfig } from "@/lib/wedding-defaults";
+import { resolveTemplate } from "@/templates/registry";
 
 const OWNER_ONLY_PATCH_FIELDS = ["theme", "template_id", "slug", "status"] as const;
 const PATCH_FIELDS = new Set(["content", "theme", "sections", "template_id", "slug", "status"]);
@@ -27,38 +25,6 @@ type WeddingRow = {
   created_at: string;
   updated_at: string;
 };
-
-function releaseErrors(input: {
-  slug: string | null;
-  templateId: string;
-  content: unknown;
-  sections: SectionConfig[];
-}): string[] {
-  const errors: string[] = [];
-  if (!input.slug) errors.push("Set a public slug before release.");
-  const normalized = normalizeWeddingContent(input.content);
-  if (!normalized.couple.bride.name || !normalized.couple.groom.name) {
-    errors.push("Bride and groom names are required before release.");
-  }
-  const completeEvent = normalized.events.find(
-    (event) => event.title && event.date && event.time && event.location && event.address
-  );
-  if (!completeEvent) errors.push("At least one complete wedding event is required before release.");
-  try {
-    resolveTemplate(input.templateId);
-    const enabledIds = input.sections.filter((section) => section.enabled).map((section) => section.id);
-    const compatibility = validateTemplateCompatibility(input.templateId, enabledIds);
-    if (compatibility.unsupported.length) {
-      errors.push(`Template does not support enabled sections: ${compatibility.unsupported.join(", ")}`);
-    }
-    if (compatibility.missingRequired.length) {
-      errors.push(`Required template sections are disabled: ${compatibility.missingRequired.join(", ")}`);
-    }
-  } catch {
-    errors.push("Selected template is not available.");
-  }
-  return errors;
-}
 
 async function loadWedding(db: TenantDbClient, id: string): Promise<WeddingRow | null> {
   const result = await db.query<WeddingRow>(
@@ -177,6 +143,7 @@ export async function PATCH(
       }
 
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      let publishReadiness: ReturnType<typeof evaluatePublishReadiness> | null = null;
 
       if (requestBody.content !== undefined) {
         const validation = validateWeddingContentInput(requestBody.content);
@@ -238,20 +205,20 @@ export async function PATCH(
           return NextResponse.json({ error: "Invalid status" }, { status: 400 });
         }
         if (requestBody.status === "released") {
-          const targetSlug = (updates.slug as string | undefined) ?? wedding.slug;
-          const targetTemplate = (updates.template_id as string | undefined) ?? wedding.template_id;
-          const targetContent = updates.content ?? wedding.content;
-          const targetSections =
-            (updates.sections as SectionConfig[] | undefined) ?? normalizeSections(wedding.sections);
-          const errors = releaseErrors({
-            slug: targetSlug,
-            templateId: targetTemplate,
-            content: targetContent,
-            sections: targetSections,
+          publishReadiness = evaluatePublishReadiness({
+            slug: (updates.slug as string | undefined) ?? wedding.slug,
+            templateId: (updates.template_id as string | undefined) ?? wedding.template_id,
+            content: updates.content ?? wedding.content,
+            sections: updates.sections ?? wedding.sections,
           });
-          if (errors.length) {
+          if (!publishReadiness.ready) {
             return NextResponse.json(
-              { error: "Wedding is not ready to release", details: errors },
+              {
+                error: "Wedding is not ready to release",
+                details: publishReadiness.errors,
+                warnings: publishReadiness.warnings,
+                checks: publishReadiness.checks,
+              },
               { status: 422 }
             );
           }
@@ -267,6 +234,7 @@ export async function PATCH(
         ...updated,
         role,
         public_url: updated.slug ? buildInvitationUrl({ slug: updated.slug }) : null,
+        ...(publishReadiness ? { readiness: publishReadiness } : {}),
       });
     });
   } catch (error) {
