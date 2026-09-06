@@ -61,6 +61,18 @@ jobs:
       - name: Verify Phase 3.7 storage isolation
         run: bun scripts/phase3_7_storage_isolation_verify.ts
 
+      - name: Verify Phase 3.8 digital gift
+        run: bun scripts/phase3_8_gift_verify.ts
+
+      - name: Verify Phase 3.9 maps and location
+        run: bun scripts/phase3_9_location_verify.ts
+
+      - name: Verify Phase 3.10 guest management
+        run: bun scripts/phase3_10_guests_verify.ts
+
+      - name: Verify Phase 3.11 publish readiness
+        run: bun scripts/phase3_11_publish_readiness_verify.ts
+
       - name: Build
         run: bun run build
 
