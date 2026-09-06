@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
 import { getSessionUser, hasWeddingAccess } from "@/lib/commerce/access";
 import { normalizeSections } from "@/lib/commerce/sections";
 import { SectionsForm } from "./SectionsForm";
@@ -14,15 +14,17 @@ export default async function LayoutSectionsPage({
   const { id } = await params;
   const user = await getSessionUser();
   if (!user) redirect("/login");
-  const supabase = createServerClient();
-  if (!(await hasWeddingAccess(supabase, id, user.id))) redirect("/dashboard");
 
-  const { data: wedding, error } = await supabase
-    .from("weddings")
-    .select("sections")
-    .eq("id", id)
-    .maybeSingle();
-  if (error || !wedding) notFound();
+  const wedding = await withTenantDb(user.id, async (db) => {
+    if (!(await hasWeddingAccess(db, id, user.id))) return null;
+    const result = await db.query<{ sections: unknown }>(
+      `SELECT sections FROM public.weddings WHERE id = $1 LIMIT 1`,
+      [id]
+    );
+    return result.rows[0] ?? null;
+  });
+
+  if (!wedding) notFound();
 
   return (
     <div className="space-y-6">
