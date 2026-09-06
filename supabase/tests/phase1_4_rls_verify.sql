@@ -33,6 +33,17 @@ BEGIN
      OR has_table_privilege('anon', 'public.wishes', 'INSERT') THEN
     RAISE EXCEPTION 'Phase 1.4 verification failed: anon has direct tenant-table privileges';
   END IF;
+
+  IF to_regprocedure('public.is_wedding_member(uuid)') IS NOT NULL
+     OR to_regprocedure('public.is_wedding_owner(uuid)') IS NOT NULL THEN
+    RAISE EXCEPTION 'Phase 1.4 verification failed: SECURITY DEFINER RLS helpers remain in public API schema';
+  END IF;
+
+  IF to_regprocedure('app_private.is_wedding_member(uuid)') IS NULL
+     OR to_regprocedure('app_private.is_wedding_owner(uuid)') IS NULL
+     OR to_regprocedure('app_private.current_better_auth_user_id()') IS NULL THEN
+    RAISE EXCEPTION 'Phase 1.4 verification failed: private RLS helpers are missing';
+  END IF;
 END $$;
 
 SET LOCAL ROLE authenticated;
