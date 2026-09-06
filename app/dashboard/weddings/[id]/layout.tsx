@@ -1,8 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb } from "@/lib/db";
+import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 import { WeddingTabs } from "./WeddingTabs";
 
 const BASE_DOMAIN =
@@ -16,29 +15,31 @@ export default async function WeddingEditLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth.api.getSession({
-    headers: await headers(),
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+
+  const context = await withTenantDb(user.id, async (db) => {
+    const role = await getWeddingRole(db, id, user.id);
+    if (!role) return null;
+
+    const result = await db.query<{
+      id: string;
+      slug: string | null;
+      status: string;
+      content: unknown;
+    }>(
+      `SELECT id, slug, status, content
+         FROM public.weddings
+        WHERE id = $1
+        LIMIT 1`,
+      [id]
+    );
+    const wedding = result.rows[0];
+    return wedding ? { wedding, role } : null;
   });
-  if (!session?.user) redirect("/login");
 
-  const supabase = createServerClient();
-  const { data: wedding, error: weddingError } = await supabase
-    .from("weddings")
-    .select("id, slug, status, content")
-    .eq("id", id)
-    .single();
-
-  if (weddingError || !wedding) notFound();
-
-  const { data: membership } = await supabase
-    .from("wedding_collaborators")
-    .select("role")
-    .eq("wedding_id", id)
-    .eq("user_id", session.user.id)
-    .single();
-
-  if (!membership) redirect("/dashboard");
-  const role = membership.role === "owner" ? "owner" : "collaborator";
+  if (!context) notFound();
+  const { wedding, role } = context;
 
   const c = wedding.content as { couple?: { bride?: { name?: string }; groom?: { name?: string } } } | undefined;
   const bride = c?.couple?.bride?.name;
