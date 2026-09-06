@@ -4,19 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: (id: string) => `/dashboard/weddings/${id}`, label: "Overview" },
-  { href: (id: string) => `/dashboard/weddings/${id}/content`, label: "Content" },
-  { href: (id: string) => `/dashboard/weddings/${id}/layout-sections`, label: "Layout" },
-  { href: (id: string) => `/dashboard/weddings/${id}/guests`, label: "Guests" },
-  { href: (id: string) => `/dashboard/weddings/${id}/settings`, label: "Settings" },
+  { href: (id: string) => `/dashboard/weddings/${id}`, label: "Overview", ownerOnly: false },
+  { href: (id: string) => `/dashboard/weddings/${id}/content`, label: "Content", ownerOnly: false },
+  { href: (id: string) => `/dashboard/weddings/${id}/layout-sections`, label: "Layout", ownerOnly: false },
+  { href: (id: string) => `/dashboard/weddings/${id}/guests`, label: "Guests", ownerOnly: true },
+  { href: (id: string) => `/dashboard/weddings/${id}/settings`, label: "Settings", ownerOnly: true },
 ] as const;
 
-export function WeddingTabs({ weddingId }: { weddingId: string }) {
+export function WeddingTabs({
+  weddingId,
+  role,
+}: {
+  weddingId: string;
+  role: "owner" | "collaborator";
+}) {
   const pathname = usePathname();
+  const visibleTabs = TABS.filter((tab) => !tab.ownerOnly || role === "owner");
 
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-white/6" aria-label="Project sections">
-      {TABS.map(({ href, label }) => {
+      {visibleTabs.map(({ href, label }) => {
         const resolved = href(weddingId);
         const isActive =
           resolved === pathname ||
