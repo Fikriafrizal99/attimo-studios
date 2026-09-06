@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     init: true
     env_file:
-      - .env.production
+      - ${APP_ENV_FILE:-.env.production}
     environment:
       NODE_ENV: production
       PORT: "3000"
