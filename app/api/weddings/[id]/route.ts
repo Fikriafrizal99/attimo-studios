@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase";
+import { withTenantDb, type TenantDbClient } from "@/lib/db";
 import { getSessionUser, getWeddingRole } from "@/lib/commerce/access";
 import { normalizeWeddingContent } from "@/lib/commerce/content";
 import { validateSlug } from "@/lib/commerce/validation";
@@ -8,6 +8,19 @@ import { resolveTemplate, validateTemplateCompatibility } from "@/templates/regi
 import type { SectionConfig } from "@/lib/wedding-defaults";
 
 const OWNER_ONLY_PATCH_FIELDS = ["theme", "template_id", "slug", "status"] as const;
+
+type WeddingRow = {
+  id: string;
+  slug: string | null;
+  status: string;
+  template_id: string;
+  sections: unknown;
+  content: unknown;
+  theme: unknown;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 function parseSections(value: unknown): SectionConfig[] | null {
   if (!Array.isArray(value)) return null;
@@ -52,12 +65,49 @@ function releaseErrors(input: {
   return errors;
 }
 
-async function loadWedding(supabase: ReturnType<typeof createServerClient>, id: string) {
-  return supabase
-    .from("weddings")
-    .select("id, slug, status, template_id, sections, content, theme, published_at, created_at, updated_at")
-    .eq("id", id)
-    .maybeSingle();
+async function loadWedding(db: TenantDbClient, id: string): Promise<WeddingRow | null> {
+  const result = await db.query<WeddingRow>(
+    `SELECT id, slug, status, template_id, sections, content, theme,
+            published_at, created_at, updated_at
+       FROM public.weddings
+      WHERE id = $1
+      LIMIT 1`,
+    [id]
+  );
+  return result.rows[0] ?? null;
+}
+
+async function updateWedding(
+  db: TenantDbClient,
+  id: string,
+  updates: Record<string, unknown>
+): Promise<WeddingRow | null> {
+  const allowed = new Set([
+    "content",
+    "theme",
+    "sections",
+    "template_id",
+    "slug",
+    "status",
+    "published_at",
+    "updated_at",
+  ]);
+  const entries = Object.entries(updates).filter(([key]) => allowed.has(key));
+  if (!entries.length) return loadWedding(db, id);
+
+  const values = entries.map(([, value]) => value);
+  const setClause = entries.map(([key], index) => `${key} = $${index + 1}`).join(", ");
+  values.push(id);
+
+  const result = await db.query<WeddingRow>(
+    `UPDATE public.weddings
+        SET ${setClause}
+      WHERE id = $${values.length}
+      RETURNING id, slug, status, template_id, sections, content, theme,
+                published_at, created_at, updated_at`,
+    values
+  );
+  return result.rows[0] ?? null;
 }
 
 export async function GET(
@@ -68,16 +118,18 @@ export async function GET(
     const user = await getSessionUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
-    const supabase = createServerClient();
-    const role = await getWeddingRole(supabase, id, user.id);
-    if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { data, error } = await loadWedding(supabase, id);
-    if (error || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({
-      ...data,
-      role,
-      public_url: data.slug ? buildInvitationUrl({ slug: data.slug }) : null,
+    return await withTenantDb(user.id, async (db) => {
+      const role = await getWeddingRole(db, id, user.id);
+      if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+      const wedding = await loadWedding(db, id);
+      if (!wedding) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({
+        ...wedding,
+        role,
+        public_url: wedding.slug ? buildInvitationUrl({ slug: wedding.slug }) : null,
+      });
     });
   } catch (error) {
     console.error("GET /api/weddings/[id] failed", error);
@@ -93,101 +145,113 @@ export async function PATCH(
     const user = await getSessionUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
-    const supabase = createServerClient();
-    const role = await getWeddingRole(supabase, id, user.id);
-    if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-    const { data: wedding, error: loadError } = await loadWedding(supabase, id);
-    if (loadError || !wedding) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
     const body = await request.json().catch(() => ({}));
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    if (role === "collaborator") {
-      const forbiddenFields = OWNER_ONLY_PATCH_FIELDS.filter(
-        (field) => (body as Record<string, unknown>)[field] !== undefined
-      );
-      if (forbiddenFields.length > 0) {
-        return NextResponse.json(
-          {
-            error: "Only the owner can change wedding settings or publish state",
-            fields: forbiddenFields,
-          },
-          { status: 403 }
+    return await withTenantDb(user.id, async (db) => {
+      const role = await getWeddingRole(db, id, user.id);
+      if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+      const wedding = await loadWedding(db, id);
+      if (!wedding) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+      if (role === "collaborator") {
+        const forbiddenFields = OWNER_ONLY_PATCH_FIELDS.filter(
+          (field) => (body as Record<string, unknown>)[field] !== undefined
         );
-      }
-    }
-
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
-
-    if (body.content !== undefined) updates.content = normalizeWeddingContent(body.content);
-    if (body.theme !== undefined) {
-      if (!body.theme || typeof body.theme !== "object" || Array.isArray(body.theme)) {
-        return NextResponse.json({ error: "Invalid theme" }, { status: 400 });
-      }
-      updates.theme = body.theme;
-    }
-    if (body.sections !== undefined) {
-      const sections = parseSections(body.sections);
-      if (!sections) return NextResponse.json({ error: "Invalid sections" }, { status: 400 });
-      updates.sections = sections;
-    }
-    if (body.template_id !== undefined) {
-      if (typeof body.template_id !== "string") return NextResponse.json({ error: "Invalid template" }, { status: 400 });
-      try {
-        resolveTemplate(body.template_id);
-      } catch {
-        return NextResponse.json({ error: "Template is not available" }, { status: 400 });
-      }
-      updates.template_id = body.template_id;
-    }
-    if (body.slug !== undefined) {
-      const validated = validateSlug(body.slug);
-      if (!validated.ok) return NextResponse.json({ error: validated.error }, { status: 400 });
-      const { data: existing } = await supabase
-        .from("weddings")
-        .select("id")
-        .eq("slug", validated.value)
-        .neq("id", id)
-        .maybeSingle();
-      if (existing) return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
-      updates.slug = validated.value;
-    }
-
-    if (body.status !== undefined) {
-      if (body.status !== "draft" && body.status !== "released") {
-        return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-      }
-      if (body.status === "released") {
-        const targetSlug = (updates.slug as string | undefined) ?? wedding.slug;
-        const targetTemplate = (updates.template_id as string | undefined) ?? wedding.template_id;
-        const targetContent = updates.content ?? wedding.content;
-        const targetSections = (updates.sections as SectionConfig[] | undefined) ?? (Array.isArray(wedding.sections) ? (wedding.sections as SectionConfig[]) : []);
-        const errors = releaseErrors({ slug: targetSlug, templateId: targetTemplate, content: targetContent, sections: targetSections });
-        if (errors.length) {
-          return NextResponse.json({ error: "Wedding is not ready to release", details: errors }, { status: 422 });
+        if (forbiddenFields.length > 0) {
+          return NextResponse.json(
+            {
+              error: "Only the owner can change wedding settings or publish state",
+              fields: forbiddenFields,
+            },
+            { status: 403 }
+          );
         }
-        updates.published_at = wedding.published_at ?? new Date().toISOString();
       }
-      updates.status = body.status;
-    }
 
-    const { data: updated, error: updateError } = await supabase
-      .from("weddings")
-      .update(updates)
-      .eq("id", id)
-      .select("id, slug, status, template_id, sections, content, theme, published_at, created_at, updated_at")
-      .single();
-    if (updateError) throw updateError;
+      const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
-    return NextResponse.json({
-      ...updated,
-      role,
-      public_url: updated.slug ? buildInvitationUrl({ slug: updated.slug }) : null,
+      if (body.content !== undefined) updates.content = normalizeWeddingContent(body.content);
+      if (body.theme !== undefined) {
+        if (!body.theme || typeof body.theme !== "object" || Array.isArray(body.theme)) {
+          return NextResponse.json({ error: "Invalid theme" }, { status: 400 });
+        }
+        updates.theme = body.theme;
+      }
+      if (body.sections !== undefined) {
+        const sections = parseSections(body.sections);
+        if (!sections) return NextResponse.json({ error: "Invalid sections" }, { status: 400 });
+        updates.sections = sections;
+      }
+      if (body.template_id !== undefined) {
+        if (typeof body.template_id !== "string") {
+          return NextResponse.json({ error: "Invalid template" }, { status: 400 });
+        }
+        try {
+          resolveTemplate(body.template_id);
+        } catch {
+          return NextResponse.json({ error: "Template is not available" }, { status: 400 });
+        }
+        updates.template_id = body.template_id;
+      }
+      if (body.slug !== undefined) {
+        const validated = validateSlug(body.slug);
+        if (!validated.ok) return NextResponse.json({ error: validated.error }, { status: 400 });
+
+        const availability = await db.query<{ available: boolean }>(
+          `SELECT app_private.is_wedding_slug_available($1, $2::uuid) AS available`,
+          [validated.value, id]
+        );
+        if (availability.rows[0]?.available !== true) {
+          return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
+        }
+        updates.slug = validated.value;
+      }
+
+      if (body.status !== undefined) {
+        if (body.status !== "draft" && body.status !== "released") {
+          return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+        }
+        if (body.status === "released") {
+          const targetSlug = (updates.slug as string | undefined) ?? wedding.slug;
+          const targetTemplate = (updates.template_id as string | undefined) ?? wedding.template_id;
+          const targetContent = updates.content ?? wedding.content;
+          const targetSections =
+            (updates.sections as SectionConfig[] | undefined) ??
+            (Array.isArray(wedding.sections) ? (wedding.sections as SectionConfig[]) : []);
+          const errors = releaseErrors({
+            slug: targetSlug,
+            templateId: targetTemplate,
+            content: targetContent,
+            sections: targetSections,
+          });
+          if (errors.length) {
+            return NextResponse.json(
+              { error: "Wedding is not ready to release", details: errors },
+              { status: 422 }
+            );
+          }
+          updates.published_at = wedding.published_at ?? new Date().toISOString();
+        }
+        updates.status = body.status;
+      }
+
+      const updated = await updateWedding(db, id, updates);
+      if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+      return NextResponse.json({
+        ...updated,
+        role,
+        public_url: updated.slug ? buildInvitationUrl({ slug: updated.slug }) : null,
+      });
     });
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return NextResponse.json({ error: "Slug already in use" }, { status: 409 });
+    }
     console.error("PATCH /api/weddings/[id] failed", error);
     return NextResponse.json({ error: "Failed to update wedding" }, { status: 500 });
   }
@@ -201,14 +265,18 @@ export async function DELETE(
     const user = await getSessionUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await context.params;
-    const supabase = createServerClient();
-    const role = await getWeddingRole(supabase, id, user.id);
-    if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    if (role !== "owner") return NextResponse.json({ error: "Only the owner can delete this wedding" }, { status: 403 });
 
-    const { error } = await supabase.from("weddings").delete().eq("id", id);
-    if (error) throw error;
-    return NextResponse.json({ success: true });
+    return await withTenantDb(user.id, async (db) => {
+      const role = await getWeddingRole(db, id, user.id);
+      if (!role) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (role !== "owner") {
+        return NextResponse.json({ error: "Only the owner can delete this wedding" }, { status: 403 });
+      }
+
+      const result = await db.query(`DELETE FROM public.weddings WHERE id = $1`, [id]);
+      if ((result.rowCount ?? 0) === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ success: true });
+    });
   } catch (error) {
     console.error("DELETE /api/weddings/[id] failed", error);
     return NextResponse.json({ error: "Failed to delete wedding" }, { status: 500 });
