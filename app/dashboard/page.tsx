@@ -38,6 +38,10 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const weddings = await withTenantDb(user.id, async (db) => {
+    // If this account was invited before sign-up/sign-in, convert matching
+    // pending email invites into ordinary collaborator memberships first.
+    await db.query(`SELECT app_private.claim_pending_collaborator_invites_for_current_user()`);
+
     const result = await db.query<WeddingListRow>(
       `SELECT
          w.id,
