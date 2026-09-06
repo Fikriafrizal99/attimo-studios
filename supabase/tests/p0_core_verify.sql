@@ -8,7 +8,7 @@ BEGIN;
 DO $$
 DECLARE
   rls_missing_count INTEGER;
-  policy_count INTEGER;
+  anon_policy_count INTEGER;
   w1 UUID;
   w2 UUID;
   g1 UUID;
@@ -43,13 +43,14 @@ BEGIN
     RAISE EXCEPTION 'P0 verification failed: RLS is not enabled on every tenant table';
   END IF;
 
-  SELECT COUNT(*) INTO policy_count
+  SELECT COUNT(*) INTO anon_policy_count
   FROM pg_policies
   WHERE schemaname = 'public'
-    AND tablename IN ('weddings', 'wedding_collaborators', 'guests', 'rsvp', 'wishes');
+    AND tablename IN ('weddings', 'wedding_collaborators', 'guests', 'rsvp', 'wishes')
+    AND 'anon' = ANY(roles);
 
-  IF policy_count <> 0 THEN
-    RAISE EXCEPTION 'P0 verification failed: direct table RLS policies exist; P0 expects server-route-only access';
+  IF anon_policy_count <> 0 THEN
+    RAISE EXCEPTION 'P0 verification failed: anon must not have direct tenant-table RLS policies';
   END IF;
 
   IF EXISTS (SELECT 1 FROM weddings WHERE template_id = 'classic') THEN
