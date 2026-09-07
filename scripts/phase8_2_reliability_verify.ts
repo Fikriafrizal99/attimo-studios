@@ -86,7 +86,7 @@ requireIncludes(
     "/api/ready",
     "pg_dump",
     "pg_restore",
-    "migration repair",
+    "migration-repair",
     "Do **not** blindly run `supabase db push`",
     "Application code rollback",
     "Supabase Storage backup boundary",
