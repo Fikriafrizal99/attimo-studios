@@ -1,17 +1,45 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { resolveWeddingSubdomainSlug } from "@/lib/commerce/subdomain";
+import { createRequestId } from "@/lib/commerce/observability";
+
+function responseWithRequestId(response: NextResponse, requestId: string) {
+  response.headers.set("x-request-id", requestId);
+  return response;
+}
+
+function nextWithRequestId(request: NextRequest, requestId: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-id", requestId);
+  return responseWithRequestId(
+    NextResponse.next({ request: { headers: requestHeaders } }),
+    requestId
+  );
+}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const allowPublicSignup = process.env.ALLOW_PUBLIC_SIGNUP === "true";
+  const requestId = createRequestId(request);
 
   if (!allowPublicSignup && pathname.startsWith("/api/auth/sign-up")) {
-    return NextResponse.json({ error: "Public sign-up is disabled" }, { status: 404 });
+    return responseWithRequestId(
+      NextResponse.json({ error: "Public sign-up is disabled" }, { status: 404 }),
+      requestId
+    );
   }
 
   if (!allowPublicSignup && pathname === "/signup") {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return responseWithRequestId(
+      NextResponse.redirect(new URL("/login", request.url)),
+      requestId
+    );
+  }
+
+  // API calls only need request correlation here. Invitation subdomain routing
+  // applies to document requests and must never rewrite/redirect API paths.
+  if (pathname.startsWith("/api/")) {
+    return nextWithRequestId(request, requestId);
   }
 
   if (process.env.PUBLIC_INVITATION_MODE === "subdomain") {
@@ -28,27 +56,29 @@ export function proxy(request: NextRequest) {
         if (pathname !== "/") {
           const canonical = request.nextUrl.clone();
           canonical.pathname = "/";
-          return NextResponse.redirect(canonical, 308);
+          return responseWithRequestId(NextResponse.redirect(canonical, 308), requestId);
         }
 
         const url = request.nextUrl.clone();
         url.pathname = "/invitation";
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set("x-wedding-slug", slug);
-        return NextResponse.rewrite(url, {
-          request: { headers: requestHeaders },
-        });
+        requestHeaders.set("x-request-id", requestId);
+        return responseWithRequestId(
+          NextResponse.rewrite(url, {
+            request: { headers: requestHeaders },
+          }),
+          requestId
+        );
       }
     }
   }
 
-  return NextResponse.next();
+  return nextWithRequestId(request, requestId);
 }
 
 export const config = {
   matcher: [
-    "/api/auth/sign-up/:path*",
-    "/signup",
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp3)$).*)",
   ],
 };
