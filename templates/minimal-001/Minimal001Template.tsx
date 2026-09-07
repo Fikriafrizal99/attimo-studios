@@ -5,6 +5,10 @@ import RSVPSection from "@/components/RSVPSection";
 import WishesSection from "@/components/WishesSection";
 import GiftSection from "@/components/GiftSection";
 import MusicPlayer from "@/components/MusicPlayer";
+import {
+  editorialTypographyClassName,
+  editorialTypographyStyle,
+} from "@/templates/typography/packs/editorial";
 import type { TemplateRenderProps } from "@/templates/types";
 
 export function Minimal001Template({
@@ -21,7 +25,12 @@ export function Minimal001Template({
 
   return (
     <InvitationProvider value={{ weddingId, publicSlug, content, sections, guest }}>
-      <main className="min-h-screen bg-[#f8f7f3] text-[#1f1f1d]">
+      <main
+        className={`${editorialTypographyClassName} min-h-screen bg-[#f8f7f3] text-[#1f1f1d]`}
+        style={editorialTypographyStyle}
+        data-endriya-template="minimal-001"
+        data-endriya-typography="cormorant-garamond+dm-serif-display+inter"
+      >
         {enabled.has("hero") && (
           <section className="relative flex min-h-[92vh] items-end overflow-hidden px-6 pb-16 pt-24 md:px-12">
             {heroImage ? (
@@ -43,7 +52,10 @@ export function Minimal001Template({
               <p className="mb-3 text-sm uppercase tracking-[0.32em] text-white/75">
                 {content.hero?.greeting || "The Wedding of"}
               </p>
-              <h1 className="font-serif text-5xl leading-none md:text-8xl">
+              <h1
+                className="text-5xl leading-none md:text-8xl"
+                style={{ fontFamily: "var(--font-wedding-display, var(--font-playfair))" }}
+              >
                 {bride?.shortName || bride?.name || "Bride"}
                 <span className="mx-3 font-light italic">&</span>
                 {groom?.shortName || groom?.name || "Groom"}
