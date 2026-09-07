@@ -33,6 +33,8 @@ const SECTION_COMPONENTS: Partial<Record<WeddingSectionId, ComponentType>> = {
   music: MusicPlayer,
 };
 
+const CLAY_MAX_DEVICE_PIXEL_RATIO = 1.5;
+
 const SCENE_POINTS = new Float32Array([
   -0.46, 0.35, 0.04, 92, 0.90, 0.67, 0.53,
   -0.46, 0.00, 0.00, 112, 0.17, 0.29, 0.34,
@@ -154,7 +156,7 @@ function ClayWebGLScene({ pointerX }: { pointerX: number }) {
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, CLAY_MAX_DEVICE_PIXEL_RATIO);
       canvas.width = Math.max(1, Math.floor(rect.width * dpr));
       canvas.height = Math.max(1, Math.floor(rect.height * dpr));
       gl.viewport(0, 0, canvas.width, canvas.height);
