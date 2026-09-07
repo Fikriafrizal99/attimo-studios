@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/orders", label: "Orders" },
   { href: "/dashboard/pipeline", label: "Pipeline" },
   { href: "/dashboard/customers", label: "Customers" },
+  { href: "/dashboard/templates", label: "Templates" },
 ] as const;
 
 function ProfileDropdownPlaceholder() {
