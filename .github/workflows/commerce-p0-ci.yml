@@ -88,6 +88,9 @@ jobs:
       - name: Verify Phase 7.2 Cartoon Love Story
         run: bun scripts/phase7_2_cartoon_template_verify.ts
 
+      - name: Verify Phase 7.3 Storybook Romance
+        run: bun scripts/phase7_3_storybook_template_verify.ts
+
       - name: Build
         run: bun run build
 
