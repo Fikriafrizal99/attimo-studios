@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/commerce/access";
 import type { PaymentStatus, ProductionStatus } from "@/lib/commerce/operations";
@@ -96,12 +97,17 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#BFA14A]">Commerce Operations</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-50">Orders</h1>
-        <p className="mt-1 text-xs text-neutral-500">
-          Track package, price, payment, production status, revision count, and optional wedding linkage.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#BFA14A]">Commerce Operations</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-50">Orders</h1>
+          <p className="mt-1 text-xs text-neutral-500">
+            Track package, price, payment, production status, revision count, and optional wedding linkage.
+          </p>
+        </div>
+        <Link href="/dashboard/pipeline" className="rounded-md border border-white/10 px-4 py-2 text-xs font-medium text-neutral-300 hover:bg-white/5">
+          View pipeline →
+        </Link>
       </div>
       <OrderManager
         initialOrders={data.orders}
