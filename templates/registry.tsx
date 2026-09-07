@@ -1,6 +1,7 @@
 import { CartoonLoveStoryTemplate } from "@/templates/cartoon-001/CartoonLoveStoryTemplate";
 import { Classic001Template } from "@/templates/classic-001/Classic001Template";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
+import { PaperCutGardenTemplate } from "@/templates/paper-cut-001/PaperCutGardenTemplate";
 import { StorybookRomanceTemplate } from "@/templates/storybook-001/StorybookRomanceTemplate";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
 import { validateTemplateTypography } from "@/templates/typography/catalog";
@@ -127,6 +128,36 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
       reducedMotionFallback: true,
     },
     render: StorybookRomanceTemplate,
+  }),
+  "paper-cut-001": defineTemplate({
+    id: "paper-cut-001",
+    name: "Endriya Paper Cut Garden 001",
+    family: "paper-cut-garden",
+    category: "Whimsical",
+    tags: ["paper-cut", "garden", "layered", "parallax", "2.5d", "whimsical"],
+    version: 1,
+    status: "active",
+    visualTier: "2.5d",
+    typography: {
+      display: "allura",
+      heading: "dm-serif-display",
+      body: "inter",
+      accent: "allura",
+      fallback: {
+        display: "playfair-display",
+        heading: "playfair-display",
+        body: "inter",
+      },
+    },
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    performance: {
+      renderingMode: "hybrid",
+      motionLevel: "rich",
+      mobileProfile: "adaptive",
+      reducedMotionFallback: true,
+    },
+    render: PaperCutGardenTemplate,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001",
