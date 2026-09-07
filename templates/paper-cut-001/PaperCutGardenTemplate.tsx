@@ -38,6 +38,33 @@ const SECTION_COMPONENTS: Partial<Record<WeddingSectionId, ComponentType>> = {
   music: MusicPlayer,
 };
 
+const DEPTH_FACTORS = {
+  1: { x: -2, y: -2, scroll: -4 },
+  2: { x: -4, y: -3, scroll: -8 },
+  3: { x: -7, y: -5, scroll: -13 },
+  4: { x: -10, y: -7, scroll: -18 },
+  5: { x: -14, y: -9, scroll: -24 },
+  6: { x: -17, y: -11, scroll: -29 },
+  8: { x: -24, y: -15, scroll: -40 },
+} as const;
+
+type DepthKey = keyof typeof DEPTH_FACTORS;
+
+function setPointerDepth(root: HTMLElement, x: number, y: number) {
+  (Object.keys(DEPTH_FACTORS) as unknown as DepthKey[]).forEach((depth) => {
+    const factor = DEPTH_FACTORS[depth];
+    root.style.setProperty(`--paper-x${depth}`, `${(x * factor.x).toFixed(2)}px`);
+    root.style.setProperty(`--paper-y${depth}`, `${(y * factor.y).toFixed(2)}px`);
+  });
+}
+
+function setScrollDepth(root: HTMLElement, progress: number) {
+  (Object.keys(DEPTH_FACTORS) as unknown as DepthKey[]).forEach((depth) => {
+    const factor = DEPTH_FACTORS[depth];
+    root.style.setProperty(`--paper-s${depth}`, `${(progress * factor.scroll).toFixed(2)}px`);
+  });
+}
+
 function PaperFlower({ className = "" }: { className?: string }) {
   return (
     <div className={`${styles.paperFlower} ${className}`} aria-hidden="true">
@@ -128,11 +155,12 @@ export function PaperCutGardenTemplate({
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         const progress = Math.min(window.scrollY / Math.max(window.innerHeight, 1), 1.5);
-        root.style.setProperty("--paper-scroll", progress.toFixed(3));
+        setScrollDepth(root, progress);
         frame = 0;
       });
     };
 
+    setPointerDepth(root, 0, 0);
     updateScrollDepth();
     window.addEventListener("scroll", updateScrollDepth, { passive: true });
     return () => {
@@ -146,16 +174,14 @@ export function PaperCutGardenTemplate({
     if (!root || event.pointerType === "touch") return;
     const rect = root.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / Math.max(window.innerHeight, 1) - 0.5) * 2;
-    root.style.setProperty("--paper-x", x.toFixed(3));
-    root.style.setProperty("--paper-y", y.toFixed(3));
+    const y = ((event.clientY / Math.max(window.innerHeight, 1)) - 0.5) * 2;
+    setPointerDepth(root, x, y);
   };
 
   const resetPointer = () => {
     const root = rootRef.current;
     if (!root) return;
-    root.style.setProperty("--paper-x", "0");
-    root.style.setProperty("--paper-y", "0");
+    setPointerDepth(root, 0, 0);
   };
 
   return (
