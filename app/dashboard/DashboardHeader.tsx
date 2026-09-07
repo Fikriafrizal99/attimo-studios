@@ -7,8 +7,9 @@ import { BrandMark } from "@/components/BrandMark";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Projects" },
+  { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/orders", label: "Orders" },
+  { href: "/dashboard/pipeline", label: "Pipeline" },
   { href: "/dashboard/customers", label: "Customers" },
 ] as const;
 
