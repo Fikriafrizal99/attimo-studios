@@ -43,19 +43,24 @@ Baca dalam urutan berikut:
 8. **`PHASE4_PUBLIC_DELIVERY.md`**  
    Phase 4 public delivery/publishing implementation record. Repository work is implemented; real-host verification is intentionally deferred to Phase 9.
 
-9. **`PRODUCTION_P0_RUNBOOK.md`**  
+9. **`PHASE5_COMMERCE_OPERATIONS.md`**  
+   Phase 5 customers, orders, payment status, RSVP analytics, wishes moderation, tenant boundaries, API/UI, and verification record.
+
+10. **`PRODUCTION_P0_RUNBOOK.md`**  
    Supabase, Better Auth, tenant-isolation, storage, domain, and device verification baseline.
 
-10. **`SELF_HOST_DOCKER.md`**  
+11. **`SELF_HOST_DOCKER.md`**  
    Self-host deployment on a single Ubuntu/Docker server.
 
-11. **`UPSTREAM_LICENSE_STATUS.md`**  
+12. **`UPSTREAM_LICENSE_STATUS.md`**  
    Tracks the commercial-use/license blocker inherited from the upstream repository.
 
 ## Current Product Decisions
 
 - One platform manages many weddings.
 - V1 is admin-managed; customers do not need an editor account.
+- Customer/order commercial records are operator-owner scoped.
+- A linked order may reference only a wedding owned by that same operator.
 - Wedding data is separated from visual template implementation.
 - Template catalog has no artificial numeric cap.
 - Templates are not required to look structurally identical.
@@ -82,8 +87,8 @@ Phase 2  Multi-tenant Operational Base      IMPLEMENTED
 Phase 3  Wedding Engine                     IMPLEMENTED
 Phase 4  Public Delivery & Publishing       IMPLEMENTED
                                              Deployment verification deferred to Phase 9
-Phase 5  Commerce Operations                NEXT
-Phase 6  Commercial/Admin Workflow          PLANNED
+Phase 5  Commerce Operations                IMPLEMENTED
+Phase 6  Commercial/Admin Workflow          NEXT
 Phase 7  Template Catalog Scaling           PLANNED
 Phase 8  Production Hardening               PLANNED
 Phase 9  Full Integration & E2E Testing      PLANNED
@@ -94,7 +99,7 @@ Phase 10 Launch Readiness                   PLANNED
 
 Deferring full E2E does **not** mean deferring engineering quality checks.
 
-During Phases 5–8, each meaningful implementation must keep the relevant verification chain green:
+During Phases 6–8, each meaningful implementation must keep the relevant verification chain green:
 
 - environment preflight where applicable,
 - service-role/security boundary verification,
@@ -118,6 +123,7 @@ A red CI result must be fixed before moving to the next major phase.
 | P0 Implementation Status | Repository/Supabase verified; environment gates tracked separately |
 | Phase 3 Wedding Engine | Implemented |
 | Phase 4 Public Delivery | Implemented; deployment verification deferred to Phase 9 |
+| Phase 5 Commerce Operations | **Implemented; production application deferred to Phase 9** |
 | Production P0 Runbook | Ready for Phase 9/production verification work |
 | Self-Host Docker Runbook | Ready |
 | Upstream License Status | External launch blocker |
