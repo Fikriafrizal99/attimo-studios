@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -172,7 +173,7 @@ export function CustomerManager({ initialCustomers }: { initialCustomers: Custom
                 {visibleCustomers.map((customer) => (
                   <tr key={customer.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.025]">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-neutral-50">{customer.name}</p>
+                      <Link href={`/dashboard/customers/${customer.id}`} className="font-medium text-neutral-50 hover:underline">{customer.name}</Link>
                       {customer.notes && <p className="mt-1 max-w-xs truncate text-[11px] text-neutral-500">{customer.notes}</p>}
                     </td>
                     <td className="px-4 py-3 text-neutral-400">
@@ -183,6 +184,7 @@ export function CustomerManager({ initialCustomers }: { initialCustomers: Custom
                     <td className="px-4 py-3 text-neutral-500">{new Date(customer.updated_at).toLocaleString("id-ID")}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-3">
+                        <Link href={`/dashboard/customers/${customer.id}`} className="text-[#BFA14A] hover:underline">Open</Link>
                         <button type="button" onClick={() => edit(customer)} className="hover:underline">Edit</button>
                         <button type="button" onClick={() => remove(customer)} className="text-red-300 hover:underline">Delete</button>
                       </div>
