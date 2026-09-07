@@ -91,6 +91,9 @@ jobs:
       - name: Verify Phase 7.3 Storybook Romance
         run: bun scripts/phase7_3_storybook_template_verify.ts
 
+      - name: Verify Phase 7.4 Paper Cut Garden 2.5D
+        run: bun scripts/phase7_4_paper_cut_template_verify.ts
+
       - name: Build
         run: bun run build
 
