@@ -100,6 +100,9 @@ jobs:
       - name: Verify Phase 7.6 Clay Couple 3D
         run: bun scripts/phase7_6_clay_template_verify.ts
 
+      - name: Verify Phase 7 catalog completion
+        run: bun scripts/phase7_catalog_completion_verify.ts
+
       - name: Build
         run: bun run build
 
