@@ -34,6 +34,7 @@ export default function Hero() {
   const brideName = bride?.shortName || bride?.name || "Bride";
   const groomName = groom?.shortName || groom?.name || "Groom";
   const coverImage = hero?.coverImage;
+  const displayFont = { fontFamily: "var(--font-wedding-display, var(--font-playfair))" };
 
   return (
     <section id="hero" ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden">
@@ -53,13 +54,13 @@ export default function Hero() {
           </div>
         )}
         <p className="mb-5 text-sm uppercase tracking-[0.32em] text-white/80">{hero?.greeting || "The Wedding of"}</p>
-        <h1 className="font-serif text-5xl font-bold md:text-7xl">{brideName}</h1>
+        <h1 className="text-6xl font-normal leading-none md:text-8xl" style={displayFont}>{brideName}</h1>
         <div className="my-6 flex items-center justify-center gap-4">
           <div className="h-px w-16 bg-white/50" />
           <Heart className="size-6 fill-rose-300 text-rose-300" />
           <div className="h-px w-16 bg-white/50" />
         </div>
-        <h2 className="font-serif text-5xl font-bold md:text-7xl">{groomName}</h2>
+        <h2 className="text-6xl font-normal leading-none md:text-8xl" style={displayFont}>{groomName}</h2>
         {hero?.subtitle && <p className="mx-auto mt-7 max-w-2xl text-lg text-white/90">{hero.subtitle}</p>}
         {hero?.quote && <p className="mx-auto mt-5 max-w-2xl font-serif text-lg italic text-white/80">“{hero.quote}”</p>}
         {blessing?.translation && (
