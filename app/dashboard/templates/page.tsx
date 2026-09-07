@@ -66,47 +66,51 @@ export default async function TemplatesCatalogPage({
         <div className="rounded-md border border-dashed border-white/10 p-10 text-center text-sm text-neutral-500">No template matches the selected filters.</div>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((template) => (
-            <article key={template.id} className="overflow-hidden rounded-md border border-white/10 bg-[#141416]">
-              <div className="aspect-[12/7] overflow-hidden border-b border-white/10 bg-black/20">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={template.thumbnail} alt={`${template.name} thumbnail`} className="h-full w-full object-cover transition duration-300 hover:scale-[1.015]" />
-              </div>
-              <div className="space-y-4 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-neutral-100">{template.name}</p>
-                    <p className="mt-1 font-mono text-[10px] text-neutral-600">{template.id} · v{template.version}</p>
+          {filtered.map((template) => {
+            const thumbnail = template.thumbnail ?? `/api/template-thumbnails/${template.id}`;
+            const previewPath = template.previewPath ?? `/dashboard/templates/${template.id}/preview`;
+            return (
+              <article key={template.id} className="overflow-hidden rounded-md border border-white/10 bg-[#141416]">
+                <div className="aspect-[12/7] overflow-hidden border-b border-white/10 bg-black/20">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={thumbnail} alt={`${template.name} thumbnail`} className="h-full w-full object-cover transition duration-300 hover:scale-[1.015]" />
+                </div>
+                <div className="space-y-4 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-neutral-100">{template.name}</p>
+                      <p className="mt-1 font-mono text-[10px] text-neutral-600">{template.id} · v{template.version}</p>
+                    </div>
+                    <span className={template.status === "active" ? "rounded-full border border-emerald-500/25 bg-emerald-500/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-300" : "rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-500"}>{template.status}</span>
                   </div>
-                  <span className={template.status === "active" ? "rounded-full border border-emerald-500/25 bg-emerald-500/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-emerald-300" : "rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-neutral-500"}>{template.status}</span>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Category</span><b className="mt-1 block font-medium text-neutral-300">{template.category}</b></div>
-                  <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Visual tier</span><b className="mt-1 block font-medium text-neutral-300">{template.visualTier}</b></div>
-                  <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Rendering</span><b className="mt-1 block font-medium text-neutral-300">{template.performance.renderingMode}</b></div>
-                  <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Motion / mobile</span><b className="mt-1 block font-medium text-neutral-300">{template.performance.motionLevel} · {template.performance.mobileProfile}</b></div>
-                </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Category</span><b className="mt-1 block font-medium text-neutral-300">{template.category}</b></div>
+                    <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Visual tier</span><b className="mt-1 block font-medium text-neutral-300">{template.visualTier}</b></div>
+                    <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Rendering</span><b className="mt-1 block font-medium text-neutral-300">{template.performance.renderingMode}</b></div>
+                    <div className="rounded-md border border-white/8 bg-black/10 p-2.5"><span className="block text-neutral-600">Motion / mobile</span><b className="mt-1 block font-medium text-neutral-300">{template.performance.motionLevel} · {template.performance.mobileProfile}</b></div>
+                  </div>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {template.tags.slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-white/8 px-2 py-1 text-[10px] text-neutral-500">{tag}</span>)}
-                </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {template.tags.slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-white/8 px-2 py-1 text-[10px] text-neutral-500">{tag}</span>)}
+                  </div>
 
-                <div className="border-t border-white/8 pt-3 text-[10px] text-neutral-500">
-                  <span>{template.typography.display}</span> · <span>{template.typography.heading}</span> · <span>{template.typography.body}</span>
-                </div>
+                  <div className="border-t border-white/8 pt-3 text-[10px] text-neutral-500">
+                    <span>{template.typography.display}</span> · <span>{template.typography.heading}</span> · <span>{template.typography.body}</span>
+                  </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] uppercase tracking-[0.14em] text-neutral-600">{template.family}</span>
-                  {template.status === "active" ? (
-                    <Link href={template.previewPath} className="rounded-md border border-[#BFA14A]/35 bg-[#BFA14A]/5 px-3 py-2 text-xs font-medium text-[#D7BD6C] hover:bg-[#BFA14A]/10">Full preview →</Link>
-                  ) : (
-                    <span className="rounded-md border border-white/8 px-3 py-2 text-xs text-neutral-600">Preview unavailable</span>
-                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-neutral-600">{template.family}</span>
+                    {template.status === "active" ? (
+                      <Link href={previewPath} className="rounded-md border border-[#BFA14A]/35 bg-[#BFA14A]/5 px-3 py-2 text-xs font-medium text-[#D7BD6C] hover:bg-[#BFA14A]/10">Full preview →</Link>
+                    ) : (
+                      <span className="rounded-md border border-white/8 px-3 py-2 text-xs text-neutral-600">Preview unavailable</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
