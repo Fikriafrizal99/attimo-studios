@@ -1,9 +1,11 @@
 import { requireDbPool } from "@/lib/db";
+import { logServerError, requestIdFrom } from "@/lib/commerce/observability";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const startedAt = Date.now();
+  const requestId = requestIdFrom(request);
   try {
     const result = await requireDbPool().query<{
       weddings_table: string | null;
@@ -33,6 +35,7 @@ export async function GET() {
           service: "endriya",
           check: "readiness",
           reason: "database_schema_incomplete",
+          requestId,
           timestamp: new Date().toISOString(),
         },
         {
@@ -49,6 +52,7 @@ export async function GET() {
         check: "readiness",
         database: "ok",
         latencyMs: Date.now() - startedAt,
+        requestId,
         timestamp: new Date().toISOString(),
       },
       {
@@ -56,13 +60,14 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("GET /api/ready failed", error);
+    logServerError("readiness_check_failed", request, error);
     return Response.json(
       {
         status: "not_ready",
         service: "endriya",
         check: "readiness",
         reason: "database_unavailable",
+        requestId,
         timestamp: new Date().toISOString(),
       },
       {
