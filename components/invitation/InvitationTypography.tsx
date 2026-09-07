@@ -14,11 +14,15 @@ import type {
   WeddingFontId,
 } from "@/templates/typography/catalog";
 
+// Custom wedding font faces remain centralized for stable semantic variables,
+// but none are preloaded globally. Browsers fetch only faces that are actually
+// used by the selected template; platform Inter/Playfair remain the fallback.
 const allura = Allura({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-endriya-allura",
   display: "swap",
+  preload: false,
 });
 
 const cormorant = Cormorant_Garamond({
@@ -26,6 +30,7 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   variable: "--font-endriya-cormorant",
   display: "swap",
+  preload: false,
 });
 
 const dmSerif = DM_Serif_Display({
@@ -33,6 +38,7 @@ const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
   variable: "--font-endriya-dm-serif-display",
   display: "swap",
+  preload: false,
 });
 
 const lora = Lora({
@@ -40,6 +46,7 @@ const lora = Lora({
   subsets: ["latin"],
   variable: "--font-endriya-lora",
   display: "swap",
+  preload: false,
 });
 
 const nunito = Nunito({
@@ -47,6 +54,7 @@ const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-endriya-nunito",
   display: "swap",
+  preload: false,
 });
 
 const parisienne = Parisienne({
@@ -54,6 +62,7 @@ const parisienne = Parisienne({
   subsets: ["latin"],
   variable: "--font-endriya-parisienne",
   display: "swap",
+  preload: false,
 });
 
 const cinzelDecorative = Cinzel_Decorative({
@@ -61,6 +70,7 @@ const cinzelDecorative = Cinzel_Decorative({
   subsets: ["latin"],
   variable: "--font-endriya-cinzel-decorative",
   display: "swap",
+  preload: false,
 });
 
 const sacramento = Sacramento({
@@ -68,6 +78,7 @@ const sacramento = Sacramento({
   subsets: ["latin"],
   variable: "--font-endriya-sacramento",
   display: "swap",
+  preload: false,
 });
 
 const loadedFontVariable: Partial<Record<WeddingFontId, string>> = {
