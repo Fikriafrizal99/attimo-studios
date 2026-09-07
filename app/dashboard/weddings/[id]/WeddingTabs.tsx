@@ -8,6 +8,8 @@ const TABS = [
   { href: (id: string) => `/dashboard/weddings/${id}/content`, label: "Content", ownerOnly: false },
   { href: (id: string) => `/dashboard/weddings/${id}/layout-sections`, label: "Layout", ownerOnly: false },
   { href: (id: string) => `/dashboard/weddings/${id}/guests`, label: "Guests", ownerOnly: true },
+  { href: (id: string) => `/dashboard/weddings/${id}/rsvp`, label: "RSVP", ownerOnly: true },
+  { href: (id: string) => `/dashboard/weddings/${id}/wishes`, label: "Wishes", ownerOnly: true },
   { href: (id: string) => `/dashboard/weddings/${id}/collaborators`, label: "Collaborators", ownerOnly: true },
   { href: (id: string) => `/dashboard/weddings/${id}/settings`, label: "Settings", ownerOnly: true },
 ] as const;
