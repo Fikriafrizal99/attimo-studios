@@ -12,7 +12,7 @@ The agreed initial experience set is:
 
 1. **Editorial Ivory** — Standard 2D
 2. **Cartoon Love Story** — Motion 2D — **IMPLEMENTED**
-3. **Storybook Romance** — Motion 2D
+3. **Storybook Romance** — Motion 2D — **IMPLEMENTED**
 4. **Paper Cut Garden** — 2.5D
 5. **Pasundan Storyland** — 2.5D
 6. **Clay Couple** — 3D / immersive progression
@@ -181,36 +181,69 @@ Experience characteristics:
 - `prefers-reduced-motion` CSS fallback,
 - distinct `illustrated-motion` experience marker.
 
-Business-boundary rule remains intact. Cartoon reuses the shared:
+Business-boundary rule remains intact. Cartoon reuses the shared Couple, Date/countdown, Location/maps, Story, Gallery, RSVP, Wishes, Gift, and Music components. It does not implement separate public business API logic.
 
-- Couple section,
-- Date/countdown,
-- Location/maps,
-- Story,
-- Gallery,
-- RSVP,
-- Wishes,
-- Gift,
-- Music player.
+## 10. Phase 7.3 — Storybook Romance
 
-The Cartoon renderer does not implement separate RSVP/wishes/gift API logic.
+**Status:** IMPLEMENTED
 
-Phase 7.2 verification requires:
+Template ID:
 
-- both `classic-001` and `cartoon-001` active,
-- full canonical section contract,
-- distinct render functions,
+```text
+storybook-001
+```
+
+Catalog identity:
+
+```text
+family       → storybook-romance
+category     → Illustrated
+visual tier  → 2d
+motion       → rich
+mobile       → full
+```
+
+Typography:
+
+```text
+display → Parisienne
+heading → Cormorant Garamond
+body    → Lora
+accent  → Parisienne
+```
+
+Experience characteristics:
+
+- two-page illustrated book spread for the desktop hero,
+- responsive single-page/story composition on mobile,
+- paper texture, page edge, central book-spine and botanical decoration,
+- custom wedding-story cover page with guest personalization,
+- landscape illustration page with layered hills, trees and couple silhouette,
+- canonical sections framed as Chapters I–VIII,
+- page/chapter reveal motion and subtle environmental motion,
+- `prefers-reduced-motion` fallback,
+- distinct `storybook-motion` experience marker.
+
+Storybook reuses the same shared Couple, Date/countdown, Location/maps, Story, Gallery, RSVP, Wishes, Gift, and Music components as the other active experiences. It introduces no new wedding schema and no duplicate RSVP/wishes/gift API logic.
+
+Phase 7.3 verification requires:
+
+- `classic-001`, `cartoon-001`, and `storybook-001` active simultaneously,
+- full canonical section contract for Storybook,
+- independent Storybook renderer,
 - canonical compatibility success,
-- shared business section reuse,
+- shared business-section reuse,
 - reduced-motion declaration,
-- illustrated catalog metadata.
+- correct Storybook catalog/typography identity,
+- production Next.js build success,
+- database smoke success,
+- Docker image and container health success.
 
-This proves that the same canonical wedding contract can now render into at least two substantially different production experiences without changing the wedding schema.
+With Phase 7.3, one canonical wedding contract now supports three substantially different active visual experiences.
 
-## 10. Remaining Phase 7 Work
+## 11. Remaining Phase 7 Work
 
-- build Storybook Romance renderer,
-- build Paper Cut Garden 2.5D renderer,
+- build Paper Cut Garden 2.5D renderer — **NEXT**,
 - build Pasundan Storyland 2.5D renderer,
 - build Clay Couple 3D/fallback architecture,
 - complete Editorial Ivory full canonical contract and activate it,
