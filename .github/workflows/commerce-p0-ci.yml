@@ -85,6 +85,9 @@ jobs:
       - name: Verify Phase 7.1 wedding typography
         run: bun scripts/phase7_1_typography_verify.ts
 
+      - name: Verify Phase 7.2 Cartoon Love Story
+        run: bun scripts/phase7_2_cartoon_template_verify.ts
+
       - name: Build
         run: bun run build
 
