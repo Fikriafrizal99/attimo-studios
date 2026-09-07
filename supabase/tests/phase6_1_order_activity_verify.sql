@@ -28,8 +28,8 @@ SELECT set_config('app.better_auth_user_id', 'phase6-owner-a', true);
 
 DO $$
 DECLARE
-  customer_id UUID;
-  order_id UUID;
+  v_customer_id UUID;
+  v_order_id UUID;
   create_events INTEGER;
   status_events INTEGER;
   payment_events INTEGER;
@@ -38,7 +38,7 @@ DECLARE
 BEGIN
   INSERT INTO public.customers (owner_user_id, name, phone)
   VALUES ('phase6-owner-a', 'Phase 6 Customer A', '080000000061')
-  RETURNING id INTO customer_id;
+  RETURNING id INTO v_customer_id;
 
   INSERT INTO public.orders (
     owner_user_id,
@@ -50,42 +50,42 @@ BEGIN
     production_status
   ) VALUES (
     'phase6-owner-a',
-    customer_id,
+    v_customer_id,
     'Premium',
     'classic-001',
     250000,
     'unpaid',
     'new'
-  ) RETURNING id INTO order_id;
+  ) RETURNING id INTO v_order_id;
 
   UPDATE public.orders
      SET production_status = 'in_progress',
          payment_status = 'partial',
          revision_count = 1
-   WHERE id = order_id;
+   WHERE id = v_order_id;
 
   SELECT COUNT(*) INTO create_events
-    FROM public.order_activity
-   WHERE order_id = order_id
-     AND event_type = 'created';
+    FROM public.order_activity oa
+   WHERE oa.order_id = v_order_id
+     AND oa.event_type = 'created';
 
   SELECT COUNT(*) INTO status_events
     FROM public.order_activity oa
-   WHERE oa.order_id = order_id
+   WHERE oa.order_id = v_order_id
      AND oa.event_type = 'production_status_changed'
      AND oa.from_value = 'new'
      AND oa.to_value = 'in_progress';
 
   SELECT COUNT(*) INTO payment_events
     FROM public.order_activity oa
-   WHERE oa.order_id = order_id
+   WHERE oa.order_id = v_order_id
      AND oa.event_type = 'payment_status_changed'
      AND oa.from_value = 'unpaid'
      AND oa.to_value = 'partial';
 
   SELECT COUNT(*) INTO revision_events
     FROM public.order_activity oa
-   WHERE oa.order_id = order_id
+   WHERE oa.order_id = v_order_id
      AND oa.event_type = 'revision_count_changed'
      AND oa.from_value = '0'
      AND oa.to_value = '1';
@@ -95,8 +95,8 @@ BEGIN
   END IF;
 
   IF EXISTS (
-    SELECT 1 FROM public.order_activity
-    WHERE order_id = '63636363-6363-4636-8636-636363636363'
+    SELECT 1 FROM public.order_activity oa
+    WHERE oa.order_id = '63636363-6363-4636-8636-636363636363'
   ) THEN
     RAISE EXCEPTION 'Phase 6 verification failed: activity RLS leaked another owner';
   END IF;
@@ -105,7 +105,7 @@ BEGIN
     INSERT INTO public.order_activity (
       owner_user_id, order_id, actor_user_id, event_type
     ) VALUES (
-      'phase6-owner-a', order_id, 'phase6-owner-a', 'created'
+      'phase6-owner-a', v_order_id, 'phase6-owner-a', 'created'
     );
   EXCEPTION WHEN insufficient_privilege THEN
     direct_insert_blocked := TRUE;
