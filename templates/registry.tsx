@@ -1,11 +1,3 @@
-import { CartoonLoveStoryTemplate } from "@/templates/cartoon-001/CartoonLoveStoryTemplate";
-import { Classic001Template } from "@/templates/classic-001/Classic001Template";
-import { ClayCoupleTemplate } from "@/templates/clay-001/ClayCoupleTemplate";
-import { EditorialIvoryTemplate } from "@/templates/editorial-001/EditorialIvoryTemplate";
-import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
-import { PaperCutGardenTemplate } from "@/templates/paper-cut-001/PaperCutGardenTemplate";
-import { PasundanStorylandTemplate } from "@/templates/pasundan-001/PasundanStorylandTemplate";
-import { StorybookRomanceTemplate } from "@/templates/storybook-001/StorybookRomanceTemplate";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
 import { validateTemplateTypography } from "@/templates/typography/catalog";
 import type { TemplateDefinition, TemplateVisualTier } from "@/templates/types";
@@ -34,6 +26,10 @@ function defineTemplate(definition: TemplateDefinition): TemplateDefinition {
 
 const FALLBACK = { display: "playfair-display", heading: "playfair-display", body: "inter" } as const;
 
+/**
+ * Catalog metadata only. Do not import renderer modules in this file.
+ * Client renderers are code-split in components/invitation/TemplateRuntime.tsx.
+ */
 export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = Object.freeze({
   "classic-001": defineTemplate({
     id: "classic-001", name: "Endriya Classic 001", family: "classic", category: "Classic",
@@ -41,7 +37,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "allura", heading: "cormorant-garamond", body: "lora", accent: "allura", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "dom", motionLevel: "rich", mobileProfile: "full", reducedMotionFallback: true },
-    render: Classic001Template,
   }),
   "editorial-001": defineTemplate({
     id: "editorial-001", name: "Endriya Editorial Ivory 001", family: "editorial-ivory", category: "Elegant",
@@ -49,7 +44,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "cormorant-garamond", heading: "dm-serif-display", body: "inter", accent: "cormorant-garamond", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "dom", motionLevel: "light", mobileProfile: "full", reducedMotionFallback: true },
-    render: EditorialIvoryTemplate,
   }),
   "cartoon-001": defineTemplate({
     id: "cartoon-001", name: "Endriya Cartoon Love Story 001", family: "cartoon-love-story", category: "Illustrated",
@@ -57,7 +51,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "parisienne", heading: "nunito", body: "nunito", accent: "parisienne", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "dom", motionLevel: "rich", mobileProfile: "full", reducedMotionFallback: true },
-    render: CartoonLoveStoryTemplate,
   }),
   "storybook-001": defineTemplate({
     id: "storybook-001", name: "Endriya Storybook Romance 001", family: "storybook-romance", category: "Illustrated",
@@ -65,7 +58,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "parisienne", heading: "cormorant-garamond", body: "lora", accent: "parisienne", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "dom", motionLevel: "rich", mobileProfile: "full", reducedMotionFallback: true },
-    render: StorybookRomanceTemplate,
   }),
   "paper-cut-001": defineTemplate({
     id: "paper-cut-001", name: "Endriya Paper Cut Garden 001", family: "paper-cut-garden", category: "Whimsical",
@@ -73,7 +65,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "allura", heading: "dm-serif-display", body: "inter", accent: "allura", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "hybrid", motionLevel: "rich", mobileProfile: "adaptive", reducedMotionFallback: true },
-    render: PaperCutGardenTemplate,
   }),
   "pasundan-001": defineTemplate({
     id: "pasundan-001", name: "Endriya Pasundan Storyland 001", family: "pasundan-storyland", category: "Heritage Nusantara",
@@ -81,7 +72,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "cinzel-decorative", heading: "cormorant-garamond", body: "lora", accent: "cinzel-decorative", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "hybrid", motionLevel: "rich", mobileProfile: "adaptive", reducedMotionFallback: true },
-    render: PasundanStorylandTemplate,
   }),
   "clay-001": defineTemplate({
     id: "clay-001", name: "Endriya Clay Couple 001", family: "clay-couple", category: "Whimsical",
@@ -89,7 +79,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     typography: { display: "sacramento", heading: "nunito", body: "nunito", accent: "sacramento", fallback: FALLBACK },
     contentSchemaVersion: 1, sectionContract: FULL_SECTION_CONTRACT,
     performance: { renderingMode: "webgl", motionLevel: "immersive", mobileProfile: "adaptive", reducedMotionFallback: true },
-    render: ClayCoupleTemplate,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001", name: "Endriya Minimal 001", family: "minimal-editorial", category: "Modern",
@@ -98,7 +87,6 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
     contentSchemaVersion: 1,
     sectionContract: ["hero", "couple", "location", "story", "gallery", "rsvp", "wishes", "gift", "music"],
     performance: { renderingMode: "dom", motionLevel: "light", mobileProfile: "full", reducedMotionFallback: true },
-    render: Minimal001Template,
   }),
 });
 
@@ -131,5 +119,5 @@ export function validateTemplateCompatibility(templateId: string, sectionIds: st
 }
 
 export function getTemplateRegistrySnapshot() {
-  return Object.values(TEMPLATE_REGISTRY).map(({ render: _render, ...definition }) => definition);
+  return Object.values(TEMPLATE_REGISTRY);
 }
