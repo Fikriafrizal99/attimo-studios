@@ -103,6 +103,9 @@ jobs:
       - name: Verify Phase 7 catalog completion
         run: bun scripts/phase7_catalog_completion_verify.ts
 
+      - name: Verify Phase 8.1 security baseline
+        run: bun scripts/phase8_1_security_verify.ts
+
       - name: Build
         run: bun run build
 
@@ -170,6 +173,9 @@ jobs:
 
       - name: Verify Phase 6.1 order activity
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase6_1_order_activity_verify.sql
+
+      - name: Verify Phase 8.1 shared security rate limits
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase8_1_security_rate_limits_verify.sql
 
   docker-smoke:
     runs-on: ubuntu-latest
