@@ -1,0 +1,338 @@
+.root {
+  --pas-x-far: 0px;
+  --pas-y-far: 0px;
+  --pas-x-mid: 0px;
+  --pas-y-mid: 0px;
+  --pas-x-near: 0px;
+  --pas-y-near: 0px;
+  --pas-scroll-far: 0px;
+  --pas-scroll-mid: 0px;
+  --pas-scroll-near: 0px;
+  --forest: #294138;
+  --forest-deep: #182a24;
+  --gold: #d3b66c;
+  --ivory: #f7edd9;
+  --mist: #aac8c7;
+  --earth: #6c5541;
+  min-height: 100vh;
+  background: var(--forest-deep);
+  color: var(--ivory);
+  overflow: hidden;
+  font-family: var(--font-wedding-body, var(--font-inter));
+}
+
+.hero {
+  min-height: 100vh;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  perspective: 1200px;
+  background: linear-gradient(180deg, #9ec3c5 0%, #d8ccaa 56%, #45624d 56%, #243a31 100%);
+}
+
+.layer {
+  position: absolute;
+  inset: -8%;
+  pointer-events: none;
+  will-change: transform;
+  transition: transform 160ms ease-out;
+}
+
+.sky {
+  transform: translate3d(var(--pas-x-far), calc(var(--pas-y-far) + var(--pas-scroll-far)), -30px) scale(1.04);
+  background:
+    radial-gradient(circle at 22% 19%, rgba(255,255,255,.48) 0 4%, transparent 4.3%),
+    radial-gradient(circle at 78% 15%, rgba(255,255,255,.28) 0 3%, transparent 3.3%);
+}
+
+.sun {
+  transform: translate3d(var(--pas-x-far), calc(var(--pas-y-far) + var(--pas-scroll-far)), -10px) scale(1.03);
+}
+
+.sun::before {
+  content: "";
+  position: absolute;
+  width: clamp(110px, 14vw, 190px);
+  aspect-ratio: 1;
+  right: 13%;
+  top: 13%;
+  border-radius: 50%;
+  background: #ddc277;
+  box-shadow: 0 0 70px rgba(221, 194, 119, .32);
+}
+
+.mountainBack,
+.mountainFront {
+  transform: translate3d(var(--pas-x-mid), calc(var(--pas-y-mid) + var(--pas-scroll-mid)), 8px) scale(1.025);
+}
+
+.mountainBack::before,
+.mountainBack::after,
+.mountainFront::before,
+.mountainFront::after {
+  content: "";
+  position: absolute;
+  bottom: 36%;
+  width: 46vw;
+  height: 34vw;
+  max-height: 430px;
+  clip-path: polygon(50% 0%, 100% 100%, 0 100%);
+}
+
+.mountainBack::before { left: -4%; background: #718a7c; }
+.mountainBack::after { right: -8%; background: #849889; transform: scale(.82); transform-origin: bottom; }
+.mountainFront::before { left: 15%; bottom: 32%; background: #526d5c; transform: scale(.72); transform-origin: bottom; }
+.mountainFront::after { right: 13%; bottom: 31%; background: #607966; transform: scale(.62); transform-origin: bottom; }
+
+.terrace {
+  transform: translate3d(var(--pas-x-mid), calc(var(--pas-y-mid) + var(--pas-scroll-mid)), 24px) scale(1.02);
+}
+
+.terrace::before {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -2%;
+  height: 42%;
+  background:
+    repeating-radial-gradient(ellipse at 50% 120%, #56734e 0 26px, #69845c 27px 48px, #3f5b43 49px 70px);
+  opacity: .9;
+  filter: drop-shadow(0 -14px 18px rgba(20, 40, 30, .14));
+}
+
+.gateLayer {
+  transform: translate3d(var(--pas-x-mid), calc(var(--pas-y-mid) + var(--pas-scroll-mid)), 52px);
+  display: grid;
+  place-items: center;
+  z-index: 4;
+}
+
+.gate {
+  width: min(62vw, 650px);
+  height: min(60vh, 620px);
+  position: relative;
+  margin-top: 9vh;
+}
+
+.gateRoof {
+  position: absolute;
+  left: 50%;
+  top: 3%;
+  width: 74%;
+  height: 17%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #392d25, #211a16);
+  clip-path: polygon(50% 0, 100% 68%, 88% 100%, 50% 62%, 12% 100%, 0 68%);
+  box-shadow: 0 16px 22px rgba(0,0,0,.18);
+}
+
+.gatePillar {
+  position: absolute;
+  bottom: 3%;
+  width: 12%;
+  height: 72%;
+  background:
+    linear-gradient(90deg, rgba(211,182,108,.12), transparent 22%, transparent 78%, rgba(211,182,108,.12)),
+    #30251f;
+  border: 1px solid rgba(211,182,108,.18);
+  box-shadow: 0 20px 24px rgba(0,0,0,.16);
+}
+.leftPillar { left: 16%; }
+.rightPillar { right: 16%; }
+
+.gateBeam {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 30%;
+  height: 9%;
+  background: #392d25;
+  border: 1px solid rgba(211,182,108,.16);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 7;
+  width: min(760px, 88vw);
+  padding: 8rem 1.5rem 4.5rem;
+  text-align: center;
+  transform: translate3d(var(--pas-x-near), calc(var(--pas-y-near) + var(--pas-scroll-near)), 82px);
+  transition: transform 160ms ease-out;
+}
+
+.guest {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 1.2rem;
+  border: 1px solid rgba(247,237,217,.28);
+  border-radius: 999px;
+  padding: .58rem .95rem;
+  background: rgba(24,42,36,.48);
+  backdrop-filter: blur(8px);
+  font-size: .8rem;
+}
+
+.kicker {
+  margin: 0 0 .8rem;
+  font-family: var(--font-wedding-accent, var(--font-playfair));
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.names {
+  margin: 0;
+  display: grid;
+  gap: .2rem;
+  font-family: var(--font-wedding-heading, var(--font-playfair));
+  font-size: clamp(3.8rem, 8vw, 8.4rem);
+  line-height: .8;
+  font-weight: 500;
+  color: #fff8e9;
+  text-shadow: 0 12px 34px rgba(16, 32, 26, .35);
+}
+
+.names em {
+  margin: .35rem 0;
+  font-family: var(--font-wedding-display, var(--font-playfair));
+  font-size: clamp(1.6rem, 2.7vw, 2.6rem);
+  font-style: normal;
+  color: var(--gold);
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 1.6rem auto 0;
+  color: #f6efdf;
+  line-height: 1.85;
+  text-shadow: 0 3px 12px rgba(19,34,29,.35);
+}
+
+.openButton {
+  margin-top: 1.9rem;
+  border: 1px solid rgba(255,248,233,.24);
+  border-radius: 999px;
+  padding: .9rem 1.5rem;
+  background: var(--gold);
+  color: #26211b;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 13px 28px rgba(30,28,20,.22);
+  transition: transform 180ms ease;
+}
+.openButton:hover { transform: translateY(-2px); }
+
+.foreground {
+  transform: translate3d(var(--pas-x-near), calc(var(--pas-y-near) + var(--pas-scroll-near)), 105px) scale(1.02);
+  z-index: 8;
+}
+
+.bambooLeaf {
+  position: absolute;
+  width: clamp(150px, 18vw, 270px);
+  height: clamp(280px, 35vw, 510px);
+  background: linear-gradient(145deg, #29462f, #162c20);
+  border-radius: 78% 8% 78% 8%;
+  filter: drop-shadow(0 18px 18px rgba(17,35,25,.24));
+}
+.leafOne { left: -4%; bottom: -10%; transform: rotate(-22deg); }
+.leafTwo { right: -5%; bottom: -8%; transform: scaleX(-1) rotate(-20deg); }
+.leafThree { right: 4%; top: 11%; transform: scale(.56) rotate(34deg); opacity: .88; }
+
+.wovenPanel {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  left: 5%;
+  top: 12%;
+  opacity: .11;
+  background:
+    repeating-linear-gradient(45deg, #d7bd79 0 7px, transparent 7px 14px),
+    repeating-linear-gradient(-45deg, #d7bd79 0 7px, transparent 7px 14px);
+  border-radius: 50%;
+}
+
+.storySection {
+  position: relative;
+  padding: 4.5rem 1rem;
+  background: linear-gradient(180deg, #20362e, #172b25);
+  overflow: hidden;
+}
+.storySection:nth-of-type(even) { background: linear-gradient(180deg, #294238, #20362e); }
+
+.sectionOrnament {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ornamentLeafLeft,
+.ornamentLeafRight {
+  position: absolute;
+  width: 170px;
+  height: 280px;
+  border-radius: 75% 8% 75% 8%;
+  background: #759074;
+  opacity: .09;
+}
+.ornamentLeafLeft { left: -80px; top: 8%; transform: rotate(-20deg); }
+.ornamentLeafRight { right: -80px; bottom: 8%; transform: scaleX(-1) rotate(-18deg); }
+
+.sectionFrame {
+  position: relative;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(211,182,108,.15);
+  border-radius: 26px;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(39,61,52,.92), rgba(29,48,40,.94)),
+    repeating-linear-gradient(45deg, rgba(211,182,108,.035) 0 8px, transparent 8px 16px);
+  box-shadow: 0 28px 48px rgba(7,20,15,.18);
+}
+
+.sectionLabel {
+  width: fit-content;
+  margin: 1.25rem auto -1rem;
+  padding: .45rem .9rem;
+  border: 1px solid rgba(211,182,108,.22);
+  border-radius: 999px;
+  color: var(--gold);
+  font-family: var(--font-wedding-accent, var(--font-playfair));
+  font-size: .72rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.sectionFrame :global(section) { background: transparent !important; color: var(--ivory); }
+.sectionFrame :global(.text-gray-600),
+.sectionFrame :global(.text-gray-700),
+.sectionFrame :global(.text-gray-800) { color: #ddd4c2 !important; }
+.sectionFrame :global(.bg-white),
+.sectionFrame :global(.bg-gray-50),
+.sectionFrame :global(.bg-rose-50\/30) { background-color: rgba(255,255,255,.04) !important; }
+
+@media (max-width: 800px) {
+  .gate { width: 86vw; height: 58vh; }
+  .heroContent { padding-inline: 1rem; }
+  .names { font-size: clamp(3.2rem, 16vw, 5.8rem); }
+  .wovenPanel { display: none; }
+  .bambooLeaf { opacity: .82; }
+  .storySection { padding: 3rem .55rem; }
+  .sectionFrame { border-radius: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .heroContent,
+  .openButton {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+  .openButton:hover { transform: none !important; }
+}
