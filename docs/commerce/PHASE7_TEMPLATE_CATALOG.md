@@ -1,27 +1,30 @@
 # ENDRIYA — Phase 7 Template Catalog Scaling
 
-**Status:** IN PROGRESS  
+**Status:** IMPLEMENTED  
 **Branch:** `develop/commerce-foundation`  
 **Phase:** 7 — Template Catalog Scaling
 
-## 1. Product Direction
+## 1. Outcome
 
-Phase 7 proves that the same canonical wedding data and business blocks can render into substantially different visual experiences.
+Phase 7 proves that the same canonical wedding data and shared business blocks can render into substantially different production experiences without changing wedding/customer/order schemas, guest logic, RSVP/wishes logic, public routing, or publish lifecycle.
 
-The agreed initial experience set is:
+Active production experiences:
 
-1. **Editorial Ivory** — Standard 2D
-2. **Cartoon Love Story** — Motion 2D — **IMPLEMENTED**
-3. **Storybook Romance** — Motion 2D — **IMPLEMENTED**
-4. **Paper Cut Garden** — 2.5D — **IMPLEMENTED**
-5. **Pasundan Storyland** — 2.5D — **IMPLEMENTED**
-6. **Clay Couple** — 3D / WebGL progressive enhancement — **IMPLEMENTED**
+```text
+classic-001      → Classic / Motion 2D
+editorial-001    → Elegant / Editorial 2D
+cartoon-001      → Illustrated / Motion 2D
+storybook-001    → Illustrated / Motion 2D
+paper-cut-001    → Whimsical / 2.5D
+pasundan-001     → Heritage Nusantara / 2.5D
+clay-001         → Whimsical / WebGL 3D
+```
 
-These are experience references, not color-only variants. Theme/color variants must not be counted as separate sellable templates unless the experience is substantively different.
+`minimal-001` remains `draft` as an older incomplete experiment and is intentionally not exposed as an active production template.
 
-## 2. Canonical Section Contract
+## 2. Canonical Contract
 
-Every active template must preserve the complete wedding section contract:
+Every active renderer implements:
 
 ```text
 hero
@@ -36,61 +39,39 @@ hero
 → music
 ```
 
-A template may alter visual composition, motion, typography, storytelling, depth, and interaction, but must not duplicate tenant-sensitive or public business logic.
+The public route remains template-neutral and delegates presentation through the canonical `InvitationRenderer` / Template Registry. No public-route template special cases were added.
 
-## 3. Wedding Typography System
+## 3. Typography Foundation
 
-Typography is a first-class template identity instead of forcing every invitation to use the global platform pair.
-
-Semantic roles:
+Typography is a template identity with semantic roles:
 
 ```text
-display → couple names / hero statement
-heading → section titles / important labels
-body    → paragraphs / event data / forms
-accent  → optional short decorative text
+display
+heading
+body
+accent
 ```
 
-Global platform fallback remains:
+Curated Phase 7 fonts:
 
-```text
-display → Playfair Display
-heading → Playfair Display
-body    → Inter
-```
-
-Templates may override these through curated wedding fonts.
-
-## 4. Curated Font Registry
-
-Initial registry:
-
-### Platform / fallback
 - Inter
 - Playfair Display
-
-### Elegant serif
 - Cormorant Garamond
 - DM Serif Display
 - Lora
-
-### Wedding script
-- Allura
-- Parisienne
-- Sacramento
-
-### Friendly / illustrated
 - Nunito
-
-### Heritage / decorative
+- Parisienne
+- Allura
+- Sacramento
 - Cinzel Decorative
 
-All registry entries must record their source and commercial-use license status. The current registry accepts only reviewed `OFL-1.1` entries from Google Fonts.
+Fonts are loaded at the invitation boundary through `next/font`; registry metadata remains pure/verifiable. Playfair Display + Inter remain the platform fallback. Script/decorative fonts are limited to display/accent roles.
 
-## 5. Production Pairing Direction
+Production pairings:
 
-| Experience | Display | Heading | Body |
+| Template | Display | Heading | Body |
 |---|---|---|---|
+| Classic | Allura | Cormorant Garamond | Lora |
 | Editorial Ivory | Cormorant Garamond | DM Serif Display | Inter |
 | Cartoon Love Story | Parisienne | Nunito | Nunito |
 | Storybook Romance | Parisienne | Cormorant Garamond | Lora |
@@ -98,220 +79,154 @@ All registry entries must record their source and commercial-use license status.
 | Pasundan Storyland | Cinzel Decorative | Cormorant Garamond | Lora |
 | Clay Couple | Sacramento | Nunito | Nunito |
 
-Exact pairing may still be adjusted after real-device visual QA, but each experience must retain a distinct typography identity.
+## 4. Experience Implementations
 
-## 6. Readability Rules
+### Cartoon Love Story — `cartoon-001`
 
-1. Script/decorative fonts are for display or short accent use only.
-2. RSVP, wishes, event details, maps, gift information, and other functional text must use a readable body font.
-3. Typography must remain readable on small mobile screens.
-4. Font choice must not change the wedding data contract.
-5. Font failure must gracefully fall back to Playfair Display / Inter.
-6. Unknown or unreviewed fonts must not be accepted by the template registry.
-7. User-uploaded arbitrary font files are not supported in Phase 7.
+Illustrated bride/groom opening, playful scene/micro-motion, chapter framing, responsive mobile composition, and reduced-motion fallback. Uses shared Couple/Date/Location/Story/Gallery/RSVP/Wishes/Gift/Music blocks.
 
-## 7. Loading Architecture
+### Storybook Romance — `storybook-001`
 
-Font metadata belongs to the Template Registry.
+Two-page illustrated book hero on desktop, single-page mobile adaptation, paper/book visual language, chapter framing, subtle motion, and reduced-motion fallback.
 
-Actual `next/font` loaders belong to the invitation rendering boundary, not the registry module itself. This keeps repository verification scripts pure and allows Next.js to process font assets correctly.
+### Paper Cut Garden — `paper-cut-001`
 
-Current semantic CSS variables:
+First 2.5D experience. Layered DOM/CSS foreground/midground/background, perspective, pointer/scroll parallax, `requestAnimationFrame` throttling, `translate3d`, adaptive mobile profile, no WebGL dependency.
 
-```text
---font-wedding-display
---font-wedding-heading
---font-wedding-body
---font-wedding-accent
-```
+### Pasundan Storyland — `pasundan-001`
 
-Shared invitation blocks inherit these variables, so business components such as RSVP, wishes, date, gift, and location do not need separate implementations per template.
+Heritage Nusantara 2.5D composition with Priangan landscape, layered mountain ranges, gate, bamboo/foliage and woven treatment, Sundanese-oriented opening language, parallax, adaptive mobile behavior, and reduced-motion fallback. It is a distinct composition, not a Paper Cut recolor.
 
-The invitation boundary now loads the curated fonts needed by the active experience set, including Cinzel Decorative for heritage display use and Sacramento for Clay Couple display use.
+### Clay Couple — `clay-001`
 
-## 8. Phase 7.1 — Typography Foundation
+First active WebGL/3D architecture proof. Native WebGL renders clay-like couple forms with custom shaders, subtle camera movement and pointer steering. Important information remains DOM content. WebGL failure/reduced-motion paths retain usable static/fallback presentation. This is the architecture proof, not the final custom-avatar/rigging pipeline.
 
-**Status:** IMPLEMENTED
+### Editorial Ivory — `editorial-001`
 
-Implemented:
+Elegant Standard 2D baseline with split editorial hero, ivory/ink visual system, strong typographic hierarchy, restrained motion, full canonical section framing, and shared business blocks. This provides a low-complexity premium baseline alongside illustrated, 2.5D, heritage, and WebGL experiences.
 
-- curated Wedding Font Registry,
-- typography metadata added to `TemplateDefinition`,
-- registry-level typography validation,
-- semantic wedding typography CSS variables,
-- invitation-level font loading boundary,
-- shared Hero uses the semantic display font,
-- `classic-001` pairing: Allura + Cormorant Garamond + Lora,
-- `minimal-001` direction: Cormorant Garamond + DM Serif Display + Inter,
-- loaders for the curated Phase 7 experience fonts,
-- Phase 7 typography verifier added to CI.
+## 5. Metadata and Catalog
 
-## 9. Phase 7.2 — Cartoon Love Story
+Template Registry now exposes stable metadata for every entry:
 
-**Status:** IMPLEMENTED
+- ID,
+- name,
+- family,
+- category,
+- tags,
+- version,
+- lifecycle status,
+- visual tier,
+- typography,
+- canonical section contract,
+- performance profile,
+- thumbnail,
+- preview path.
 
-Template ID: `cartoon-001`
+Default stable catalog assets are derived centrally:
 
 ```text
-family       → cartoon-love-story
-category     → Illustrated
-visual tier  → 2d
-motion       → rich
-mobile       → full
+thumbnail   → /api/template-thumbnails/{templateId}
+previewPath → /dashboard/templates/{templateId}/preview
 ```
 
-Typography: Parisienne + Nunito + Nunito.
-
-Experience characteristics include a custom illustrated/cartoon hero, animated bride/groom scene, playful landscape composition, chapter framing, mobile-first responsive treatment, reduced-motion fallback, and reuse of the canonical shared business sections.
-
-## 10. Phase 7.3 — Storybook Romance
-
-**Status:** IMPLEMENTED
-
-Template ID: `storybook-001`
+Operator catalog:
 
 ```text
-family       → storybook-romance
-category     → Illustrated
-visual tier  → 2d
-motion       → rich
-mobile       → full
+/dashboard/templates
 ```
 
-Typography: Parisienne + Cormorant Garamond + Lora.
+Catalog supports:
 
-Experience characteristics include a two-page illustrated book spread, responsive single-page mobile composition, paper/page treatment, chapter framing, subtle motion, reduced-motion fallback, and reuse of the same canonical business sections.
+- keyword/tag search,
+- category filter,
+- visual-tier filter,
+- active/draft/archive lifecycle filter,
+- typography/performance metadata visibility,
+- generated thumbnail cards,
+- full internal preview navigation.
 
-## 11. Phase 7.4 — Paper Cut Garden 2.5D
+The main Commerce Studio navigation now includes **Templates**.
 
-**Status:** IMPLEMENTED
+## 6. Shared Preview Fixture
 
-Template ID: `paper-cut-001`
+All catalog previews use one canonical wedding fixture:
 
 ```text
-family         → paper-cut-garden
-category       → Whimsical
-visual tier    → 2.5d
-rendering mode → hybrid
-motion         → rich
-mobile         → adaptive
+lib/commerce/template-preview-fixture.ts
 ```
 
-Typography: Allura + DM Serif Display + Inter.
-
-Paper Cut Garden introduced layered foreground/midground/background depth, pointer and scroll parallax, `requestAnimationFrame` throttling, compositor-friendly `translate3d`, adaptive mobile depth, touch-safe behavior, and reduced-motion fallback without requiring WebGL.
-
-## 12. Phase 7.5 — Pasundan Storyland 2.5D
-
-**Status:** IMPLEMENTED
-
-Template ID:
+Full preview route:
 
 ```text
-pasundan-001
+/dashboard/templates/{templateId}/preview
 ```
 
-Catalog identity:
+The route renders through the same `InvitationRenderer` used by the product rather than maintaining separate demo-specific renderer logic. RSVP remains non-submittable without a real personalized public guest context.
+
+## 7. Repeatable Authoring Contract
+
+Future template contributors must follow:
 
 ```text
-family         → pasundan-storyland
-category       → Heritage Nusantara
-visual tier    → 2.5d
-rendering mode → hybrid
-motion         → rich
-mobile         → adaptive
+docs/commerce/TEMPLATE_AUTHORING_GUIDE.md
 ```
 
-Typography:
+The guide documents canonical sections, metadata requirements, typography roles, 2D/2.5D/3D rules, mobile/reduced-motion requirements, anti-duplicate rules, activation sequence, CI requirements, and the prohibition on changing core business schemas/logic merely to add a visual template.
+
+## 8. Verification
+
+Final Phase 7 compatibility gate:
 
 ```text
-display → Cinzel Decorative
-heading → Cormorant Garamond
-body    → Lora
-accent  → Cinzel Decorative
+scripts/phase7_catalog_completion_verify.ts
 ```
 
-Experience characteristics:
+It verifies:
 
-- distinct heritage-inspired Priangan world rather than a reskin of Paper Cut Garden,
-- layered sky, sun, mountain ranges, terraced green landscape, gate, bamboo foliage and woven texture,
-- `Wilujeng Sumping` opening language and Sunda-oriented section labels,
-- pointer-based and scroll-driven layered depth,
-- `requestAnimationFrame` throttling for scroll updates,
-- adaptive depth treatment on mobile and no dependence on pointer interaction for touch users,
-- `prefers-reduced-motion` fallback that removes transforms while preserving all invitation content,
-- no changes to wedding schema, public resolver, guest logic, RSVP, wishes, gift, maps, or publishing lifecycle.
+- at least seven active production experiences,
+- family/category diversity,
+- 2D + 2.5D + 3D coverage,
+- metadata completeness,
+- performance/mobile/motion declarations,
+- canonical fixture compatibility across every active template,
+- Editorial Ivory production identity,
+- catalog/thumbnail/preview artifacts,
+- authoring guide existence/content,
+- template-neutral public invitation route,
+- legacy incomplete Minimal template remains draft.
 
-The heritage composition is intentionally presentation-only. Cultural assets and wording remain subject to Phase 8 rights/content review and Phase 9 real-device/visual acceptance before commercial release.
-
-## 13. Phase 7.6 — Clay Couple 3D
-
-**Status:** IMPLEMENTED
-
-Template ID:
+Completion CI passed:
 
 ```text
-clay-001
+Phase 7.1 typography verifier       PASS
+Phase 7.2 Cartoon verifier          PASS
+Phase 7.3 Storybook verifier        PASS
+Phase 7.4 Paper Cut verifier        PASS
+Phase 7.5 Pasundan verifier         PASS
+Phase 7.6 Clay 3D verifier          PASS
+Phase 7 catalog completion          PASS
+Production Next.js build            PASS
+Canonical DB migration chain        PASS
+Tenant / integrity database smoke   PASS
+Docker image build                  PASS
+Container health smoke              PASS
 ```
 
-Catalog identity:
+## 9. Deferred Acceptance / Hardening
 
-```text
-family         → clay-couple
-category       → Whimsical
-visual tier    → 3d
-rendering mode → webgl
-motion         → immersive
-mobile         → adaptive
-```
+Phase 7 is repository-level `IMPLEMENTED`, not production `VERIFIED`.
 
-Typography:
+Deferred to Phase 8/9:
 
-```text
-display → Sacramento
-heading → Nunito
-body    → Nunito
-accent  → Sacramento
-```
+- numeric bundle/performance budgets and deeper performance hardening,
+- final image optimization and heavy-asset strategy,
+- custom Clay avatar modeling/rigging pipeline,
+- cultural asset/content rights review,
+- real-device visual QA,
+- low-end/mobile WebGL capability testing,
+- reduced-motion real-device verification,
+- slow-network testing,
+- final production domain/deployment acceptance.
 
-Experience architecture:
-
-- first active ENDRIYA template using an actual WebGL runtime,
-- dependency-free native WebGL enhancement; no Three.js bundle is added to normal templates,
-- bride/groom clay characters are built from depth-positioned shaded point-spheres rendered by custom vertex/fragment shaders,
-- subtle idle camera orbit plus pointer steering on capable desktop devices,
-- the WebGL context is created once and pointer state is passed through a stable ref,
-- device pixel ratio is capped for rendering cost control,
-- `prefers-reduced-motion` disables the continuous orbit and leaves a static scene,
-- a DOM/CSS clay-couple fallback remains available when WebGL cannot initialize,
-- all names, guest personalization, opening CTA, and core wedding information remain DOM content and do not depend on WebGL,
-- canonical Couple, Date/countdown, Location/maps, Story, Gallery, RSVP, Wishes, Gift, and Music components remain shared.
-
-This is the production architecture proof for the 3D tier, not yet the final custom-avatar production pipeline. Custom couple modeling, clothing/heritage variants, advanced rigging, heavier scene assets, and final low-end-device tuning remain later premium/hardening work.
-
-## 14. Current Active Experience Proof
-
-One canonical wedding contract now supports at least six active production experiences:
-
-```text
-classic-001      → Classic / Motion 2D
-cartoon-001      → Illustrated / Motion 2D
-storybook-001    → Illustrated / Motion 2D
-paper-cut-001    → Whimsical / 2.5D
-pasundan-001     → Heritage Nusantara / 2.5D
-clay-001         → Whimsical / WebGL 3D
-```
-
-All six preserve the complete canonical section contract and reuse the shared business blocks.
-
-## 15. Remaining Phase 7 Work
-
-- complete Editorial Ivory full canonical contract and activate it,
-- add catalog discovery metadata/filtering surfaces,
-- add template thumbnails and dedicated preview/demo paths,
-- add performance budgets per experience level,
-- verify one canonical wedding fixture across every active template in a single compatibility gate,
-- prepare explicit authoring checklist for future template contributors,
-- defer reduced-motion/low-capability real-device acceptance to Phase 9.
-
-Phase 7 remains `IN PROGRESS` until the catalog/discovery/compatibility work and agreed Editorial baseline are complete.
+**Next phase:** Phase 8 — Production Hardening.
