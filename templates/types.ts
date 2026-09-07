@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import type {
   CanonicalWeddingContent,
   SectionConfig,
@@ -39,6 +38,11 @@ export type TemplatePerformanceProfile = {
   reducedMotionFallback: boolean;
 };
 
+/**
+ * Pure catalog metadata. Runtime renderer modules are intentionally kept out
+ * of this type/registry so a 2D invitation never has to statically reference
+ * 2.5D/3D client implementations merely to resolve template metadata.
+ */
 export type TemplateDefinition = {
   /** Stable database-facing identifier. Never rename after release. */
   id: string;
@@ -51,7 +55,7 @@ export type TemplateDefinition = {
   status: TemplateStatus;
   /** Commercial visual class. Features are identical across all tiers. */
   visualTier: TemplateVisualTier;
-  /** Curated typography identity. Font files/loaders remain template-scoped. */
+  /** Curated typography identity. Font files/loaders remain invitation-scoped. */
   typography: TemplateTypography;
   /** Wedding content schema consumed by the renderer. */
   contentSchemaVersion: 1;
@@ -60,5 +64,4 @@ export type TemplateDefinition = {
   thumbnail?: string;
   previewPath?: string;
   performance: TemplatePerformanceProfile;
-  render: ComponentType<TemplateRenderProps>;
 };
