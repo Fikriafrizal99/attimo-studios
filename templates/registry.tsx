@@ -1,7 +1,9 @@
 import { CartoonLoveStoryTemplate } from "@/templates/cartoon-001/CartoonLoveStoryTemplate";
 import { Classic001Template } from "@/templates/classic-001/Classic001Template";
+import { ClayCoupleTemplate } from "@/templates/clay-001/ClayCoupleTemplate";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
 import { PaperCutGardenTemplate } from "@/templates/paper-cut-001/PaperCutGardenTemplate";
+import { PasundanStorylandTemplate } from "@/templates/pasundan-001/PasundanStorylandTemplate";
 import { StorybookRomanceTemplate } from "@/templates/storybook-001/StorybookRomanceTemplate";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
 import { validateTemplateTypography } from "@/templates/typography/catalog";
@@ -158,6 +160,66 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
       reducedMotionFallback: true,
     },
     render: PaperCutGardenTemplate,
+  }),
+  "pasundan-001": defineTemplate({
+    id: "pasundan-001",
+    name: "Endriya Pasundan Storyland 001",
+    family: "pasundan-storyland",
+    category: "Heritage Nusantara",
+    tags: ["sunda", "pasundan", "heritage", "priangan", "parallax", "2.5d", "nusantara"],
+    version: 1,
+    status: "active",
+    visualTier: "2.5d",
+    typography: {
+      display: "cinzel-decorative",
+      heading: "cormorant-garamond",
+      body: "lora",
+      accent: "cinzel-decorative",
+      fallback: {
+        display: "playfair-display",
+        heading: "playfair-display",
+        body: "inter",
+      },
+    },
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    performance: {
+      renderingMode: "hybrid",
+      motionLevel: "rich",
+      mobileProfile: "adaptive",
+      reducedMotionFallback: true,
+    },
+    render: PasundanStorylandTemplate,
+  }),
+  "clay-001": defineTemplate({
+    id: "clay-001",
+    name: "Endriya Clay Couple 001",
+    family: "clay-couple",
+    category: "Whimsical",
+    tags: ["clay", "character", "3d", "webgl", "whimsical", "immersive"],
+    version: 1,
+    status: "active",
+    visualTier: "3d",
+    typography: {
+      display: "sacramento",
+      heading: "nunito",
+      body: "nunito",
+      accent: "sacramento",
+      fallback: {
+        display: "playfair-display",
+        heading: "playfair-display",
+        body: "inter",
+      },
+    },
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    performance: {
+      renderingMode: "webgl",
+      motionLevel: "immersive",
+      mobileProfile: "adaptive",
+      reducedMotionFallback: true,
+    },
+    render: ClayCoupleTemplate,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001",
