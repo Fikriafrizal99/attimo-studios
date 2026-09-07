@@ -3,7 +3,7 @@
 **Status:** ACTIVE PROJECT REFERENCE  
 **Branch:** `develop/commerce-foundation`  
 **Decision date:** 2026-09-07  
-**Last roadmap update:** Phase 6 completed; Phase 7 is next.  
+**Last roadmap update:** Phase 7 completed; Phase 8 is next.  
 **Purpose:** authoritative reference for implementation order, phase status, deferred testing, and launch gates.
 
 ---
@@ -64,8 +64,8 @@ The phase/product cannot be considered launch-ready because a dependency or issu
 | Phase 4 | Public Delivery & Publishing | `IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING` |
 | Phase 5 | Customers, Orders, Payment Status, RSVP Analytics, Wishes Moderation | `IMPLEMENTED` |
 | Phase 6 | Commercial/Admin Workflow | `IMPLEMENTED` |
-| Phase 7 | Template Catalog Scaling | **NEXT — PLANNED** |
-| Phase 8 | Production Hardening | `PLANNED` |
+| Phase 7 | Template Catalog Scaling | `IMPLEMENTED` |
+| Phase 8 | Production Hardening | **NEXT — PLANNED** |
 | Phase 9 | Full Integration & End-to-End Acceptance Testing | `PLANNED` |
 | Phase 10 | Launch Readiness & Release Gate | `PLANNED` |
 
@@ -244,34 +244,19 @@ Customer ↔ Order ↔ Wedding ↔ Preview / Settings / Wedding Studio
 
 ### Revision / Approval Controls
 
-Order workspace provides explicit controls for:
-
-- production status,
-- payment status,
-- revision count,
-- suggested next production states.
-
-The helper does not mutate states automatically.
+Order workspace provides explicit controls for production status, payment status, revision count, and suggested next production states. The helper does not mutate states automatically.
 
 ### Publish Readiness Visibility
 
-Order workspace consumes the existing centralized `evaluatePublishReadiness()` result and shows readiness checks in commerce context.
-
-No duplicate publish validator was added.
+Order workspace consumes the existing centralized `evaluatePublishReadiness()` result and shows readiness checks in commerce context. No duplicate publish validator was added.
 
 ### Operational Attention
 
-Warnings surface mismatches such as:
-
-- unpaid/partial payment,
-- progressing order without wedding,
-- approved order with blocked wedding readiness,
-- order marked published while wedding is draft,
-- released wedding while order is not published/completed.
+Warnings surface mismatches such as unpaid/partial payment, progressing order without wedding, approved order with blocked readiness, order marked published while wedding is draft, or released wedding while order is not published/completed.
 
 ### Activity / Audit Baseline
 
-New migration/table:
+Migration/table:
 
 ```text
 supabase/migrations/20260907000200_phase6_order_activity.sql
@@ -293,8 +278,6 @@ Browser roles receive read-only owner-scoped access. Activity rows are emitted b
 
 ### Phase 6 Verification
 
-Completion passed:
-
 ```text
 Environment preflight       PASS
 Service-role boundary       PASS
@@ -304,8 +287,6 @@ Phase 5 verifier            PASS
 Phase 6 workflow verifier   PASS
 Production Next.js build    PASS
 Canonical migration chain   PASS
-Phase 5 DB verifier         PASS
-Phase 6 activity DB test    PASS
 Database smoke              PASS
 Docker image build          PASS
 Container health smoke      PASS
@@ -317,92 +298,117 @@ Reference: `PHASE6_ADMIN_WORKFLOW.md`.
 
 # Phase 7 — Template Catalog Scaling
 
+**Status:** `IMPLEMENTED`
+
 ## Objective
 
 Prove that the template engine can scale to multiple production-quality visual families without changes to core wedding/business logic.
 
-## Planned Scope
+## Implemented Scope
 
-### 7.1 Multiple Active Production Templates
+### Multiple Active Production Templates
 
-Activate more than one production-quality template and more than one visual/category family.
+Seven active production experiences now span Classic, Elegant, Illustrated, Whimsical, Heritage Nusantara, Motion 2D, 2.5D, and WebGL 3D directions:
 
-### 7.2 Metadata Completeness
+```text
+classic-001
+editorial-001
+cartoon-001
+storybook-001
+paper-cut-001
+pasundan-001
+clay-001
+```
 
-Every production template should expose stable metadata such as:
+`minimal-001` remains draft because its older renderer does not implement the complete canonical section contract.
 
-- template ID,
-- customer-facing name,
-- family,
-- category,
-- tags,
-- version,
-- status,
-- visual tier,
-- thumbnail,
-- preview/demo path,
-- performance profile,
-- canonical section contract.
+### Metadata Completeness
 
-### 7.3 Catalog Experience
+Every registry entry exposes stable metadata including ID, name, family, category, tags, version, lifecycle status, visual tier, curated typography, thumbnail, preview path, performance profile, and canonical section contract.
 
-Provide an operator/customer-facing template catalog surface with useful:
+### Catalog Experience
 
-- categories,
-- tags,
-- active/draft/archive lifecycle,
-- preview/demo navigation,
-- visual-tier information where useful.
+Operator catalog:
 
-### 7.4 Compatibility Verification
+```text
+/dashboard/templates
+```
 
-Every active template must implement the complete canonical section contract and pass compatibility verification.
+It supports keyword/tag search, category, visual-tier and lifecycle filters, thumbnail cards, typography/performance visibility, and full internal preview navigation.
 
-### 7.5 Mobile / Motion Baseline
+Preview route:
 
-Every active production template must define:
+```text
+/dashboard/templates/{templateId}/preview
+```
 
-- mobile profile,
-- motion level,
-- reduced-motion fallback,
-- rendering mode.
+All previews use one canonical wedding fixture and render through the normal `InvitationRenderer`.
 
-### 7.6 Repeatable Template Authoring
+### Compatibility Verification
 
-Create a reusable checklist/contract for adding a new template without modifying core wedding logic.
+Every active template implements the complete canonical contract:
+
+```text
+hero
+couple
+date
+location
+story
+gallery
+rsvp
+wishes
+gift
+music
+```
+
+The final catalog verifier checks every active template against the same canonical preview fixture and verifies that the public invitation route remains template-neutral.
+
+### Mobile / Motion Baseline
+
+Every active template declares rendering mode, motion level, mobile profile, and reduced-motion fallback. 2.5D templates use adaptive layered depth; the 3D Clay experience uses progressive enhancement with DOM fallback.
+
+### Repeatable Template Authoring
+
+Authoring contract:
+
+```text
+docs/commerce/TEMPLATE_AUTHORING_GUIDE.md
+```
+
+It prohibits changing core wedding/business schemas or routing merely to add a template and documents the required activation/verification sequence.
 
 ## Architecture Rule
 
-Adding a template must not require changes to:
-
-- wedding DB schema,
-- customer/order schema,
-- guest logic,
-- RSVP logic,
-- wishes logic,
-- public invitation resolver,
-- core routing,
-- publish lifecycle.
+Adding a template must not require changes to wedding DB schema, customer/order schema, guest logic, RSVP logic, wishes logic, public invitation resolver, core routing, or publish lifecycle.
 
 There is no artificial template-count cap.
 
-## Phase 7 Acceptance
+## Phase 7 Completion Verification
 
-Before leaving Phase 7:
+```text
+Phase 7.1 typography verifier       PASS
+Phase 7.2 Cartoon verifier          PASS
+Phase 7.3 Storybook verifier        PASS
+Phase 7.4 Paper Cut verifier        PASS
+Phase 7.5 Pasundan verifier         PASS
+Phase 7.6 Clay 3D verifier          PASS
+Phase 7 catalog completion          PASS
+Production Next.js build            PASS
+Canonical DB migration chain        PASS
+Tenant / integrity database smoke   PASS
+Docker image build                  PASS
+Container health smoke              PASS
+```
 
-- at least two production-quality active templates exist,
-- active templates span more than one family/category,
-- metadata/catalog preview is usable,
-- compatibility verifier passes every active template,
-- new-template authoring procedure is documented,
-- core invitation route remains unchanged while adding the additional template,
-- CI remains green.
+Numeric bundle/performance budgets and deeper performance hardening are intentionally part of Phase 8. Full real-device visual acceptance remains Phase 9.
 
-Full real-device visual acceptance remains Phase 9.
+Reference: `PHASE7_TEMPLATE_CATALOG.md` and `TEMPLATE_AUTHORING_GUIDE.md`.
 
 ---
 
 # Phase 8 — Production Hardening
+
+**Status:** `NEXT — PLANNED`
 
 ## Objective
 
@@ -570,10 +576,10 @@ Phase 3  ✅
 Phase 4  ✅ code / ⏳ environment verification deferred
 Phase 5  ✅
 Phase 6  ✅
-Phase 7  ▶ NEXT
-Phase 8  ⏳
+Phase 7  ✅
+Phase 8  ▶ NEXT
 Phase 9  ⏳ full integration/E2E
 Phase 10 ⏳ launch gate
 ```
 
-**Next implementation reference: Phase 7 — Template Catalog Scaling.**
+**Next implementation reference: Phase 8 — Production Hardening.**
