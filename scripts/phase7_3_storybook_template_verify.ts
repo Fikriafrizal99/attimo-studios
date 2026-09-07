@@ -11,8 +11,6 @@ function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-const classic = resolveTemplate("classic-001");
-const cartoon = resolveTemplate("cartoon-001");
 const storybook = resolveTemplate("storybook-001");
 
 assert(storybook.status === "active", "storybook-001 must be active");
@@ -26,8 +24,11 @@ assert(storybook.performance.reducedMotionFallback, "storybook-001 needs reduced
 assert(storybook.typography.display === "parisienne", "storybook display font should be Parisienne");
 assert(storybook.typography.heading === "cormorant-garamond", "storybook heading font should be Cormorant Garamond");
 assert(storybook.typography.body === "lora", "storybook body font should be Lora");
-assert(storybook.render !== classic.render, "storybook renderer must differ from classic renderer");
-assert(storybook.render !== cartoon.render, "storybook renderer must differ from cartoon renderer");
+assert(storybook.performance.budget.experienceJsKb > 0, "storybook must declare a performance budget");
+
+const runtime = readFileSync("components/invitation/TemplateRuntime.tsx", "utf8");
+assert(runtime.includes('"storybook-001": dynamic('), "storybook renderer must be independently code-split");
+assert(runtime.includes("StorybookRomanceTemplate"), "storybook runtime mapping missing");
 
 const sections = new Set(storybook.sectionContract);
 assert(sections.size === WEDDING_SECTION_IDS.length, "storybook section contract size mismatch");
