@@ -1,6 +1,6 @@
 # ENDRIYA — Phase 8 Production Hardening
 
-**Status:** IN PROGRESS  
+**Status:** IMPLEMENTED — PRODUCTION/DEVICE VERIFICATION PENDING; COMMERCIAL RIGHTS BLOCKER REMAINS  
 **Branch:** `develop/commerce-foundation`  
 **Phase:** 8 — Production Hardening
 
@@ -56,7 +56,7 @@ docs/commerce/PRODUCTION_OPERATIONS_RUNBOOK.md
 
 ## 8.3 Performance Hardening
 
-Implemented / being verified:
+Implemented and verified:
 
 - template metadata registry remains renderer-free,
 - every active renderer is explicitly code-split with `next/dynamic`,
@@ -66,7 +66,7 @@ Implemented / being verified:
 - Paper Cut and Pasundan parallax work is animation-frame throttled,
 - reduced-motion fallbacks remain mandatory,
 - Clay WebGL DPR is capped to `1.5`,
-- Clay continues to retain a DOM fallback when WebGL is unavailable.
+- Clay retains a DOM fallback when WebGL is unavailable.
 
 Budget classes:
 
@@ -81,7 +81,7 @@ These are repository/operator targets, not yet measured real-device acceptance r
 
 ## 8.4 Product / Legal Baseline
 
-Implemented / being verified:
+Implemented and verified:
 
 - public `/privacy` guest-data notice,
 - public `/terms` baseline,
@@ -89,7 +89,8 @@ Implemented / being verified:
 - asset-rights register,
 - music-usage policy,
 - Google Fonts provenance and OFL-1.1 metadata in the curated font registry,
-- CI branding gate for remaining `Attimo` references in public/product source surfaces.
+- CI branding gate for remaining `Attimo` references in public/product source surfaces,
+- remaining public/product legacy branding identified by the gate was replaced with ENDRIYA naming.
 
 References:
 
@@ -111,21 +112,33 @@ The upstream source-code rights issue is not a technical defect that CI can make
 
 Upstream code rights and individual asset rights remain separate checks.
 
-## Current Acceptance Position
+## Completion Verification
 
-Repository implementation work for 8.1 and 8.2 is present and previously gated. 8.3 and 8.4 have been added and are passing through the full CI chain. Phase 8 must remain `IN PROGRESS` until the final HEAD passes:
+Repository-level completion passed on the Phase 8 completion HEAD:
 
 ```text
-Phase 8.1 security verifier
-Phase 8.2 reliability verifier
-Phase 8.3 performance verifier
-Phase 8.4 product/legal verifier
-Production Next.js build
-Canonical database migration chain
-Tenant/integrity database smoke
-Phase 8 rate-limit database test
-Docker image build
-Container health smoke
+Phase 8.1 security verifier             PASS
+Phase 8.2 reliability verifier          PASS
+Phase 8.3 performance verifier          PASS
+Phase 8.4 product/legal verifier        PASS
+Production Next.js build                PASS
+Canonical database migration chain      PASS
+Tenant/integrity database smoke         PASS
+Phase 8 shared rate-limit database test PASS
+Docker image build                      PASS
+Container health smoke                  PASS
 ```
 
-A GitHub runner/setup download failure is infrastructure noise, not acceptance evidence; a clean completion run is still required before Phase 8 is marked `IMPLEMENTED`.
+## Deferred to Phase 9
+
+- final environment/secrets,
+- Supabase production migration-history reconciliation,
+- staging/production-like deployment,
+- HTTPS/domain and optional wildcard subdomain verification,
+- actual bundle/network measurements,
+- slow-network and real-device behavior,
+- public-form concurrency/load acceptance,
+- complete Customer → Order → Wedding → Publish → RSVP/Wishes E2E journey,
+- real production asset/right sampling.
+
+Phase 8 is repository-level `IMPLEMENTED`, not production `VERIFIED`.
