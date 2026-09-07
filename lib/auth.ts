@@ -31,10 +31,27 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+    freshAge: 60 * 60,
+  },
   rateLimit: {
     enabled: true,
     window: 60,
-    max: 100,
+    max: 60,
+    storage: "database",
+    modelName: "rateLimit",
+    customRules: {
+      "/sign-in/email": {
+        window: 60,
+        max: 5,
+      },
+      "/sign-up/email": {
+        window: 60,
+        max: 3,
+      },
+    },
   },
   secret: authSecret,
   basePath: "/api/auth",
