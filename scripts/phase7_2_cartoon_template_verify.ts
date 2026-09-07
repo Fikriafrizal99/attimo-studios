@@ -12,7 +12,6 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const cartoon = resolveTemplate("cartoon-001");
-const classic = resolveTemplate("classic-001");
 
 assert(cartoon.status === "active", "cartoon-001 must be active");
 assert(cartoon.category === "Illustrated", "cartoon-001 must be in Illustrated category");
@@ -25,7 +24,11 @@ assert(cartoon.performance.reducedMotionFallback, "cartoon-001 needs reduced-mot
 assert(cartoon.typography.display === "parisienne", "cartoon display font should be Parisienne");
 assert(cartoon.typography.heading === "nunito", "cartoon heading font should be Nunito");
 assert(cartoon.typography.body === "nunito", "cartoon body font should be Nunito");
-assert(cartoon.render !== classic.render, "cartoon renderer must be independent from classic renderer");
+assert(cartoon.performance.budget.experienceJsKb > 0, "cartoon must declare a performance budget");
+
+const runtime = readFileSync("components/invitation/TemplateRuntime.tsx", "utf8");
+assert(runtime.includes('"cartoon-001": dynamic('), "cartoon renderer must be independently code-split");
+assert(runtime.includes("CartoonLoveStoryTemplate"), "cartoon runtime mapping missing");
 
 const sections = new Set(cartoon.sectionContract);
 assert(sections.size === WEDDING_SECTION_IDS.length, "cartoon section contract size mismatch");
