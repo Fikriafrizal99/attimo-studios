@@ -120,7 +120,7 @@ export const WEDDING_FONT_REGISTRY: Readonly<Record<WeddingFontId, WeddingFontDe
     },
   });
 
-export const DEFAULT_TEMPLATE_TYPOGRAPHY: TemplateTypography = Object.freeze({
+export const DEFAULT_TEMPLATE_TYPOGRAPHY: TemplateTypography = {
   display: "playfair-display",
   heading: "playfair-display",
   body: "inter",
@@ -129,7 +129,7 @@ export const DEFAULT_TEMPLATE_TYPOGRAPHY: TemplateTypography = Object.freeze({
     heading: "playfair-display",
     body: "inter",
   },
-});
+};
 
 export function validateTemplateTypography(typography: TemplateTypography): void {
   const roles: Array<[WeddingFontId, WeddingFontRole]> = [
