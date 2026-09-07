@@ -5,10 +5,6 @@ import RSVPSection from "@/components/RSVPSection";
 import WishesSection from "@/components/WishesSection";
 import GiftSection from "@/components/GiftSection";
 import MusicPlayer from "@/components/MusicPlayer";
-import {
-  editorialTypographyClassName,
-  editorialTypographyStyle,
-} from "@/templates/typography/packs/editorial";
 import type { TemplateRenderProps } from "@/templates/types";
 
 export function Minimal001Template({
@@ -26,8 +22,7 @@ export function Minimal001Template({
   return (
     <InvitationProvider value={{ weddingId, publicSlug, content, sections, guest }}>
       <main
-        className={`${editorialTypographyClassName} min-h-screen bg-[#f8f7f3] text-[#1f1f1d]`}
-        style={editorialTypographyStyle}
+        className="min-h-screen bg-[#f8f7f3] text-[#1f1f1d]"
         data-endriya-template="minimal-001"
         data-endriya-typography="cormorant-garamond+dm-serif-display+inter"
       >
