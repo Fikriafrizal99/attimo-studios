@@ -94,6 +94,12 @@ jobs:
       - name: Verify Phase 7.4 Paper Cut Garden 2.5D
         run: bun scripts/phase7_4_paper_cut_template_verify.ts
 
+      - name: Verify Phase 7.5 Pasundan Storyland 2.5D
+        run: bun scripts/phase7_5_pasundan_template_verify.ts
+
+      - name: Verify Phase 7.6 Clay Couple 3D
+        run: bun scripts/phase7_6_clay_template_verify.ts
+
       - name: Build
         run: bun run build
 
