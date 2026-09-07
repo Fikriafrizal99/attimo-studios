@@ -4,6 +4,7 @@ import type {
   SectionConfig,
   WeddingSectionId,
 } from "@/lib/wedding-contract";
+import type { TemplateTypography } from "@/templates/typography/catalog";
 
 export const TEMPLATE_VISUAL_TIERS = ["2d", "2.5d", "3d"] as const;
 export type TemplateVisualTier = (typeof TEMPLATE_VISUAL_TIERS)[number];
@@ -50,6 +51,8 @@ export type TemplateDefinition = {
   status: TemplateStatus;
   /** Commercial visual class. Features are identical across all tiers. */
   visualTier: TemplateVisualTier;
+  /** Curated typography identity. Font files/loaders remain template-scoped. */
+  typography: TemplateTypography;
   /** Wedding content schema consumed by the renderer. */
   contentSchemaVersion: 1;
   /** Every active template must implement the complete canonical section contract. */
