@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { WEDDING_SECTION_IDS } from "@/lib/wedding-contract";
 import { resolveTemplate } from "@/templates/registry";
 
@@ -15,7 +16,11 @@ assert(template.contentSchemaVersion === 1, "Template 001 must consume wedding c
 assert(template.performance.renderingMode === "dom", "Template 001 must use DOM rendering");
 assert(template.performance.mobileProfile === "full", "Template 001 must support the full mobile profile");
 assert(template.performance.reducedMotionFallback === true, "Template 001 must keep reduced-motion fallback");
-assert(template.render.name === "Classic001Template", "Template 001 must resolve the packaged Classic001Template renderer");
+assert(template.performance.budget.experienceJsKb > 0, "Template 001 must declare an experience JS budget");
+
+const runtime = readFileSync("components/invitation/TemplateRuntime.tsx", "utf8");
+assert(runtime.includes('"classic-001": dynamic('), "Template 001 must remain code-split in TemplateRuntime");
+assert(runtime.includes("Classic001Template"), "Template 001 runtime must resolve Classic001Template");
 
 const sections = new Set(template.sectionContract);
 assert(sections.size === WEDDING_SECTION_IDS.length, "Template 001 section contract size is invalid");
