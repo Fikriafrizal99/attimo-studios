@@ -47,6 +47,18 @@ for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'BETTER_AUTH_URL', 'NEXT_PUBLIC_A
   }
 }
 
+let databaseUrl;
+try {
+  databaseUrl = new URL(process.env.DATABASE_URL);
+} catch {
+  console.error('P0 preflight failed: DATABASE_URL must be a valid PostgreSQL URL');
+  process.exit(1);
+}
+if (!['postgres:', 'postgresql:'].includes(databaseUrl.protocol)) {
+  console.error('P0 preflight failed: DATABASE_URL must use postgres:// or postgresql://');
+  process.exit(1);
+}
+
 if (!allowPlaceholders && process.env.BETTER_AUTH_SECRET.length < 32) {
   console.error('P0 preflight failed: BETTER_AUTH_SECRET must be at least 32 characters');
   process.exit(1);
@@ -57,11 +69,33 @@ if (appEnv === 'production' && !strict) {
   process.exit(1);
 }
 
+function requirePositiveNumber(key) {
+  const value = Number(process.env[key]);
+  if (!Number.isFinite(value) || value <= 0) {
+    console.error(`P0 preflight failed: ${key} must be a positive number`);
+    process.exit(1);
+  }
+}
+
 if (strict) {
   if (process.env.ALLOW_PUBLIC_SIGNUP !== 'false') {
     console.error(`P0 preflight failed: ${appEnv} requires ALLOW_PUBLIC_SIGNUP=false in strict mode`);
     process.exit(1);
   }
+
+  const strictRateLimitKeys = [
+    'PUBLIC_SUBMISSION_RATE_LIMIT',
+    'PUBLIC_SUBMISSION_RATE_WINDOW_MS',
+    'PUBLIC_WEDDING_BURST_RATE_LIMIT',
+    'PUBLIC_RESOLUTION_RATE_LIMIT',
+    'PUBLIC_READ_RATE_LIMIT',
+  ];
+  const missingStrict = strictRateLimitKeys.filter((key) => !process.env[key]);
+  if (missingStrict.length) {
+    console.error(`P0 preflight failed: strict mode missing ${missingStrict.join(', ')}`);
+    process.exit(1);
+  }
+  strictRateLimitKeys.forEach(requirePositiveNumber);
 
   for (const key of ['BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'PUBLIC_INVITATION_BASE_URL', 'NEXT_PUBLIC_SUPABASE_URL']) {
     const url = new URL(process.env[key]);
@@ -73,6 +107,18 @@ if (strict) {
       console.error(`P0 preflight failed: strict ${appEnv} ${key} still uses a placeholder/local host`);
       process.exit(1);
     }
+  }
+
+  if (['localhost', '127.0.0.1'].includes(databaseUrl.hostname)) {
+    console.error(`P0 preflight failed: strict ${appEnv} DATABASE_URL still uses a local host`);
+    process.exit(1);
+  }
+
+  const authOrigin = new URL(process.env.BETTER_AUTH_URL).origin;
+  const appOrigin = new URL(process.env.NEXT_PUBLIC_APP_URL).origin;
+  if (authOrigin !== appOrigin) {
+    console.error('P0 preflight failed: BETTER_AUTH_URL and NEXT_PUBLIC_APP_URL must share the same origin in strict mode');
+    process.exit(1);
   }
 }
 
