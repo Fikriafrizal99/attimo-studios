@@ -76,6 +76,9 @@ jobs:
       - name: Verify Phase 4.2 public routing
         run: bun scripts/phase4_2_public_routing_verify.ts
 
+      - name: Verify Phase 5.1 operation contracts
+        run: bun scripts/phase5_1_operations_verify.ts
+
       - name: Build
         run: bun run build
 
@@ -137,6 +140,9 @@ jobs:
 
       - name: Verify Phase 2.4 collaborator management
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase2_4_collaborators_verify.sql
+
+      - name: Verify Phase 5.1 commerce operations
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/phase5_1_commerce_operations_verify.sql
 
   docker-smoke:
     runs-on: ubuntu-latest
