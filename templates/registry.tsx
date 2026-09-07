@@ -1,6 +1,7 @@
 import { CartoonLoveStoryTemplate } from "@/templates/cartoon-001/CartoonLoveStoryTemplate";
 import { Classic001Template } from "@/templates/classic-001/Classic001Template";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
+import { StorybookRomanceTemplate } from "@/templates/storybook-001/StorybookRomanceTemplate";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
 import { validateTemplateTypography } from "@/templates/typography/catalog";
 import type { TemplateDefinition, TemplateVisualTier } from "@/templates/types";
@@ -96,6 +97,36 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
       reducedMotionFallback: true,
     },
     render: CartoonLoveStoryTemplate,
+  }),
+  "storybook-001": defineTemplate({
+    id: "storybook-001",
+    name: "Endriya Storybook Romance 001",
+    family: "storybook-romance",
+    category: "Illustrated",
+    tags: ["storybook", "romance", "illustrated", "chapter", "motion"],
+    version: 1,
+    status: "active",
+    visualTier: "2d",
+    typography: {
+      display: "parisienne",
+      heading: "cormorant-garamond",
+      body: "lora",
+      accent: "parisienne",
+      fallback: {
+        display: "playfair-display",
+        heading: "playfair-display",
+        body: "inter",
+      },
+    },
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    performance: {
+      renderingMode: "dom",
+      motionLevel: "rich",
+      mobileProfile: "full",
+      reducedMotionFallback: true,
+    },
+    render: StorybookRomanceTemplate,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001",
