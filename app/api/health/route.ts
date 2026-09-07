@@ -4,7 +4,8 @@ export async function GET() {
   return Response.json(
     {
       status: "ok",
-      service: "wedding-invitation",
+      service: "endriya",
+      check: "liveness",
       uptimeSeconds: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
     },
