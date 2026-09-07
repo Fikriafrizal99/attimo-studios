@@ -34,7 +34,6 @@ const SECTION_COMPONENTS: Partial<Record<WeddingSectionId, ComponentType>> = {
 };
 
 const SCENE_POINTS = new Float32Array([
-  // x, y, z, size, r, g, b — groom
   -0.46, 0.35, 0.04, 92, 0.90, 0.67, 0.53,
   -0.46, 0.00, 0.00, 112, 0.17, 0.29, 0.34,
   -0.46,-0.24, 0.02, 105, 0.15, 0.25, 0.29,
@@ -43,7 +42,6 @@ const SCENE_POINTS = new Float32Array([
   -0.57,-0.47, 0.02, 52, 0.13, 0.22, 0.25,
   -0.35,-0.47, 0.02, 52, 0.13, 0.22, 0.25,
   -0.46, 0.51, 0.02, 68, 0.20, 0.13, 0.11,
-  // bride
    0.46, 0.35, 0.10, 92, 0.92, 0.69, 0.55,
    0.46, 0.00, 0.08, 118, 0.92, 0.86, 0.77,
    0.46,-0.24, 0.08, 112, 0.88, 0.81, 0.72,
@@ -52,12 +50,10 @@ const SCENE_POINTS = new Float32Array([
    0.35,-0.47, 0.08, 52, 0.82, 0.74, 0.66,
    0.57,-0.47, 0.08, 52, 0.82, 0.74, 0.66,
    0.46, 0.51, 0.08, 70, 0.24, 0.15, 0.13,
-  // bouquet
    0.66, 0.02, 0.20, 34, 0.88, 0.42, 0.48,
    0.71, 0.08, 0.18, 31, 0.94, 0.60, 0.58,
    0.62, 0.10, 0.19, 30, 0.86, 0.50, 0.62,
    0.69,-0.02, 0.16, 27, 0.95, 0.71, 0.62,
-  // floor petals / depth markers
   -0.80,-0.62,-0.10, 24, 0.92, 0.55, 0.56,
   -0.67,-0.68, 0.18, 18, 0.95, 0.70, 0.63,
    0.04,-0.67,-0.18, 21, 0.90, 0.48, 0.55,
@@ -79,7 +75,12 @@ function compileShader(gl: WebGLRenderingContext, type: number, source: string) 
 
 function ClayWebGLScene({ pointerX }: { pointerX: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pointerRef = useRef(pointerX);
   const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    pointerRef.current = pointerX;
+  }, [pointerX]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -149,7 +150,7 @@ function ClayWebGLScene({ pointerX }: { pointerX: number }) {
     const dprLocation = gl.getUniformLocation(program, "uDpr");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
-    let start = performance.now();
+    const start = performance.now();
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -163,7 +164,7 @@ function ClayWebGLScene({ pointerX }: { pointerX: number }) {
 
     const render = (time: number) => {
       const idleOrbit = reducedMotion ? 0 : Math.sin((time - start) / 3000) * 0.08;
-      gl.uniform1f(angleLocation, idleOrbit + pointerX * 0.12);
+      gl.uniform1f(angleLocation, idleOrbit + pointerRef.current * 0.12);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.enable(gl.DEPTH_TEST);
@@ -184,7 +185,7 @@ function ClayWebGLScene({ pointerX }: { pointerX: number }) {
       gl.deleteShader(vertex);
       gl.deleteShader(fragment);
     };
-  }, [pointerX]);
+  }, []);
 
   return (
     <>
