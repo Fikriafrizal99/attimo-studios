@@ -3,7 +3,7 @@
 **Status:** ACTIVE PROJECT REFERENCE  
 **Branch:** `develop/commerce-foundation`  
 **Decision date:** 2026-09-07  
-**Last roadmap update:** Phase 5 completed; Phase 6 is next.  
+**Last roadmap update:** Phase 6 completed; Phase 7 is next.  
 **Purpose:** authoritative reference for implementation order, phase status, deferred testing, and launch gates.
 
 ---
@@ -14,9 +14,7 @@ ENDRIYA uses the following delivery strategy:
 
 > **Complete the main implementation phases first while keeping repository-level verification green. Full deployment, cross-module integration testing, real-domain testing, real-device QA, and end-to-end business acceptance are consolidated into Phase 9.**
 
-This avoids repeatedly switching between development and production-environment work after every feature.
-
-Testing is **not** deferred completely. Every implementation phase must still keep the relevant engineering gates green:
+Testing is **not** deferred completely. Every implementation phase must keep the relevant engineering gates green:
 
 - production Next.js build,
 - TypeScript/build validation,
@@ -65,8 +63,8 @@ The phase/product cannot be considered launch-ready because a dependency or issu
 | Phase 3 | Wedding Engine | `IMPLEMENTED` |
 | Phase 4 | Public Delivery & Publishing | `IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING` |
 | Phase 5 | Customers, Orders, Payment Status, RSVP Analytics, Wishes Moderation | `IMPLEMENTED` |
-| Phase 6 | Commercial/Admin Workflow | **NEXT — PLANNED** |
-| Phase 7 | Template Catalog Scaling | `PLANNED` |
+| Phase 6 | Commercial/Admin Workflow | `IMPLEMENTED` |
+| Phase 7 | Template Catalog Scaling | **NEXT — PLANNED** |
 | Phase 8 | Production Hardening | `PLANNED` |
 | Phase 9 | Full Integration & End-to-End Acceptance Testing | `PLANNED` |
 | Phase 10 | Launch Readiness & Release Gate | `PLANNED` |
@@ -77,56 +75,38 @@ If scope or sequencing materially changes, update this document before implement
 
 # Phase 1 — Foundation & Security
 
-## Objective
+**Status:** `IMPLEMENTED / TECHNICALLY VERIFIED`
 
-Establish a reproducible database/auth foundation with explicit tenant boundaries.
-
-## Status
-
-`IMPLEMENTED / TECHNICALLY VERIFIED`
-
-Key outcomes include Better Auth integration, RLS strategy, private authorization helpers, wedding ownership, database integrity, storage boundary foundations, and CI/database-smoke coverage.
+Established the reproducible database/auth/security foundation: Better Auth, RLS strategy, private authorization helpers, wedding ownership, integrity guards, storage boundary foundations, and CI/database-smoke coverage.
 
 ---
 
 # Phase 2 — Multi-Wedding Operations Foundation
 
-## Objective
+**Status:** `IMPLEMENTED / TECHNICALLY VERIFIED`
 
-Allow authenticated operators to safely manage multiple wedding projects and collaborators.
-
-## Status
-
-`IMPLEMENTED / TECHNICALLY VERIFIED`
-
-Key outcomes include owner/collaborator roles, tenant-scoped project access, collaborator invitations, owner-only settings boundaries, and database verification.
+Established owner/collaborator roles, tenant-scoped wedding access, collaborator invites, owner-only settings boundaries, and database verification.
 
 ---
 
 # Phase 3 — Wedding Engine
 
-## Objective
+**Status:** `IMPLEMENTED`
 
-Provide one canonical wedding product engine shared by all visual templates.
-
-## Implemented Scope
+Implemented:
 
 - canonical wedding content contract,
-- server validation schema,
+- server validation,
 - template registry,
-- reference production renderer,
+- reference renderer,
 - timezone-safe countdown,
-- gallery engine,
+- gallery,
 - wedding-scoped storage isolation,
-- digital gift / bank / QRIS,
-- maps/location engine,
+- digital gift/bank/QRIS,
+- maps/location,
 - guest management,
 - personalized guest URLs,
-- centralized publish readiness validator.
-
-## Status
-
-`IMPLEMENTED`
+- centralized publish-readiness validator.
 
 Reference: `PHASE3_WEDDING_ENGINE.md`.
 
@@ -134,35 +114,27 @@ Reference: `PHASE3_WEDDING_ENGINE.md`.
 
 # Phase 4 — Public Delivery & Publishing
 
-## Objective
+**Status:** `IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING`
 
-Turn the wedding engine into a stable released-invitation delivery surface.
-
-## Implemented Scope
+Implemented:
 
 - shared released-wedding resolver,
 - released-only public access,
 - wedding-scoped guest-token resolution,
-- canonical path routing,
-- optional subdomain routing,
+- path/subdomain routing,
 - reverse-proxy host support,
 - canonical/OG/social metadata,
-- guest tokens excluded from canonical URLs,
+- guest-token exclusion from canonical URLs,
 - unpublish lifecycle,
 - released-wedding mutation lock,
-- path/subdomain routing verifier.
-
-## Status
-
-`IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING`
+- routing verification.
 
 Deferred to Phase 9:
 
-- final `.env.production`,
+- final production env,
 - real deployment,
 - HTTPS/domain,
-- path-mode public smoke,
-- wildcard DNS/TLS and subdomain verification,
+- wildcard DNS/TLS/subdomain test,
 - real social preview,
 - mobile/device QA.
 
@@ -172,37 +144,20 @@ Reference: `PHASE4_PUBLIC_DELIVERY.md`.
 
 # Phase 5 — Commerce Operations
 
-## Objective
+**Status:** `IMPLEMENTED`
 
-Turn ENDRIYA into an admin-managed wedding-invitation business operation, not only a wedding editor.
+Implemented:
 
-## Implemented Scope
-
-### Customers
-
-- owner-scoped customer records,
-- name,
-- WhatsApp/phone,
-- optional email,
-- notes,
-- timestamps,
-- CRUD API and dashboard,
-- search and order count.
-
-### Orders
-
-- owner-scoped order records,
-- customer relationship,
-- optional owned-wedding relationship,
-- package,
-- template,
-- price/currency,
-- payment status,
-- production status,
-- revision count,
-- notes/timestamps,
-- CRUD API and dashboard,
-- filters and summary cards.
+- operator-owner-scoped customers,
+- customer CRUD/search/order count,
+- operator-owner-scoped orders,
+- package/template/price/payment/production/revision tracking,
+- manual payment states,
+- customer/order/wedding relationship integrity,
+- owner-only RSVP analytics,
+- owner-only wishes moderation,
+- commerce dashboard navigation,
+- tenant-aware API and DB verification.
 
 Production statuses:
 
@@ -227,173 +182,136 @@ paid
 refunded
 ```
 
-### Relationship Integrity
-
-Database safeguards require:
-
-- customer and order to belong to the same operator,
-- linked wedding to be owned by the same operator,
-- collaborators cannot attach another owner's wedding to commerce records,
-- one wedding can be linked to at most one order in the current managed-service model.
-
-### RSVP Analytics
-
-Owner-only per-wedding analytics now include:
-
-- active invitation count,
-- RSVP responses,
-- attending,
-- not attending,
-- maybe,
-- expected guest count,
-- pending personalized responses,
-- response rate in the dashboard.
-
-### Wishes Moderation
-
-Owner-only moderation supports:
-
-- list per wedding,
-- visible / hidden / spam states,
-- show/restore,
-- hide,
-- mark spam,
-- delete.
-
-The public wishes API continues to expose only `visible` wishes for released weddings.
-
-## Repository Verification
-
-Phase 5 completion passed:
-
-```text
-Service-role boundary       PASS
-Phase 3 verification chain  PASS
-Phase 4 routing verifier    PASS
-Phase 5 contract verifier   PASS
-Production Next.js build    PASS
-Canonical migration chain   PASS
-Phase 5 DB tenant verifier  PASS
-Database smoke              PASS
-Docker image build          PASS
-Container health smoke      PASS
-```
-
-## Status
-
-`IMPLEMENTED`
-
-Production migration application and full business-journey verification remain deferred to Phase 9 by project decision.
-
 Reference: `PHASE5_COMMERCE_OPERATIONS.md`.
 
 ---
 
 # Phase 6 — Commercial/Admin Workflow
 
+**Status:** `IMPLEMENTED`
+
 ## Objective
 
-Connect the existing modules into a fast, understandable daily workflow for the ENDRIYA operator.
+Connect Phase 3–5 modules into a practical daily operator workflow without introducing a second publish validator or autonomous state machine.
 
-## Planned Scope
+## Implemented Scope
 
-### 6.1 Admin Overview
+### Operations Overview
 
-Create a commerce-oriented overview containing useful operational indicators, for example:
+`/dashboard` now shows:
 
 - active orders,
-- unpaid / partial payments,
-- orders waiting for customer data,
-- work in progress,
-- preview/revision/approval queue,
-- published/completed orders,
-- upcoming wedding projects where useful.
+- payment attention,
+- waiting data,
+- in-progress/preview/revision/approval queues,
+- customer count,
+- released wedding count,
+- active order queue,
+- production pulse,
+- wedding projects.
 
-### 6.2 Order Pipeline
+### Order Pipeline
 
-Provide an operational pipeline across production states:
+`/dashboard/pipeline` exposes explicit columns:
 
 ```text
 new
-→ waiting_data
-→ in_progress
-→ preview_ready
-→ revision
-→ approved
-→ published
-→ completed
+waiting_data
+in_progress
+preview_ready
+revision
+approved
+published
+completed
 ```
 
-`cancelled` remains a terminal exception path.
+Cancelled orders remain outside the active board.
 
-The workflow must remain explicit rather than silently changing states from unrelated UI actions.
+### Customer → Order → Wedding Navigation
 
-### 6.3 Customer → Order → Wedding Navigation
-
-Operators must be able to move quickly between:
+Implemented contextual workspaces:
 
 ```text
-Customer
-   ↓
-Order
-   ↓
-Wedding Project
-   ↓
-Preview / Guests / RSVP / Wishes / Settings
+/dashboard/customers/{customerId}
+/dashboard/orders/{orderId}
 ```
 
-Avoid duplicated business records and avoid forcing operators to manually copy IDs.
+Operators can navigate directly:
 
-### 6.4 Revision / Approval Workflow
+```text
+Customer ↔ Order ↔ Wedding ↔ Preview / Settings / Wedding Studio
+```
 
-Improve operational handling of:
+### Revision / Approval Controls
 
+Order workspace provides explicit controls for:
+
+- production status,
+- payment status,
 - revision count,
-- preview-ready state,
-- revision state,
-- approved state,
-- clear next actions.
+- suggested next production states.
 
-### 6.5 Publish Readiness in Commerce Workflow
+The helper does not mutate states automatically.
 
-Order/wedding workflow should surface publish readiness without bypassing the existing Phase 3/4 readiness gate.
+### Publish Readiness Visibility
 
-The order module must **not** implement a second conflicting publish validator.
+Order workspace consumes the existing centralized `evaluatePublishReadiness()` result and shows readiness checks in commerce context.
 
-### 6.6 Payment Visibility
+No duplicate publish validator was added.
 
-Payment status should be visible where an operator decides whether to proceed, publish, or complete an order.
+### Operational Attention
 
-Payment automation is still optional; the source of truth remains the Phase 5 operational payment status.
+Warnings surface mismatches such as:
 
-### 6.7 Operational Search / Filter / Sort
+- unpaid/partial payment,
+- progressing order without wedding,
+- approved order with blocked wedding readiness,
+- order marked published while wedding is draft,
+- released wedding while order is not published/completed.
 
-Improve operational lists where useful:
+### Activity / Audit Baseline
 
-- search,
-- status filters,
-- payment filters,
-- sorting,
-- useful empty states,
-- loading/error feedback.
+New migration/table:
 
-### 6.8 Activity / Audit Baseline
+```text
+supabase/migrations/20260907000200_phase6_order_activity.sql
+public.order_activity
+```
 
-Add an operator-action/activity history only where it materially improves operational traceability. Do not build a complex enterprise audit system unless justified.
+Recorded activity:
 
-## Phase 6 Acceptance
+```text
+created
+customer_changed
+wedding_changed
+payment_status_changed
+production_status_changed
+revision_count_changed
+```
 
-Before leaving Phase 6:
+Browser roles receive read-only owner-scoped access. Activity rows are emitted by the database trigger and cannot be fabricated directly by the authenticated browser role.
 
-- operator can understand current workload from dashboard,
-- order pipeline is practical to operate,
-- customer/order/wedding navigation is direct,
-- revision/approval state is clear,
-- payment and readiness information are visible in context,
-- no workflow bypasses existing tenant/security/publish rules,
-- repository CI remains green.
+### Phase 6 Verification
 
-**Full deployed user-journey testing remains Phase 9.**
+Completion passed:
+
+```text
+Environment preflight       PASS
+Service-role boundary       PASS
+Phase 3 verifier chain      PASS
+Phase 4 routing verifier    PASS
+Phase 5 verifier            PASS
+Phase 6 workflow verifier   PASS
+Production Next.js build    PASS
+Canonical migration chain   PASS
+Phase 5 DB verifier         PASS
+Phase 6 activity DB test    PASS
+Database smoke              PASS
+Docker image build          PASS
+Container health smoke      PASS
+```
+
+Reference: `PHASE6_ADMIN_WORKFLOW.md`.
 
 ---
 
@@ -401,33 +319,86 @@ Before leaving Phase 6:
 
 ## Objective
 
-Prove that the template engine can scale without changing core wedding logic.
+Prove that the template engine can scale to multiple production-quality visual families without changes to core wedding/business logic.
 
 ## Planned Scope
 
-- multiple production-quality active templates,
-- more than one visual/category family,
-- complete metadata,
-- thumbnails/demo previews,
-- categories/tags,
-- lifecycle (`draft`, `active`, `archived`),
-- compatibility verification,
-- mobile performance expectations,
+### 7.1 Multiple Active Production Templates
+
+Activate more than one production-quality template and more than one visual/category family.
+
+### 7.2 Metadata Completeness
+
+Every production template should expose stable metadata such as:
+
+- template ID,
+- customer-facing name,
+- family,
+- category,
+- tags,
+- version,
+- status,
+- visual tier,
+- thumbnail,
+- preview/demo path,
+- performance profile,
+- canonical section contract.
+
+### 7.3 Catalog Experience
+
+Provide an operator/customer-facing template catalog surface with useful:
+
+- categories,
+- tags,
+- active/draft/archive lifecycle,
+- preview/demo navigation,
+- visual-tier information where useful.
+
+### 7.4 Compatibility Verification
+
+Every active template must implement the complete canonical section contract and pass compatibility verification.
+
+### 7.5 Mobile / Motion Baseline
+
+Every active production template must define:
+
+- mobile profile,
+- motion level,
 - reduced-motion fallback,
-- repeatable template-authoring checklist.
+- rendering mode.
+
+### 7.6 Repeatable Template Authoring
+
+Create a reusable checklist/contract for adding a new template without modifying core wedding logic.
 
 ## Architecture Rule
 
 Adding a template must not require changes to:
 
 - wedding DB schema,
+- customer/order schema,
 - guest logic,
 - RSVP logic,
 - wishes logic,
 - public invitation resolver,
-- core routing.
+- core routing,
+- publish lifecycle.
 
-There is no artificial platform template-count cap.
+There is no artificial template-count cap.
+
+## Phase 7 Acceptance
+
+Before leaving Phase 7:
+
+- at least two production-quality active templates exist,
+- active templates span more than one family/category,
+- metadata/catalog preview is usable,
+- compatibility verifier passes every active template,
+- new-template authoring procedure is documented,
+- core invitation route remains unchanged while adding the additional template,
+- CI remains green.
+
+Full real-device visual acceptance remains Phase 9.
 
 ---
 
@@ -489,7 +460,7 @@ Verify ENDRIYA as one complete product in a staging/production-like environment.
 
 Repository `IMPLEMENTED` status alone is insufficient for production `VERIFIED` status.
 
-## 9.1 Environment Preparation
+## Environment Preparation
 
 Prepare/reconcile:
 
@@ -501,11 +472,7 @@ Prepare/reconcile:
 - path routing first,
 - optional wildcard DNS/TLS after path baseline passes.
 
-Secrets must never be committed to Git.
-
-## 9.2 Primary Business Journey
-
-Test one complete managed-service journey:
+## Primary Business Journey
 
 ```text
 Customer inquiry
@@ -530,83 +497,27 @@ Customer inquiry
 → Order completed
 ```
 
-## 9.3 Required Acceptance Families
+## Required Acceptance Families
 
-### Publish lifecycle
+Test:
 
-```text
-Draft → not public
-Release → public
-Released mutation → blocked
-Unpublish → not public
-Edit draft → allowed
-Re-release → readiness re-evaluated
-```
-
-### Personalized guest
-
-Verify valid/invalid/inactive/rotated tokens, wedding isolation, quota context, and canonical metadata without guest token.
-
-### RSVP
-
-Verify attendance options, quota enforcement, repeat behavior, analytics totals, wedding scope, failure states, and rate limiting.
-
-### Wishes
-
-Verify submission, wedding scope, moderation, hide/unhide/delete, public visible-only behavior, and spam/rate-limit baseline.
-
-### Cross-tenant security
-
-Use at least two isolated tenants/weddings and verify no leakage or unauthorized mutation across:
-
-- weddings,
-- customers,
-- orders,
-- guests,
-- RSVP,
-- wishes,
-- assets,
-- owner-only actions.
+- publish/unpublish/re-release lifecycle,
+- personalized guest tokens and rotation,
+- RSVP quota/scope/analytics,
+- wishes moderation/public visibility,
+- cross-tenant customer/order/wedding/guest/RSVP/wishes/assets security,
+- asset type/size/signature/namespace,
+- path then optional subdomain routing,
+- SEO/social metadata,
+- Android/iPhone/desktop browsers,
+- reduced-motion/slow-network/mobile layout,
+- negative and unauthorized scenarios.
 
 Target cross-tenant incidents: **0**.
 
-### Assets
+## Evidence
 
-Verify file type/size/signature, wedding namespace, replacement/deletion behavior, and released-media loading.
-
-### URL/domain
-
-Verify path mode first, then optional subdomain mode, canonical redirects, reserved slugs, forwarded host, wildcard DNS/TLS, and absence of localhost hard-coding.
-
-### SEO/social
-
-Verify title, description, canonical URL, OG metadata, guest-token exclusion, and no draft indexing.
-
-### Device/browser
-
-At minimum:
-
-- Android Chrome,
-- iPhone Safari where available,
-- desktop Chrome/Edge,
-- common mobile viewports,
-- slower network simulation,
-- reduced-motion mode.
-
-### Negative scenarios
-
-Include nonexistent/draft slug, inactive template, duplicate/reserved slug, invalid/inactive guest, over-quota RSVP, malformed message, oversized/unsupported upload, unauthorized API/dashboard access, collaborator owner-action attempt, and released-wedding direct mutation.
-
-## 9.4 Evidence
-
-Keep appropriate evidence:
-
-- acceptance checklist,
-- screenshots for important flows,
-- CI/commit SHA,
-- migration verifier results,
-- browser/device notes,
-- defects and resolution commits.
+Keep acceptance checklist, screenshots, CI/commit SHAs, migration verifier results, device notes, defects, and resolution commits.
 
 Phase 9 ends only when critical/high-severity defects are fixed or explicitly accepted.
 
@@ -625,8 +536,7 @@ Make the final commercial go/no-go decision.
 - [ ] clean deployment,
 - [ ] HTTPS/domain stable,
 - [ ] primary E2E journey passes,
-- [ ] tenant isolation passes,
-- [ ] customer/order isolation passes,
+- [ ] tenant/customer/order isolation passes,
 - [ ] RSVP/wishes behavior passes,
 - [ ] mobile/device QA passes,
 - [ ] backup/rollback documented.
@@ -636,7 +546,7 @@ Make the final commercial go/no-go decision.
 - [ ] operator account ready,
 - [ ] customer intake workflow ready,
 - [ ] order workflow understood,
-- [ ] payment tracking process ready,
+- [ ] payment tracking ready,
 - [ ] revision/approval/publish SOP ready,
 - [ ] support/contact process ready.
 
@@ -659,11 +569,11 @@ Phase 2  ✅
 Phase 3  ✅
 Phase 4  ✅ code / ⏳ environment verification deferred
 Phase 5  ✅
-Phase 6  ▶ NEXT
-Phase 7  ⏳
+Phase 6  ✅
+Phase 7  ▶ NEXT
 Phase 8  ⏳
 Phase 9  ⏳ full integration/E2E
 Phase 10 ⏳ launch gate
 ```
 
-**Next implementation reference: Phase 6 — Commercial/Admin Workflow.**
+**Next implementation reference: Phase 7 — Template Catalog Scaling.**
