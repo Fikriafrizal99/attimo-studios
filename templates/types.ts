@@ -31,11 +31,21 @@ export type TemplateRenderProps = {
   guest?: PublicGuestContext;
 };
 
+export type TemplatePerformanceBudget = {
+  /** Target client-side JS attributable to the experience chunk, excluding shared framework runtime. */
+  experienceJsKb: number;
+  /** Recommended aggregate wedding-controlled media budget before operator warning. */
+  mediaKb: number;
+  /** Rendering DPR cap for custom canvas/WebGL code. DOM templates keep this at 1. */
+  maxDevicePixelRatio: number;
+};
+
 export type TemplatePerformanceProfile = {
   renderingMode: TemplateRenderingMode;
   motionLevel: TemplateMotionLevel;
   mobileProfile: TemplateMobileProfile;
   reducedMotionFallback: boolean;
+  budget: TemplatePerformanceBudget;
 };
 
 /**
