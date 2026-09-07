@@ -1,0 +1,369 @@
+# ENDRIYA Phase 6 — Commercial / Admin Workflow
+
+**Status:** IMPLEMENTED  
+**Branch:** `develop/commerce-foundation`  
+**Repository verification:** PASS  
+**Environment / E2E verification:** deferred to Phase 9.
+
+## Objective
+
+Phase 6 connects the Phase 3–5 modules into an operator workflow that is practical for daily managed-service operations.
+
+The phase does **not** create a second workflow engine or a second publish validator. Existing Phase 5 `production_status` remains the commercial workflow source of truth, and the Phase 3/4 centralized publish-readiness validator remains the only release-readiness source of truth.
+
+---
+
+## 6.1 Operations Overview — implemented
+
+`/dashboard` is now an operations-oriented home screen.
+
+It surfaces:
+
+- active orders,
+- payment-attention count,
+- waiting-data queue,
+- revision queue,
+- preview-ready queue,
+- approved queue,
+- customer count,
+- released-wedding count,
+- recent active orders,
+- production pulse,
+- wedding-project table.
+
+Operators can jump directly to:
+
+```text
+Orders
+Pipeline
+Customer records
+Order workspace
+Wedding Studio
+Preview
+Live invitation (released only)
+```
+
+---
+
+## 6.2 Order Pipeline — implemented
+
+Route:
+
+```text
+/dashboard/pipeline
+```
+
+The pipeline displays the managed-service production states as explicit columns:
+
+```text
+new
+waiting_data
+in_progress
+preview_ready
+revision
+approved
+published
+completed
+```
+
+`cancelled` remains outside the active board and is reported separately.
+
+Each order card includes useful operational context:
+
+- customer,
+- package,
+- order value,
+- payment state,
+- revision count,
+- linked wedding slug,
+- last update.
+
+Cards open the order workspace where changes are made explicitly.
+
+Pipeline movement is not automatic. A wedding edit, payment update, or publish action does not silently advance unrelated commercial states.
+
+---
+
+## 6.3 Customer → Order → Wedding Navigation — implemented
+
+### Customer workspace
+
+Route:
+
+```text
+/dashboard/customers/{customerId}
+```
+
+It includes:
+
+- customer contact data,
+- customer notes,
+- order count,
+- paid-order count,
+- total order value,
+- order history,
+- links to each order workspace,
+- links to linked wedding projects.
+
+### Order workspace
+
+Route:
+
+```text
+/dashboard/orders/{orderId}
+```
+
+It connects:
+
+```text
+Customer
+   ↕
+Order
+   ↕
+Wedding Project
+   ↕
+Preview / Settings / Wedding Studio
+```
+
+IDs remain internal identifiers; operators are given direct contextual navigation instead of being expected to copy IDs manually.
+
+---
+
+## 6.4 Revision & Approval Workflow — implemented
+
+The order workspace provides explicit controls for:
+
+- production status,
+- payment status,
+- revision count.
+
+Recommended next production states are surfaced from a shared workflow helper, while the operator retains explicit control.
+
+Examples:
+
+```text
+preview_ready → revision / approved
+revision → in_progress / preview_ready
+approved → published / revision
+published → completed / approved
+```
+
+The workflow helper does not mutate data by itself.
+
+Canonical helper:
+
+```text
+lib/commerce/workflow.ts
+```
+
+---
+
+## 6.5 Publish Readiness in Commerce Workflow — implemented
+
+The order workspace evaluates the linked wedding using the existing centralized function:
+
+```text
+evaluatePublishReadiness(...)
+```
+
+It displays:
+
+- ready / blocked state,
+- blocking issue count,
+- individual readiness checks,
+- warnings.
+
+No duplicate commerce-specific publish validator was introduced.
+
+The release API remains authoritative for actual wedding publication.
+
+Operational mismatch warnings include cases such as:
+
+- approved order but wedding not publish-ready,
+- order marked published while wedding is still draft,
+- wedding released while order is not marked published/completed,
+- order progressing without a linked wedding.
+
+---
+
+## 6.6 Payment Visibility — implemented
+
+Payment state is visible in:
+
+- operations overview,
+- order list,
+- pipeline card,
+- order workspace,
+- customer order history.
+
+The source of truth remains the Phase 5 manual payment status:
+
+```text
+unpaid
+partial
+paid
+refunded
+```
+
+Phase 6 does not require payment-gateway automation.
+
+---
+
+## 6.7 Operational Search / Filter / Empty States — implemented baseline
+
+Existing Phase 5 list tools remain integrated:
+
+- customer search,
+- order search,
+- payment filter,
+- production filter,
+- updated-at ordering,
+- empty states,
+- API/UI error toasts.
+
+Phase 6 adds operational navigation and a pipeline view rather than duplicating these filters.
+
+---
+
+## 6.8 Activity / Audit Baseline — implemented
+
+Migration:
+
+```text
+supabase/migrations/20260907000200_phase6_order_activity.sql
+```
+
+New table:
+
+```text
+public.order_activity
+```
+
+Recorded event types:
+
+```text
+created
+customer_changed
+wedding_changed
+payment_status_changed
+production_status_changed
+revision_count_changed
+```
+
+Rows are generated by a narrow database trigger when meaningful order workflow fields change.
+
+### Security boundary
+
+`authenticated` browser roles receive **SELECT only** on activity records.
+
+They cannot directly insert, modify, or fabricate activity events.
+
+RLS restricts activity reads to:
+
+```text
+owner_user_id = current Better Auth operator
+```
+
+The order workspace displays the activity timeline with actor and timestamp.
+
+---
+
+## Shared workflow helpers
+
+File:
+
+```text
+lib/commerce/workflow.ts
+```
+
+Provides:
+
+- pipeline state order,
+- suggested next production transitions,
+- operational-attention detection,
+- activity labels.
+
+It is intentionally a presentation/operations helper, not an autonomous state machine.
+
+---
+
+## Navigation
+
+Top commerce navigation now includes:
+
+```text
+Overview
+Orders
+Pipeline
+Customers
+```
+
+Wedding Studio remains a separate project-level workspace.
+
+---
+
+## Repository Verification
+
+### Workflow helper verifier
+
+```text
+bun scripts/phase6_1_workflow_verify.ts
+```
+
+Verifies:
+
+- pipeline state order,
+- suggested transitions,
+- unpaid / missing-wedding attention,
+- approved-but-not-ready attention,
+- published/order-vs-wedding mismatch attention,
+- activity labels.
+
+### Database verifier
+
+```text
+supabase/tests/phase6_1_order_activity_verify.sql
+```
+
+Verifies:
+
+- order creation emits activity,
+- production-state change emits activity,
+- payment-state change emits activity,
+- revision change emits activity,
+- another owner's activity is hidden by RLS,
+- authenticated browser role cannot insert activity directly.
+
+### Completion CI
+
+Phase 6 completion run passed:
+
+```text
+Environment preflight       PASS
+Service-role boundary       PASS
+Phase 3 verifier chain      PASS
+Phase 4 routing verifier    PASS
+Phase 5 contract verifier   PASS
+Phase 6 workflow verifier   PASS
+Production Next.js build    PASS
+Canonical migration chain   PASS
+Phase 5 DB verifier         PASS
+Phase 6 activity DB test    PASS
+Database smoke              PASS
+Docker image build          PASS
+Container health smoke      PASS
+```
+
+---
+
+## Current status
+
+**Phase 6 repository implementation: `IMPLEMENTED`.**
+
+The new Phase 6 migration is part of the canonical repository migration chain but is **not being pushed to the real production Supabase at this stage**, consistent with the master strategy. Final migration reconciliation, deployment, real operator flow, browser/device QA, and E2E acceptance remain Phase 9 work.
+
+## Next phase
+
+**Phase 7 — Template Catalog Scaling**
+
+The next goal is to prove that ENDRIYA can support multiple production-quality template families without modifying wedding schema, RSVP, wishes, guest logic, public routing, or the core invitation resolver.
