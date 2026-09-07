@@ -1,11 +1,13 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   Allura,
+  Cinzel_Decorative,
   Cormorant_Garamond,
   DM_Serif_Display,
   Lora,
   Nunito,
   Parisienne,
+  Sacramento,
 } from "next/font/google";
 import type {
   TemplateTypography,
@@ -54,6 +56,20 @@ const parisienne = Parisienne({
   display: "swap",
 });
 
+const cinzelDecorative = Cinzel_Decorative({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-endriya-cinzel-decorative",
+  display: "swap",
+});
+
+const sacramento = Sacramento({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-endriya-sacramento",
+  display: "swap",
+});
+
 const loadedFontVariable: Partial<Record<WeddingFontId, string>> = {
   inter: "var(--font-inter)",
   "playfair-display": "var(--font-playfair)",
@@ -63,6 +79,8 @@ const loadedFontVariable: Partial<Record<WeddingFontId, string>> = {
   nunito: "var(--font-endriya-nunito)",
   parisienne: "var(--font-endriya-parisienne)",
   allura: "var(--font-endriya-allura)",
+  "cinzel-decorative": "var(--font-endriya-cinzel-decorative)",
+  sacramento: "var(--font-endriya-sacramento)",
 };
 
 const fontLoaderClassName = [
@@ -72,6 +90,8 @@ const fontLoaderClassName = [
   lora.variable,
   nunito.variable,
   parisienne.variable,
+  cinzelDecorative.variable,
+  sacramento.variable,
 ].join(" ");
 
 function resolveLoadedFont(fontId: WeddingFontId, fallbackId: WeddingFontId): string {
