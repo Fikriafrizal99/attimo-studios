@@ -18,7 +18,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-const THEME_KEY = "attimo-theme";
+const THEME_KEY = "endriya-theme";
 type Theme = "system" | "light" | "dark";
 
 function useTheme() {
@@ -82,11 +82,8 @@ export function UserProfileDropdown() {
           align="end"
           className="z-50 min-w-[220px] rounded-md border border-white/6 bg-[#141416] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
         >
-          {/* User */}
           <div className="border-b border-white/6 px-2 py-2">
-            <p className="truncate text-sm font-semibold text-neutral-50">
-              {userDisplayName}
-            </p>
+            <p className="truncate text-sm font-semibold text-neutral-50">{userDisplayName}</p>
             <p className="truncate text-xs text-neutral-400">{userEmail}</p>
           </div>
 
@@ -114,47 +111,18 @@ export function UserProfileDropdown() {
           <DropdownMenu.Item className={itemClass} disabled>
             <Command className="size-3.5 shrink-0" aria-hidden />
             <span className="flex-1">Command Menu</span>
-            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-neutral-500">
-              ⌘K
-            </kbd>
+            <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-neutral-500">⌘K</kbd>
           </DropdownMenu.Item>
           <div className="flex items-center justify-between gap-2 px-2 py-1.5">
             <span className="text-xs text-neutral-400">Theme</span>
             <div className="flex rounded-md border border-white/6 bg-white/5 p-0.5" role="group" aria-label="Theme">
-              <button
-                type="button"
-                onClick={() => setTheme("system")}
-                title="System"
-                className={cn(
-                  "rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]",
-                  theme === "system" && "border border-white/10 bg-white/5 text-neutral-50"
-                )}
-                aria-pressed={theme === "system"}
-              >
+              <button type="button" onClick={() => setTheme("system")} title="System" className={cn("rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]", theme === "system" && "border border-white/10 bg-white/5 text-neutral-50")} aria-pressed={theme === "system"}>
                 <Monitor className="size-3.5" aria-hidden />
               </button>
-              <button
-                type="button"
-                onClick={() => setTheme("light")}
-                title="Light"
-                className={cn(
-                  "rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]",
-                  theme === "light" && "border border-white/10 bg-white/5 text-neutral-50"
-                )}
-                aria-pressed={theme === "light"}
-              >
+              <button type="button" onClick={() => setTheme("light")} title="Light" className={cn("rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]", theme === "light" && "border border-white/10 bg-white/5 text-neutral-50")} aria-pressed={theme === "light"}>
                 <Sun className="size-3.5" aria-hidden />
               </button>
-              <button
-                type="button"
-                onClick={() => setTheme("dark")}
-                title="Dark"
-                className={cn(
-                  "rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]",
-                  theme === "dark" && "border border-white/10 bg-white/5 text-neutral-50"
-                )}
-                aria-pressed={theme === "dark"}
-              >
+              <button type="button" onClick={() => setTheme("dark")} title="Dark" className={cn("rounded p-1 text-neutral-400 transition-colors hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A]", theme === "dark" && "border border-white/10 bg-white/5 text-neutral-50")} aria-pressed={theme === "dark"}>
                 <Moon className="size-3.5" aria-hidden />
               </button>
             </div>
@@ -168,27 +136,10 @@ export function UserProfileDropdown() {
               Home
             </Link>
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className={itemClass}
-            onSelect={(e) => {
-              e.preventDefault();
-              handleSignOut();
-            }}
-          >
+          <DropdownMenu.Item className={itemClass} onSelect={(e) => { e.preventDefault(); handleSignOut(); }}>
             <LogOut className="size-3.5 shrink-0" aria-hidden />
             Log out
           </DropdownMenu.Item>
-
-          <DropdownMenu.Separator className="my-1 h-px bg-white/6" />
-
-          <div className="p-1">
-            <Link
-              href="/request-access"
-              className="flex min-h-[36px] w-full items-center justify-center rounded-md bg-white/10 text-xs font-medium text-neutral-100 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BFA14A] focus-visible:ring-offset-2 focus-visible:ring-offset-[#141416]"
-            >
-              Upgrade to Pro
-            </Link>
-          </div>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
