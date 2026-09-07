@@ -7,10 +7,33 @@ import {
   validateSlug,
 } from "@/lib/commerce/validation";
 import {
-  checkRateLimit,
+  checkSharedRateLimit,
   getClientIp,
+  PUBLIC_READ_LIMIT,
+  PUBLIC_RESOLUTION_LIMIT,
   PUBLIC_SUBMISSION_LIMIT,
+  PUBLIC_WEDDING_BURST_LIMIT,
+  type RateLimitOptions,
 } from "@/lib/commerce/rate-limit";
+
+async function rateLimitResponse(
+  key: string,
+  options: RateLimitOptions,
+  message: string
+) {
+  const rate = await checkSharedRateLimit(key, options);
+  if (rate.allowed) return null;
+  return NextResponse.json(
+    { error: message },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(rate.retryAfterSeconds),
+        "X-RateLimit-Remaining": "0",
+      },
+    }
+  );
+}
 
 async function resolveReleasedGuest(input: {
   slug: unknown;
@@ -63,6 +86,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
+    const clientIp = getClientIp(request);
+    const resolutionLimit = await rateLimitResponse(
+      `${clientIp}:rsvp:resolve`,
+      PUBLIC_RESOLUTION_LIMIT,
+      "Too many RSVP link attempts. Please try again later."
+    );
+    if (resolutionLimit) return resolutionLimit;
+
     const resolved = await resolveReleasedGuest({
       slug: body.wedding_slug,
       token: body.guest_token,
@@ -72,16 +103,29 @@ export async function POST(request: NextRequest) {
     }
 
     const { supabase, wedding, guest } = resolved;
-    const rate = checkRateLimit(
-      `${getClientIp(request)}:rsvp:${wedding.id}:${guest.id}`,
-      PUBLIC_SUBMISSION_LIMIT
+
+    // Guest-scoped protection remains effective even if forwarding headers are
+    // spoofed. IP- and wedding-scoped keys add source and aggregate protection.
+    const guestLimit = await rateLimitResponse(
+      `rsvp:${wedding.id}:guest:${guest.id}`,
+      PUBLIC_SUBMISSION_LIMIT,
+      "Too many RSVP attempts for this guest. Please try again later."
     );
-    if (!rate.allowed) {
-      return NextResponse.json(
-        { error: "Too many RSVP attempts. Please try again later." },
-        { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
-      );
-    }
+    if (guestLimit) return guestLimit;
+
+    const ipLimit = await rateLimitResponse(
+      `${clientIp}:rsvp:${wedding.id}`,
+      PUBLIC_SUBMISSION_LIMIT,
+      "Too many RSVP attempts. Please try again later."
+    );
+    if (ipLimit) return ipLimit;
+
+    const weddingBurstLimit = await rateLimitResponse(
+      `rsvp:${wedding.id}:all`,
+      PUBLIC_WEDDING_BURST_LIMIT,
+      "This wedding is receiving too many RSVP submissions. Please try again later."
+    );
+    if (weddingBurstLimit) return weddingBurstLimit;
 
     if (!isAttendance(body.attendance)) {
       return NextResponse.json({ error: "Invalid attendance value" }, { status: 400 });
@@ -168,6 +212,14 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    const clientIp = getClientIp(request);
+    const resolutionLimit = await rateLimitResponse(
+      `${clientIp}:rsvp:resolve-read`,
+      PUBLIC_RESOLUTION_LIMIT,
+      "Too many RSVP link requests. Please try again later."
+    );
+    if (resolutionLimit) return resolutionLimit;
+
     const resolved = await resolveReleasedGuest({
       slug: request.nextUrl.searchParams.get("slug"),
       token: request.nextUrl.searchParams.get("guest_token"),
@@ -177,6 +229,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { supabase, wedding, guest } = resolved;
+    const readLimit = await rateLimitResponse(
+      `${clientIp}:rsvp:read:${wedding.id}`,
+      PUBLIC_READ_LIMIT,
+      "Too many RSVP requests. Please try again later."
+    );
+    if (readLimit) return readLimit;
+
     const { data, error } = await supabase
       .from("rsvp")
       .select("guest_id, attendance, guest_count, message, submitted_at")
