@@ -13,10 +13,6 @@ import WishesSection from "@/components/WishesSection";
 import GiftSection from "@/components/GiftSection";
 import MusicPlayer from "@/components/MusicPlayer";
 import type { WeddingSectionId } from "@/lib/wedding-contract";
-import {
-  classicTypographyClassName,
-  classicTypographyStyle,
-} from "@/templates/typography/packs/classic";
 import type { TemplateRenderProps } from "@/templates/types";
 
 const SECTION_COMPONENTS: Record<WeddingSectionId, ComponentType> = {
@@ -49,8 +45,7 @@ export function Classic001Template({
       value={{ weddingId, publicSlug, content, sections, theme, guest }}
     >
       <main
-        className={`${classicTypographyClassName} min-h-screen bg-white`}
-        style={classicTypographyStyle}
+        className="min-h-screen bg-white"
         data-endriya-template="classic-001"
         data-endriya-visual-tier="2d"
         data-endriya-typography="allura+cormorant-garamond+lora"
