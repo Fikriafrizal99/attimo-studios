@@ -13,7 +13,7 @@ The agreed initial experience set is:
 1. **Editorial Ivory** — Standard 2D
 2. **Cartoon Love Story** — Motion 2D — **IMPLEMENTED**
 3. **Storybook Romance** — Motion 2D — **IMPLEMENTED**
-4. **Paper Cut Garden** — 2.5D
+4. **Paper Cut Garden** — 2.5D — **IMPLEMENTED**
 5. **Pasundan Storyland** — 2.5D
 6. **Clay Couple** — 3D / immersive progression
 
@@ -226,25 +226,75 @@ Experience characteristics:
 
 Storybook reuses the same shared Couple, Date/countdown, Location/maps, Story, Gallery, RSVP, Wishes, Gift, and Music components as the other active experiences. It introduces no new wedding schema and no duplicate RSVP/wishes/gift API logic.
 
-Phase 7.3 verification requires:
+With Phase 7.3, one canonical wedding contract supports three substantially different active visual experiences.
 
-- `classic-001`, `cartoon-001`, and `storybook-001` active simultaneously,
-- full canonical section contract for Storybook,
-- independent Storybook renderer,
-- canonical compatibility success,
+## 11. Phase 7.4 — Paper Cut Garden 2.5D
+
+**Status:** IMPLEMENTED
+
+Template ID:
+
+```text
+paper-cut-001
+```
+
+Catalog identity:
+
+```text
+family         → paper-cut-garden
+category       → Whimsical
+visual tier    → 2.5d
+rendering mode → hybrid
+motion         → rich
+mobile         → adaptive
+```
+
+Typography:
+
+```text
+display → Allura
+heading → DM Serif Display
+body    → Inter
+accent  → Allura
+```
+
+Experience characteristics:
+
+- first active ENDRIYA template classified as `2.5d`,
+- layered paper-cut hero composed from sky, hills, arch, foliage, floral foreground and wedding-name planes,
+- explicit foreground/midground/background depth factors,
+- pointer-based parallax on capable desktop pointers,
+- scroll-driven depth movement throttled through `requestAnimationFrame`,
+- compositor-friendly `translate3d` transforms and CSS perspective,
+- paper-shadow treatment and layered section framing across the canonical wedding experience,
+- adaptive mobile profile that reduces visual scale/depth complexity,
+- touch input does not depend on pointer parallax,
+- `prefers-reduced-motion` removes the depth transforms and motion while preserving all content,
+- no WebGL runtime required.
+
+Paper Cut Garden still reuses the shared Couple, Date/countdown, Location/maps, Story, Gallery, RSVP, Wishes, Gift, and Music components. The 2.5D layer changes presentation only; there is no new wedding schema and no duplicated public business API logic.
+
+Phase 7.4 verification requires:
+
+- `paper-cut-001` active and discoverable through the `2.5d` tier filter,
+- four active production experiences in total,
+- full canonical section compatibility,
+- `hybrid` rendering declaration,
+- adaptive mobile profile,
+- pointer and scroll depth mechanics,
+- explicit layered depth markers,
+- browser-safe pixel-based transform variables,
 - shared business-section reuse,
-- reduced-motion declaration,
-- correct Storybook catalog/typography identity,
+- reduced-motion fallback,
 - production Next.js build success,
 - database smoke success,
 - Docker image and container health success.
 
-With Phase 7.3, one canonical wedding contract now supports three substantially different active visual experiences.
+With Phase 7.4, the shared wedding contract is proven across both conventional Motion 2D and layered 2.5D experiences.
 
-## 11. Remaining Phase 7 Work
+## 12. Remaining Phase 7 Work
 
-- build Paper Cut Garden 2.5D renderer — **NEXT**,
-- build Pasundan Storyland 2.5D renderer,
+- build Pasundan Storyland 2.5D renderer — **NEXT**,
 - build Clay Couple 3D/fallback architecture,
 - complete Editorial Ivory full canonical contract and activate it,
 - add catalog discovery metadata/filtering,
