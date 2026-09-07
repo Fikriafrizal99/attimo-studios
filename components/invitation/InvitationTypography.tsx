@@ -4,6 +4,8 @@ import {
   Cormorant_Garamond,
   DM_Serif_Display,
   Lora,
+  Nunito,
+  Parisienne,
 } from "next/font/google";
 import type {
   TemplateTypography,
@@ -38,12 +40,28 @@ const lora = Lora({
   display: "swap",
 });
 
+const nunito = Nunito({
+  weight: ["400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+  variable: "--font-endriya-nunito",
+  display: "swap",
+});
+
+const parisienne = Parisienne({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-endriya-parisienne",
+  display: "swap",
+});
+
 const loadedFontVariable: Partial<Record<WeddingFontId, string>> = {
   inter: "var(--font-inter)",
   "playfair-display": "var(--font-playfair)",
   "cormorant-garamond": "var(--font-endriya-cormorant)",
   "dm-serif-display": "var(--font-endriya-dm-serif-display)",
   lora: "var(--font-endriya-lora)",
+  nunito: "var(--font-endriya-nunito)",
+  parisienne: "var(--font-endriya-parisienne)",
   allura: "var(--font-endriya-allura)",
 };
 
@@ -52,6 +70,8 @@ const fontLoaderClassName = [
   cormorant.variable,
   dmSerif.variable,
   lora.variable,
+  nunito.variable,
+  parisienne.variable,
 ].join(" ");
 
 function resolveLoadedFont(fontId: WeddingFontId, fallbackId: WeddingFontId): string {
