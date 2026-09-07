@@ -109,6 +109,12 @@ jobs:
       - name: Verify Phase 8.2 reliability baseline
         run: bun scripts/phase8_2_reliability_verify.ts
 
+      - name: Verify Phase 8.3 performance hardening
+        run: bun scripts/phase8_3_performance_verify.ts
+
+      - name: Verify Phase 8.4 product and legal baseline
+        run: bun scripts/phase8_4_product_legal_verify.ts
+
       - name: Build
         run: bun run build
 
