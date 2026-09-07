@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase";
+import { logServerError } from "@/lib/commerce/observability";
 import {
   cleanText,
   isAttendance,
@@ -104,8 +105,6 @@ export async function POST(request: NextRequest) {
 
     const { supabase, wedding, guest } = resolved;
 
-    // Guest-scoped protection remains effective even if forwarding headers are
-    // spoofed. IP- and wedding-scoped keys add source and aggregate protection.
     const guestLimit = await rateLimitResponse(
       `rsvp:${wedding.id}:guest:${guest.id}`,
       PUBLIC_SUBMISSION_LIMIT,
@@ -201,15 +200,11 @@ export async function POST(request: NextRequest) {
       { status: created ? 201 : 200 }
     );
   } catch (error) {
-    console.error("POST /api/rsvp failed", error);
+    logServerError("rsvp_submit_failed", request, error);
     return NextResponse.json({ error: "Failed to submit RSVP" }, { status: 500 });
   }
 }
 
-/**
- * Public but only for a valid personal guest link. Returns aggregate attendance
- * plus that guest's own current response so the same link can edit RSVP later.
- */
 export async function GET(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
@@ -270,7 +265,7 @@ export async function GET(request: NextRequest) {
         : null,
     });
   } catch (error) {
-    console.error("GET /api/rsvp failed", error);
+    logServerError("rsvp_read_failed", request, error);
     return NextResponse.json({ error: "Failed to fetch RSVP" }, { status: 500 });
   }
 }
