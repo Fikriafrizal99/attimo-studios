@@ -1,3 +1,4 @@
+import { CartoonLoveStoryTemplate } from "@/templates/cartoon-001/CartoonLoveStoryTemplate";
 import { Classic001Template } from "@/templates/classic-001/Classic001Template";
 import { Minimal001Template } from "@/templates/minimal-001/Minimal001Template";
 import { WEDDING_SECTION_IDS, type WeddingSectionId } from "@/lib/wedding-contract";
@@ -65,6 +66,36 @@ export const TEMPLATE_REGISTRY: Readonly<Record<string, TemplateDefinition>> = O
       reducedMotionFallback: true,
     },
     render: Classic001Template,
+  }),
+  "cartoon-001": defineTemplate({
+    id: "cartoon-001",
+    name: "Endriya Cartoon Love Story 001",
+    family: "cartoon-love-story",
+    category: "Illustrated",
+    tags: ["cartoon", "illustrated", "playful", "motion", "love-story"],
+    version: 1,
+    status: "active",
+    visualTier: "2d",
+    typography: {
+      display: "parisienne",
+      heading: "nunito",
+      body: "nunito",
+      accent: "parisienne",
+      fallback: {
+        display: "playfair-display",
+        heading: "playfair-display",
+        body: "inter",
+      },
+    },
+    contentSchemaVersion: 1,
+    sectionContract: FULL_SECTION_CONTRACT,
+    performance: {
+      renderingMode: "dom",
+      motionLevel: "rich",
+      mobileProfile: "full",
+      reducedMotionFallback: true,
+    },
+    render: CartoonLoveStoryTemplate,
   }),
   "minimal-001": defineTemplate({
     id: "minimal-001",
