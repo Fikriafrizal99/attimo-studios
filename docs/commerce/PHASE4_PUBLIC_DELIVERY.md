@@ -1,8 +1,17 @@
 # ENDRIYA Phase 4 — Public Delivery & Publishing
 
-Status: implementation in progress on `develop/commerce-foundation`
+**Status:** IMPLEMENTED — DEPLOYMENT VERIFICATION DEFERRED TO PHASE 9  
+**Branch:** `develop/commerce-foundation`
 
 Phase 4 turns the Phase 3 wedding engine into a stable public delivery surface. It defines one released-wedding resolver shared by path and subdomain delivery, canonical public URLs, personalized guest resolution, publication lifecycle rules, and deployment/domain verification.
+
+## Project sequencing decision
+
+Repository implementation and focused technical verification for Phase 4 are complete.
+
+Per `IMPLEMENTATION_TESTING_MASTER_PLAN.md`, real-host deployment verification is intentionally deferred until **Phase 9 — Full Integration & End-to-End Acceptance Testing** so Phases 5–8 can be implemented first without repeatedly switching between feature development and environment setup.
+
+This does **not** remove CI requirements. Build, database smoke, security boundary checks, focused verification scripts, Docker build, and health smoke must remain green while later phases are implemented.
 
 ## Scope
 
@@ -105,20 +114,37 @@ It verifies:
 - reserved-subdomain rejection,
 - apex-host rejection.
 
-## Remaining Phase 4 deployment gates
+## Repository verification result
 
-These require the real deployed hostname rather than repository-only work:
+The Phase 4 implementation has passed the repository verification chain including:
 
-1. choose/configure the production domain,
-2. configure HTTPS,
-3. keep `PUBLIC_INVITATION_MODE=path` for the first production smoke test,
-4. verify released and draft behavior through the real deployed application,
-5. verify personalized guest links end-to-end,
-6. if subdomain mode is enabled, configure wildcard DNS and wildcard TLS,
-7. test `slug.domain.id` behind the actual reverse proxy/CDN,
-8. verify canonical metadata in the deployed HTML/social preview,
-9. run mobile/device QA on a real released invitation.
+- service-role boundary verification,
+- Phase 3 focused verification scripts,
+- Phase 4 public routing verification,
+- production Next.js build,
+- database smoke,
+- Docker image build,
+- container health smoke.
+
+## Deferred Phase 9 environment gates
+
+The following are **recorded, not forgotten**. They will be executed during Phase 9 against the integrated product:
+
+1. create/reconcile final deployment environment/secrets,
+2. choose/configure the real staging/production hostname,
+3. configure HTTPS,
+4. keep `PUBLIC_INVITATION_MODE=path` for the first real-host smoke test,
+5. verify released and draft/unpublish behavior through the deployed application,
+6. verify personalized guest links end-to-end,
+7. if subdomain mode is enabled, configure wildcard DNS and wildcard TLS,
+8. test `slug.domain.id` behind the actual reverse proxy/CDN,
+9. verify canonical metadata and social preview against the real public URL,
+10. run mobile/device QA on real released invitations.
 
 ## Phase boundary
 
-Phase 4 is about delivery and publication, not commerce operations. Orders, customer records, payment status, RSVP analytics, and wishes moderation remain the next operational/commercial phase after public delivery is stable.
+Phase 4 is about delivery and publication, not commerce operations.
+
+The immediate next implementation phase is **Phase 5 — Commerce Operations**, covering Orders, Customers, Payment Status, RSVP Analytics, and Wishes Moderation.
+
+The authoritative cross-phase sequencing and final testing plan is `IMPLEMENTATION_TESTING_MASTER_PLAN.md`.
