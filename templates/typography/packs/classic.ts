@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Allura, Cormorant_Garamond, Lora } from "next/font/google";
 
 const display = Allura({
@@ -27,4 +28,4 @@ export const classicTypographyStyle = {
   "--font-wedding-display": "var(--font-endriya-classic-display)",
   "--font-wedding-heading": "var(--font-endriya-classic-heading)",
   "--font-wedding-body": "var(--font-endriya-classic-body)",
-} as React.CSSProperties;
+} as CSSProperties;
