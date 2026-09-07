@@ -26,12 +26,17 @@ export function EndriyaLanding() {
       <footer className="border-t border-white/[0.06] px-6 py-8 md:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
           <span>ENDRIYA — Digital Wedding Experience</span>
-          <Link
-            href="/login"
-            className="rounded-sm hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            Sign in
-          </Link>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2" aria-label="Legal and account links">
+            <Link href="/privacy" className="rounded-sm hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              Privacy
+            </Link>
+            <Link href="/terms" className="rounded-sm hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              Terms
+            </Link>
+            <Link href="/login" className="rounded-sm hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              Sign in
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
