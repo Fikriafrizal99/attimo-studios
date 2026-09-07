@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase";
+import { logServerError } from "@/lib/commerce/observability";
 import { cleanText, isUuid } from "@/lib/commerce/validation";
 import {
   checkSharedRateLimit,
@@ -39,7 +40,6 @@ export async function POST(request: NextRequest) {
     const weddingId = body.wedding_id as string;
     const clientIp = getClientIp(request);
 
-    // Apply source protection before any released-wedding/guest lookup.
     const resolutionLimit = await rateLimitResponse(
       `${clientIp}:wish:resolve`,
       PUBLIC_RESOLUTION_LIMIT,
@@ -89,8 +89,6 @@ export async function POST(request: NextRequest) {
       }
       guest = data;
 
-      // Personalized links gain an additional guest-scoped limit that remains
-      // effective even when source IP forwarding is misconfigured or spoofed.
       const guestLimit = await rateLimitResponse(
         `wish:${weddingId}:guest:${guest.id}`,
         PUBLIC_SUBMISSION_LIMIT,
@@ -130,7 +128,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("POST /api/wishes failed", error);
+    logServerError("wish_submit_failed", request, error);
     return NextResponse.json({ error: "Failed to submit wish" }, { status: 500 });
   }
 }
@@ -182,7 +180,7 @@ export async function GET(request: NextRequest) {
       count: rows.length,
     });
   } catch (error) {
-    console.error("GET /api/wishes failed", error);
+    logServerError("wishes_read_failed", request, error);
     return NextResponse.json({ error: "Failed to fetch wishes" }, { status: 500 });
   }
 }
