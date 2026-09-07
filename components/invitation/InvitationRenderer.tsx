@@ -1,3 +1,4 @@
+import { InvitationTypography } from "@/components/invitation/InvitationTypography";
 import { normalizeWeddingContent } from "@/lib/commerce/content";
 import { normalizeSections } from "@/lib/commerce/sections";
 import { resolveTemplate } from "@/templates/registry";
@@ -22,14 +23,17 @@ export function InvitationRenderer({
 }) {
   const definition = resolveTemplate(templateId);
   const Template = definition.render;
+
   return (
-    <Template
-      weddingId={weddingId}
-      publicSlug={publicSlug}
-      content={normalizeWeddingContent(content)}
-      sections={normalizeSections(sections)}
-      theme={theme}
-      guest={guest}
-    />
+    <InvitationTypography typography={definition.typography}>
+      <Template
+        weddingId={weddingId}
+        publicSlug={publicSlug}
+        content={normalizeWeddingContent(content)}
+        sections={normalizeSections(sections)}
+        theme={theme}
+        guest={guest}
+      />
+    </InvitationTypography>
   );
 }
