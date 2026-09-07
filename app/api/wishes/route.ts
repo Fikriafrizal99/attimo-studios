@@ -2,10 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase";
 import { cleanText, isUuid } from "@/lib/commerce/validation";
 import {
-  checkRateLimit,
+  checkSharedRateLimit,
   getClientIp,
+  PUBLIC_READ_LIMIT,
+  PUBLIC_RESOLUTION_LIMIT,
   PUBLIC_SUBMISSION_LIMIT,
+  PUBLIC_WEDDING_BURST_LIMIT,
+  type RateLimitOptions,
 } from "@/lib/commerce/rate-limit";
+
+async function rateLimitResponse(
+  key: string,
+  options: RateLimitOptions,
+  message: string
+) {
+  const rate = await checkSharedRateLimit(key, options);
+  if (rate.allowed) return null;
+  return NextResponse.json(
+    { error: message },
+    {
+      status: 429,
+      headers: {
+        "Retry-After": String(rate.retryAfterSeconds),
+        "X-RateLimit-Remaining": "0",
+      },
+    }
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +37,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Valid wedding_id is required" }, { status: 400 });
     }
     const weddingId = body.wedding_id as string;
+    const clientIp = getClientIp(request);
 
-    const rate = checkRateLimit(
-      `${getClientIp(request)}:wish:${weddingId}`,
-      PUBLIC_SUBMISSION_LIMIT
+    // Apply source protection before any released-wedding/guest lookup.
+    const resolutionLimit = await rateLimitResponse(
+      `${clientIp}:wish:resolve`,
+      PUBLIC_RESOLUTION_LIMIT,
+      "Too many wish requests. Please try again later."
     );
-    if (!rate.allowed) {
-      return NextResponse.json(
-        { error: "Too many submissions. Please try again later." },
-        { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
-      );
-    }
+    if (resolutionLimit) return resolutionLimit;
 
     const message = cleanText(body.message, 1000, true);
     const location = cleanText(body.location, 120, false) || "";
@@ -38,6 +59,20 @@ export async function POST(request: NextRequest) {
       .eq("status", "released")
       .maybeSingle();
     if (!wedding) return NextResponse.json({ error: "Wedding not found" }, { status: 404 });
+
+    const ipLimit = await rateLimitResponse(
+      `${clientIp}:wish:${weddingId}`,
+      PUBLIC_SUBMISSION_LIMIT,
+      "Too many submissions. Please try again later."
+    );
+    if (ipLimit) return ipLimit;
+
+    const weddingBurstLimit = await rateLimitResponse(
+      `wish:${weddingId}:all`,
+      PUBLIC_WEDDING_BURST_LIMIT,
+      "This wedding is receiving too many wishes. Please try again later."
+    );
+    if (weddingBurstLimit) return weddingBurstLimit;
 
     const guestToken = cleanText(body.guest_token, 128, false) || "";
     let guest: { id: string; display_name: string } | null = null;
@@ -53,6 +88,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Guest link is invalid or inactive" }, { status: 400 });
       }
       guest = data;
+
+      // Personalized links gain an additional guest-scoped limit that remains
+      // effective even when source IP forwarding is misconfigured or spoofed.
+      const guestLimit = await rateLimitResponse(
+        `wish:${weddingId}:guest:${guest.id}`,
+        PUBLIC_SUBMISSION_LIMIT,
+        "Too many wishes from this guest link. Please try again later."
+      );
+      if (guestLimit) return guestLimit;
     }
 
     const name = guest?.display_name ?? cleanText(body.name, 120, true);
@@ -98,6 +142,14 @@ export async function GET(request: NextRequest) {
     if (!isUuid(weddingId)) {
       return NextResponse.json({ error: "Valid wedding_id is required" }, { status: 400 });
     }
+
+    const clientIp = getClientIp(request);
+    const readLimit = await rateLimitResponse(
+      `${clientIp}:wish:read:${weddingId}`,
+      PUBLIC_READ_LIMIT,
+      "Too many wish requests. Please try again later."
+    );
+    if (readLimit) return readLimit;
 
     const supabase = createServiceRoleClient();
     const { data: wedding } = await supabase
