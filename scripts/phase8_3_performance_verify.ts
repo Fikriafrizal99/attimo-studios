@@ -60,13 +60,14 @@ expect(clay, "prefers-reduced-motion: reduce", "Clay reduced motion");
 expect(clay, "requestAnimationFrame", "Clay controlled animation frame");
 expect(clay, "fallbackHidden", "Clay WebGL fallback");
 
-for (const path of [
-  "templates/paper-cut-001/PaperCutGardenTemplate.tsx",
-  "templates/pasundan-001/PasundanStorylandTemplate.tsx",
-]) {
-  const source = read(path);
-  expect(source, "requestAnimationFrame", `${path} frame throttling`);
-  expect(source, "prefers-reduced-motion", `${path} reduced motion`);
+for (const [tsxPath, cssPath] of [
+  ["templates/paper-cut-001/PaperCutGardenTemplate.tsx", "templates/paper-cut-001/PaperCutGardenTemplate.module.css"],
+  ["templates/pasundan-001/PasundanStorylandTemplate.tsx", "templates/pasundan-001/PasundanStorylandTemplate.module.css"],
+] as const) {
+  const source = read(tsxPath);
+  const css = read(cssPath);
+  expect(source, "requestAnimationFrame", `${tsxPath} frame throttling`);
+  expect(css, "prefers-reduced-motion: reduce", `${cssPath} reduced motion`);
 }
 
 console.log("Phase 8.3 performance hardening verification passed");
