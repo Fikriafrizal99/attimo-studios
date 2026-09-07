@@ -1,0 +1,462 @@
+.root {
+  --cartoon-ink: #21495a;
+  --cartoon-sky: #b9e6ff;
+  --cartoon-grass: #8fc77d;
+  --cartoon-cream: #fff8df;
+  --cartoon-paper: #fffdf6;
+  --cartoon-pink: #ed8e83;
+  --cartoon-yellow: #f5c863;
+  --cartoon-blue: #6aa8c0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--cartoon-cream);
+  color: var(--cartoon-ink);
+  font-family: var(--font-wedding-body, sans-serif);
+}
+
+.root :global(.font-serif) {
+  font-family: var(--font-wedding-heading, sans-serif) !important;
+}
+
+.root :global(.text-gray-800),
+.root :global(.text-gray-700),
+.root :global(.text-gray-600),
+.root :global(.text-gray-500),
+.root :global(.text-stone-800),
+.root :global(.text-stone-700),
+.root :global(.text-stone-600),
+.root :global(.text-stone-500) {
+  color: var(--cartoon-ink) !important;
+}
+
+.root :global(.bg-white),
+.root :global(.bg-white\/90),
+.root :global(.bg-white\/80) {
+  background-color: var(--cartoon-paper) !important;
+}
+
+.root :global(#couple),
+.root :global(#date),
+.root :global(#location),
+.root :global(#story),
+.root :global(#gallery),
+.root :global(#rsvp),
+.root :global(#wishes),
+.root :global(#gift) {
+  background: transparent !important;
+  position: relative;
+  z-index: 2;
+}
+
+.root :global(#couple > div),
+.root :global(#date > div),
+.root :global(#location > div),
+.root :global(#story > div),
+.root :global(#gallery > div),
+.root :global(#rsvp > div),
+.root :global(#wishes > div),
+.root :global(#gift > div) {
+  position: relative;
+  z-index: 2;
+}
+
+.root :global(.rounded-2xl),
+.root :global(.rounded-xl) {
+  border: 2px solid rgba(33, 73, 90, 0.12) !important;
+  border-radius: 30px !important;
+  box-shadow: 0 10px 0 rgba(33, 73, 90, 0.07) !important;
+}
+
+.root :global(button) {
+  font-family: var(--font-wedding-body, sans-serif);
+}
+
+.chapter {
+  position: relative;
+  padding-top: 3.25rem;
+  background: var(--cartoon-cream);
+}
+
+.chapter:nth-of-type(even) {
+  background: #f3fbff;
+}
+
+.chapter::before,
+.chapter::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  border-radius: 999px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.chapter::before {
+  width: 88px;
+  height: 88px;
+  left: -28px;
+  top: 82px;
+  background: #ffd9d2;
+}
+
+.chapter::after {
+  width: 54px;
+  height: 54px;
+  right: 4%;
+  bottom: 9%;
+  background: #d5edba;
+}
+
+.chapterLabel {
+  position: absolute;
+  z-index: 5;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border: 2px solid rgba(33, 73, 90, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.92);
+  color: var(--cartoon-ink);
+  box-shadow: 0 5px 0 rgba(33, 73, 90, 0.08);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 6.5rem 1.25rem 4rem;
+  background: linear-gradient(180deg, var(--cartoon-sky) 0 58%, var(--cartoon-grass) 58% 100%);
+}
+
+.heroInner {
+  position: relative;
+  z-index: 8;
+  width: min(980px, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.guest {
+  display: inline-flex;
+  margin-bottom: 1.2rem;
+  padding: 0.55rem 1rem;
+  border: 2px solid rgba(33, 73, 90, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 5px 0 rgba(33, 73, 90, 0.08);
+  font-size: 0.8rem;
+}
+
+.kicker {
+  margin-bottom: 0.5rem;
+  color: var(--cartoon-ink);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.names {
+  margin: 0;
+  color: var(--cartoon-ink);
+  font-family: var(--font-wedding-display, cursive);
+  font-size: clamp(4.4rem, 13vw, 9.5rem);
+  font-weight: 400;
+  line-height: 0.84;
+  text-shadow: 0 5px 0 rgba(255, 255, 255, 0.55);
+}
+
+.ampersand {
+  display: block;
+  margin: 0.12em 0;
+  color: var(--cartoon-pink);
+  font-family: var(--font-wedding-display, cursive);
+  font-size: 0.65em;
+}
+
+.subtitle {
+  max-width: 620px;
+  margin: 1.25rem auto 0;
+  color: #315b6c;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.scene {
+  position: relative;
+  height: 320px;
+  max-width: 760px;
+  margin: 2rem auto 1.5rem;
+}
+
+.cloud {
+  position: absolute;
+  width: 142px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 7px 0 rgba(63, 103, 125, 0.05));
+  animation: cloud-drift 8s ease-in-out infinite alternate;
+}
+
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.cloud::before {
+  width: 58px;
+  height: 58px;
+  left: 20px;
+  top: -28px;
+}
+
+.cloud::after {
+  width: 72px;
+  height: 72px;
+  right: 17px;
+  top: -36px;
+}
+
+.cloudLeft {
+  top: 54px;
+  left: 0;
+}
+
+.cloudRight {
+  top: 86px;
+  right: 0;
+  transform: scale(0.78);
+  animation-delay: -3s;
+}
+
+.characters {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2.3rem;
+  transform: translateX(-50%);
+}
+
+.character {
+  position: relative;
+  width: 126px;
+  height: 236px;
+  animation: character-bob 2.8s ease-in-out infinite;
+}
+
+.characterBride {
+  animation-delay: -1.4s;
+}
+
+.head {
+  position: absolute;
+  z-index: 3;
+  top: 5px;
+  left: 20px;
+  width: 86px;
+  height: 86px;
+  border: 4px solid var(--cartoon-ink);
+  border-radius: 50%;
+  background: #e8b893;
+}
+
+.hair {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  left: 18px;
+  width: 91px;
+  height: 44px;
+  border-radius: 54px 54px 18px 18px;
+  background: #382923;
+}
+
+.eyeLeft,
+.eyeRight {
+  position: absolute;
+  top: 38px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cartoon-ink);
+}
+
+.eyeLeft { left: 26px; }
+.eyeRight { right: 26px; }
+
+.smile {
+  position: absolute;
+  top: 53px;
+  left: 27px;
+  width: 28px;
+  height: 13px;
+  border-bottom: 3px solid var(--cartoon-ink);
+  border-radius: 0 0 28px 28px;
+}
+
+.body {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  width: 110px;
+  height: 145px;
+  border: 4px solid var(--cartoon-ink);
+  border-radius: 50px 50px 22px 22px;
+  background: #315d70;
+}
+
+.characterBride .body {
+  background: #fff7e9;
+}
+
+.heart {
+  margin-bottom: 78px;
+  color: #e96d69;
+  font-size: 2.8rem;
+  line-height: 1;
+  animation: heart-pulse 1.2s ease-in-out infinite;
+}
+
+.openButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding: 0.82rem 1.45rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--cartoon-ink);
+  color: white;
+  box-shadow: 0 7px 0 rgba(33, 73, 90, 0.22);
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.openButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 0 rgba(33, 73, 90, 0.2);
+}
+
+.hill,
+.hillBack {
+  position: absolute;
+  z-index: 2;
+  bottom: -150px;
+  width: 65vw;
+  height: 300px;
+  border-radius: 50% 50% 0 0;
+  background: #78b46b;
+  pointer-events: none;
+}
+
+.hill { left: -18vw; }
+.hillBack {
+  right: -24vw;
+  bottom: -175px;
+  background: #76ad72;
+}
+
+.flower {
+  position: absolute;
+  z-index: 3;
+  bottom: 42px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--cartoon-yellow);
+  box-shadow: 17px 0 0 #f09b9a, -17px 0 0 #f09b9a, 0 17px 0 #f09b9a, 0 -17px 0 #f09b9a;
+  animation: flower-sway 2.8s ease-in-out infinite alternate;
+}
+
+.flowerOne { left: 8%; }
+.flowerTwo { right: 10%; animation-delay: -1.4s; }
+
+@keyframes character-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-9px) rotate(-1deg); }
+}
+
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+@keyframes cloud-drift {
+  from { translate: -6px 0; }
+  to { translate: 10px 3px; }
+}
+
+@keyframes flower-sway {
+  from { transform: rotate(-7deg); }
+  to { transform: rotate(7deg); }
+}
+
+@media (max-width: 700px) {
+  .hero {
+    padding-top: 7.25rem;
+  }
+
+  .scene {
+    height: 285px;
+  }
+
+  .characters {
+    gap: 0.8rem;
+    transform: translateX(-50%) scale(0.86);
+    transform-origin: bottom center;
+  }
+
+  .cloud {
+    transform: scale(0.72);
+  }
+
+  .cloudRight {
+    transform: scale(0.58);
+  }
+
+  .chapterLabel {
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .character,
+  .heart,
+  .cloud,
+  .flower {
+    animation: none !important;
+    transform: none;
+    translate: none;
+  }
+}
