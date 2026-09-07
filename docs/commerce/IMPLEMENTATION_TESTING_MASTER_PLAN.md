@@ -3,76 +3,103 @@
 **Status:** ACTIVE PROJECT REFERENCE  
 **Branch:** `develop/commerce-foundation`  
 **Decision date:** 2026-09-07  
-**Purpose:** menjadi acuan urutan implementasi, definisi status fase, dan strategi pengujian sampai launch.
+**Last roadmap update:** Phase 5 completed; Phase 6 is next.  
+**Purpose:** authoritative reference for implementation order, phase status, deferred testing, and launch gates.
 
 ---
 
 ## 1. Project Decision
 
-ENDRIYA akan menggunakan strategi berikut:
+ENDRIYA uses the following delivery strategy:
 
-> **Selesaikan seluruh fase implementasi utama terlebih dahulu, sambil tetap menjaga CI/unit/database smoke test tetap hijau. Deployment penuh, integration testing lintas modul, real-domain test, real-device QA, dan end-to-end business acceptance dikumpulkan menjadi satu fase testing khusus setelah implementasi produk utama selesai.**
+> **Complete the main implementation phases first while keeping repository-level verification green. Full deployment, cross-module integration testing, real-domain testing, real-device QA, and end-to-end business acceptance are consolidated into Phase 9.**
 
-Keputusan ini dibuat supaya pekerjaan tidak bolak-balik antara development, deployment, dan konfigurasi server setiap selesai satu fitur.
+This avoids repeatedly switching between development and production-environment work after every feature.
 
-Ini **bukan berarti testing ditunda seluruhnya**.
+Testing is **not** deferred completely. Every implementation phase must still keep the relevant engineering gates green:
 
-Selama implementasi setiap fase, hal berikut tetap wajib:
+- production Next.js build,
+- TypeScript/build validation,
+- service-role/security boundary checks,
+- canonical database migration chain,
+- database smoke tests,
+- tenant/integrity verification,
+- phase-specific verification scripts,
+- Docker image build,
+- container health smoke.
 
-- production build harus lulus,
-- TypeScript harus lulus,
-- security boundary check harus lulus,
-- database migration/smoke test harus lulus,
-- phase-specific verification script harus lulus bila tersedia,
-- Docker image harus tetap dapat dibangun,
-- container health smoke tetap dijaga.
-
-Yang sengaja ditunda ke fase testing akhir adalah pengujian yang membutuhkan environment produk secara utuh, domain nyata, browser/device nyata, dan alur bisnis lintas modul.
+Environment-dependent verification is intentionally deferred to Phase 9 unless a blocking issue requires earlier investigation.
 
 ---
 
 ## 2. Status Vocabulary
 
-Agar tidak ada kebingungan antara "sudah dibuat" dan "sudah benar-benar terbukti di production", seluruh fase menggunakan status berikut.
-
 ### `PLANNED`
-Scope sudah disepakati tetapi implementasi belum dimulai.
+Scope is agreed but implementation has not started.
 
 ### `IN PROGRESS`
-Implementasi sedang dikerjakan.
+Implementation is actively being developed.
 
 ### `IMPLEMENTED`
-Kode utama sudah selesai dan repository-level verification yang relevan sudah lulus.
+Main code is complete and relevant repository-level verification has passed.
 
-Status ini **tidak otomatis berarti production verified**.
+`IMPLEMENTED` does **not** mean production verified.
 
 ### `DEPLOYMENT VERIFICATION PENDING`
-Kode sudah implemented tetapi masih membutuhkan pengujian di environment nyata seperti domain, HTTPS, server, Supabase production, browser, atau device.
+Repository implementation is complete but requires target-environment verification.
 
 ### `VERIFIED`
-Integration/E2E test yang relevan sudah dijalankan di environment target dan hasilnya memenuhi acceptance criteria.
+Relevant integration/E2E acceptance has passed in the target environment.
 
 ### `BLOCKED`
-Tidak boleh dianggap launch-ready karena ada dependency eksternal atau masalah yang belum selesai.
+The phase/product cannot be considered launch-ready because a dependency or issue remains unresolved.
 
 ---
 
-## 3. Master Phase Roadmap
+## 3. Master Roadmap
 
-| Phase | Scope | Current Direction |
+| Phase | Scope | Current Status |
 |---|---|---|
-| Phase 1 | Foundation, database integrity, auth/security baseline, tenant boundary | Implemented / technically verified |
-| Phase 2 | Multi-wedding operational foundation, ownership/collaboration and tenant-safe management | Implemented / technically verified |
-| Phase 3 | Wedding Engine | Implemented |
-| Phase 4 | Public Delivery & Publishing | Implemented; deployment verification deferred |
-| Phase 5 | Orders, Customers, Payment Status, RSVP Analytics, Wishes Moderation | Next implementation phase |
-| Phase 6 | Commercial/Admin Workflow | Planned |
-| Phase 7 | Template Catalog Scaling | Planned |
-| Phase 8 | Production Hardening | Planned |
-| Phase 9 | Full Integration & End-to-End Acceptance Testing | Planned after implementation phases |
-| Phase 10 | Launch Readiness & Release Gate | Planned |
+| Phase 1 | Foundation, database integrity, auth/security baseline, tenant boundary | `IMPLEMENTED / technically verified` |
+| Phase 2 | Multi-wedding ownership/collaboration and tenant-safe management | `IMPLEMENTED / technically verified` |
+| Phase 3 | Wedding Engine | `IMPLEMENTED` |
+| Phase 4 | Public Delivery & Publishing | `IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING` |
+| Phase 5 | Customers, Orders, Payment Status, RSVP Analytics, Wishes Moderation | `IMPLEMENTED` |
+| Phase 6 | Commercial/Admin Workflow | **NEXT — PLANNED** |
+| Phase 7 | Template Catalog Scaling | `PLANNED` |
+| Phase 8 | Production Hardening | `PLANNED` |
+| Phase 9 | Full Integration & End-to-End Acceptance Testing | `PLANNED` |
+| Phase 10 | Launch Readiness & Release Gate | `PLANNED` |
 
-Phase numbering after Phase 4 is the working master roadmap. If scope materially changes, update this document before implementation.
+If scope or sequencing materially changes, update this document before implementation.
+
+---
+
+# Phase 1 — Foundation & Security
+
+## Objective
+
+Establish a reproducible database/auth foundation with explicit tenant boundaries.
+
+## Status
+
+`IMPLEMENTED / TECHNICALLY VERIFIED`
+
+Key outcomes include Better Auth integration, RLS strategy, private authorization helpers, wedding ownership, database integrity, storage boundary foundations, and CI/database-smoke coverage.
+
+---
+
+# Phase 2 — Multi-Wedding Operations Foundation
+
+## Objective
+
+Allow authenticated operators to safely manage multiple wedding projects and collaborators.
+
+## Status
+
+`IMPLEMENTED / TECHNICALLY VERIFIED`
+
+Key outcomes include owner/collaborator roles, tenant-scoped project access, collaborator invitations, owner-only settings boundaries, and database verification.
 
 ---
 
@@ -80,28 +107,26 @@ Phase numbering after Phase 4 is the working master roadmap. If scope materially
 
 ## Objective
 
-Membangun satu canonical wedding engine yang dapat dipakai oleh seluruh template visual tanpa menggandakan business logic.
+Provide one canonical wedding product engine shared by all visual templates.
 
 ## Implemented Scope
 
 - canonical wedding content contract,
 - server validation schema,
 - template registry,
-- reference Template 001,
+- reference production renderer,
 - timezone-safe countdown,
-- real gallery engine,
+- gallery engine,
 - wedding-scoped storage isolation,
-- digital gift/bank/QRIS,
+- digital gift / bank / QRIS,
 - maps/location engine,
-- owner guest management,
+- guest management,
 - personalized guest URLs,
 - centralized publish readiness validator.
 
-## Current Status
+## Status
 
 `IMPLEMENTED`
-
-Repository-level verification dan migration terkait sudah tersedia. Environment/device acceptance tetap dapat diuji ulang secara menyeluruh pada Phase 9.
 
 Reference: `PHASE3_WEDDING_ENGINE.md`.
 
@@ -111,57 +136,35 @@ Reference: `PHASE3_WEDDING_ENGINE.md`.
 
 ## Objective
 
-Mengubah Wedding Engine menjadi public invitation delivery surface yang memiliki lifecycle publish yang aman dan URL yang stabil.
+Turn the wedding engine into a stable released-invitation delivery surface.
 
 ## Implemented Scope
 
 - shared released-wedding resolver,
 - released-only public access,
-- wedding-scoped guest token resolution,
+- wedding-scoped guest-token resolution,
 - canonical path routing,
 - optional subdomain routing,
 - reverse-proxy host support,
-- canonical metadata,
-- Open Graph/social metadata,
-- personalized URL tidak menjadi canonical page,
+- canonical/OG/social metadata,
+- guest tokens excluded from canonical URLs,
 - unpublish lifecycle,
-- released wedding mutation lock,
-- public URL hanya tersedia untuk released wedding,
-- CI verification untuk routing/public URL behavior.
+- released-wedding mutation lock,
+- path/subdomain routing verifier.
 
-## Repository Verification
-
-Current implementation has passed:
-
-- service-role boundary verification,
-- Phase 3 verification chain,
-- Phase 4 routing verification,
-- production Next.js build,
-- database smoke,
-- Docker build,
-- container health smoke.
-
-## Deferred Environment Verification
-
-Pengujian berikut **sengaja dipindahkan ke Phase 9**:
-
-- real `.env.production` composition,
-- actual production/staging deployment,
-- HTTPS verification,
-- released invitation through real hostname,
-- draft/unpublish returning non-public result,
-- personalized guest link end-to-end,
-- wildcard DNS,
-- wildcard TLS,
-- `{slug}.domain.id` routing through real proxy/CDN,
-- social preview against real public URL,
-- mobile/device visual QA.
-
-## Current Status
+## Status
 
 `IMPLEMENTED — DEPLOYMENT VERIFICATION PENDING`
 
-Ini adalah keputusan proyek, bukan pekerjaan Phase 4 yang terlupakan.
+Deferred to Phase 9:
+
+- final `.env.production`,
+- real deployment,
+- HTTPS/domain,
+- path-mode public smoke,
+- wildcard DNS/TLS and subdomain verification,
+- real social preview,
+- mobile/device QA.
 
 Reference: `PHASE4_PUBLIC_DELIVERY.md`.
 
@@ -171,38 +174,37 @@ Reference: `PHASE4_PUBLIC_DELIVERY.md`.
 
 ## Objective
 
-Membuat platform dapat mengelola customer dan order sebagai bisnis undangan digital, bukan hanya wedding editor.
+Turn ENDRIYA into an admin-managed wedding-invitation business operation, not only a wedding editor.
 
-## Required Scope
+## Implemented Scope
 
-### 5.1 Customers
+### Customers
 
-Minimum customer record:
-
-- customer ID,
+- owner-scoped customer records,
 - name,
 - WhatsApp/phone,
-- email optional,
+- optional email,
 - notes,
-- created/updated timestamps.
+- timestamps,
+- CRUD API and dashboard,
+- search and order count.
 
-### 5.2 Orders
+### Orders
 
-Minimum order record:
-
-- order ID,
-- customer,
-- wedding,
+- owner-scoped order records,
+- customer relationship,
+- optional owned-wedding relationship,
 - package,
 - template,
-- price,
+- price/currency,
 - payment status,
 - production status,
 - revision count,
-- notes,
-- created/updated timestamps.
+- notes/timestamps,
+- CRUD API and dashboard,
+- filters and summary cards.
 
-Recommended production states:
+Production statuses:
 
 ```text
 new
@@ -216,7 +218,7 @@ completed
 cancelled
 ```
 
-Recommended payment states:
+Payment statuses:
 
 ```text
 unpaid
@@ -225,41 +227,65 @@ paid
 refunded
 ```
 
-### 5.3 Payment Status
+### Relationship Integrity
 
-V1 requires operational payment tracking first. Automatic payment gateway is not required for initial managed-service flow.
+Database safeguards require:
 
-### 5.4 RSVP Analytics
+- customer and order to belong to the same operator,
+- linked wedding to be owned by the same operator,
+- collaborators cannot attach another owner's wedding to commerce records,
+- one wedding can be linked to at most one order in the current managed-service model.
 
-Admin must be able to see per wedding:
+### RSVP Analytics
 
-- invitation count,
+Owner-only per-wedding analytics now include:
+
+- active invitation count,
 - RSVP responses,
 - attending,
 - not attending,
 - maybe,
 - expected guest count,
-- pending response.
+- pending personalized responses,
+- response rate in the dashboard.
 
-### 5.5 Wishes Moderation
+### Wishes Moderation
 
-Admin must be able to:
+Owner-only moderation supports:
 
-- view wishes per wedding,
-- hide/unhide,
-- delete abusive/spam entries,
-- ensure public invitation only displays allowed wishes.
+- list per wedding,
+- visible / hidden / spam states,
+- show/restore,
+- hide,
+- mark spam,
+- delete.
 
-## Acceptance Before Leaving Phase 5
+The public wishes API continues to expose only `visible` wishes for released weddings.
 
-- data model/migrations are safe and tenant-aware,
-- APIs enforce owner/operator access,
-- customer/order/payment relations are consistent,
-- RSVP analytics never cross wedding boundaries,
-- wishes moderation never crosses wedding boundaries,
-- build + DB smoke + relevant verification scripts pass.
+## Repository Verification
 
-**Full user journey deployment testing remains Phase 9.**
+Phase 5 completion passed:
+
+```text
+Service-role boundary       PASS
+Phase 3 verification chain  PASS
+Phase 4 routing verifier    PASS
+Phase 5 contract verifier   PASS
+Production Next.js build    PASS
+Canonical migration chain   PASS
+Phase 5 DB tenant verifier  PASS
+Database smoke              PASS
+Docker image build          PASS
+Container health smoke      PASS
+```
+
+## Status
+
+`IMPLEMENTED`
+
+Production migration application and full business-journey verification remain deferred to Phase 9 by project decision.
+
+Reference: `PHASE5_COMMERCE_OPERATIONS.md`.
 
 ---
 
@@ -267,27 +293,107 @@ Admin must be able to:
 
 ## Objective
 
-Menyatukan modul menjadi workflow operasional yang nyaman dipakai admin sehari-hari.
+Connect the existing modules into a fast, understandable daily workflow for the ENDRIYA operator.
 
 ## Planned Scope
 
-- admin dashboard overview,
-- order pipeline view,
-- production status workflow,
-- customer-to-order-to-wedding navigation,
-- revision tracking,
-- preview approval state,
-- publish readiness visibility from order workflow,
-- payment status visibility,
-- operator action history/audit where useful,
-- search/filter/sort for operational lists,
-- clear empty/error/loading states.
+### 6.1 Admin Overview
 
-## Principle
+Create a commerce-oriented overview containing useful operational indicators, for example:
 
-V1 remains **admin-managed service**.
+- active orders,
+- unpaid / partial payments,
+- orders waiting for customer data,
+- work in progress,
+- preview/revision/approval queue,
+- published/completed orders,
+- upcoming wedding projects where useful.
 
-Customer self-service editor is not required for launch V1.
+### 6.2 Order Pipeline
+
+Provide an operational pipeline across production states:
+
+```text
+new
+→ waiting_data
+→ in_progress
+→ preview_ready
+→ revision
+→ approved
+→ published
+→ completed
+```
+
+`cancelled` remains a terminal exception path.
+
+The workflow must remain explicit rather than silently changing states from unrelated UI actions.
+
+### 6.3 Customer → Order → Wedding Navigation
+
+Operators must be able to move quickly between:
+
+```text
+Customer
+   ↓
+Order
+   ↓
+Wedding Project
+   ↓
+Preview / Guests / RSVP / Wishes / Settings
+```
+
+Avoid duplicated business records and avoid forcing operators to manually copy IDs.
+
+### 6.4 Revision / Approval Workflow
+
+Improve operational handling of:
+
+- revision count,
+- preview-ready state,
+- revision state,
+- approved state,
+- clear next actions.
+
+### 6.5 Publish Readiness in Commerce Workflow
+
+Order/wedding workflow should surface publish readiness without bypassing the existing Phase 3/4 readiness gate.
+
+The order module must **not** implement a second conflicting publish validator.
+
+### 6.6 Payment Visibility
+
+Payment status should be visible where an operator decides whether to proceed, publish, or complete an order.
+
+Payment automation is still optional; the source of truth remains the Phase 5 operational payment status.
+
+### 6.7 Operational Search / Filter / Sort
+
+Improve operational lists where useful:
+
+- search,
+- status filters,
+- payment filters,
+- sorting,
+- useful empty states,
+- loading/error feedback.
+
+### 6.8 Activity / Audit Baseline
+
+Add an operator-action/activity history only where it materially improves operational traceability. Do not build a complex enterprise audit system unless justified.
+
+## Phase 6 Acceptance
+
+Before leaving Phase 6:
+
+- operator can understand current workload from dashboard,
+- order pipeline is practical to operate,
+- customer/order/wedding navigation is direct,
+- revision/approval state is clear,
+- payment and readiness information are visible in context,
+- no workflow bypasses existing tenant/security/publish rules,
+- repository CI remains green.
+
+**Full deployed user-journey testing remains Phase 9.**
 
 ---
 
@@ -295,24 +401,24 @@ Customer self-service editor is not required for launch V1.
 
 ## Objective
 
-Membuktikan bahwa template engine benar-benar dapat berkembang tanpa mengubah core wedding logic.
+Prove that the template engine can scale without changing core wedding logic.
 
 ## Planned Scope
 
-- activate multiple production-quality templates,
-- at least more than one visual/category family,
-- template metadata completeness,
-- thumbnail/demo preview,
+- multiple production-quality active templates,
+- more than one visual/category family,
+- complete metadata,
+- thumbnails/demo previews,
 - categories/tags,
-- template lifecycle (`draft`, `active`, `archived`),
-- compatibility validation,
-- mobile performance rules,
+- lifecycle (`draft`, `active`, `archived`),
+- compatibility verification,
+- mobile performance expectations,
 - reduced-motion fallback,
-- reusable template authoring checklist.
+- repeatable template-authoring checklist.
 
 ## Architecture Rule
 
-Adding a new template must not require changes to:
+Adding a template must not require changes to:
 
 - wedding DB schema,
 - guest logic,
@@ -321,7 +427,7 @@ Adding a new template must not require changes to:
 - public invitation resolver,
 - core routing.
 
-The template count has no artificial platform cap.
+There is no artificial platform template-count cap.
 
 ---
 
@@ -329,27 +435,27 @@ The template count has no artificial platform cap.
 
 ## Objective
 
-Menutup technical and operational risks before full acceptance testing.
+Close technical, operational, performance, and legal risks before full acceptance testing.
 
 ## Planned Scope
 
 ### Security
 
-- review auth/session settings,
-- rate limiting upgrade where required,
-- public RSVP/wishes spam controls,
+- auth/session review,
+- stronger/shared rate limiting where needed,
+- RSVP/wishes spam-control review,
 - tenant authorization audit,
 - storage mutation audit,
 - secret/config review,
-- CSP/security headers where appropriate.
+- security headers/CSP where appropriate.
 
 ### Reliability
 
 - production environment preflight,
-- error handling review,
+- error-handling review,
 - observability/logging baseline,
-- backup/recovery documentation,
-- database migration procedure,
+- backup/recovery runbook,
+- canonical migration procedure,
 - deployment rollback procedure.
 
 ### Performance
@@ -357,21 +463,21 @@ Menutup technical and operational risks before full acceptance testing.
 - image optimization,
 - mobile invitation performance,
 - template bundle/performance checks,
-- heavy animation degradation/fallback,
-- basic load/concurrency checks for public forms.
+- animation degradation/fallback,
+- basic public-form concurrency/load checks.
 
-### Product/Legal
+### Product / Legal
 
 - remove remaining upstream branding,
-- review bundled assets,
-- music rights policy,
+- review bundled asset rights,
+- music-rights policy,
 - privacy policy,
 - terms/basic guest-data notice,
-- commercial source-code rights resolved or upstream-derived implementation replaced.
+- resolve commercial source-code rights or replace upstream-derived implementation.
 
-## Important External Blocker
+## External Launch Blocker
 
-Upstream commercial usage/license status remains a launch blocker until resolved according to `UPSTREAM_LICENSE_STATUS.md`.
+Upstream commercial-use/license status remains a launch blocker until resolved according to `UPSTREAM_LICENSE_STATUS.md`.
 
 ---
 
@@ -379,246 +485,130 @@ Upstream commercial usage/license status remains a launch blocker until resolved
 
 ## Objective
 
-Menguji ENDRIYA sebagai **satu produk utuh**, bukan sebagai kumpulan fitur terpisah.
+Verify ENDRIYA as one complete product in a staging/production-like environment.
 
-No phase may be marked fully production `VERIFIED` merely because its implementation passed repository CI.
+Repository `IMPLEMENTED` status alone is insufficient for production `VERIFIED` status.
 
 ## 9.1 Environment Preparation
 
-Create/reconcile the final staging/production-like environment:
+Prepare/reconcile:
 
-- complete environment file/secrets,
-- Supabase production schema verification,
-- Better Auth config,
+- final environment/secrets,
+- Supabase migration history and final schema,
+- Better Auth production settings,
 - Docker deployment,
-- HTTPS,
-- domain,
+- HTTPS/domain,
 - path routing first,
-- optional wildcard DNS/TLS after path-mode baseline passes.
+- optional wildcard DNS/TLS after path baseline passes.
 
 Secrets must never be committed to Git.
 
 ## 9.2 Primary Business Journey
 
-Test one complete order from start to finish:
+Test one complete managed-service journey:
 
 ```text
 Customer inquiry
-   ↓
-Customer record
-   ↓
-Order created
-   ↓
-Package + price + payment status
-   ↓
-Wedding project created
-   ↓
-Template selected
-   ↓
-Wedding content entered
-   ↓
-Assets uploaded
-   ↓
-Guest list created/imported
-   ↓
-Preview generated
-   ↓
-Revision / approval
-   ↓
-Publish readiness passes
-   ↓
-Wedding released
-   ↓
-Public invitation URL
-   ↓
-Personalized guest URL
-   ↓
-Guest opens invitation
-   ↓
-RSVP submitted
-   ↓
-Wish submitted
-   ↓
-Admin sees RSVP analytics
-   ↓
-Admin moderates wishes
-   ↓
-Order completed
+→ Customer record
+→ Order
+→ Package / price / payment
+→ Wedding project
+→ Template
+→ Content
+→ Assets
+→ Guests
+→ Preview
+→ Revision / approval
+→ Publish readiness
+→ Release
+→ Public invitation
+→ Personalized guest URL
+→ RSVP
+→ Wish
+→ RSVP analytics
+→ Wishes moderation
+→ Order completed
 ```
 
-## 9.3 Publish Lifecycle Test
+## 9.3 Required Acceptance Families
 
-Required sequence:
+### Publish lifecycle
 
 ```text
-Draft → public URL must not expose wedding
-Release → public URL works
-Released → direct content/settings mutation must be blocked
-Unpublish → public URL no longer resolves
+Draft → not public
+Release → public
+Released mutation → blocked
+Unpublish → not public
 Edit draft → allowed
-Release again → readiness gate runs again
+Re-release → readiness re-evaluated
 ```
 
-## 9.4 Personalized Guest Test
+### Personalized guest
 
-Verify:
+Verify valid/invalid/inactive/rotated tokens, wedding isolation, quota context, and canonical metadata without guest token.
 
-- valid guest token resolves correct name/quota,
-- invalid token does not expose another guest,
-- token from Wedding A never resolves in Wedding B,
-- rotated token invalidates previous personalized URL,
-- inactive guest is not personalized,
-- canonical metadata excludes guest token.
+### RSVP
 
-## 9.5 RSVP Test
+Verify attendance options, quota enforcement, repeat behavior, analytics totals, wedding scope, failure states, and rate limiting.
 
-Verify:
+### Wishes
 
-- guest attendance values,
-- guest quota enforcement,
-- wedding scope,
-- duplicate/repeat behavior according to product rule,
-- analytics totals,
-- public form failure states,
-- rate-limit/spam baseline.
+Verify submission, wedding scope, moderation, hide/unhide/delete, public visible-only behavior, and spam/rate-limit baseline.
 
-## 9.6 Wishes Test
+### Cross-tenant security
 
-Verify:
+Use at least two isolated tenants/weddings and verify no leakage or unauthorized mutation across:
 
-- submission,
-- wedding scope,
-- moderation,
-- hide/unhide,
-- delete,
-- only allowed wishes render publicly,
-- rate-limit/spam behavior.
+- weddings,
+- customers,
+- orders,
+- guests,
+- RSVP,
+- wishes,
+- assets,
+- owner-only actions.
 
-## 9.7 Cross-Tenant Security Test
+Target cross-tenant incidents: **0**.
 
-Create at least two separate weddings/accounts/tenants where applicable and attempt unauthorized access.
+### Assets
 
-Must verify:
+Verify file type/size/signature, wedding namespace, replacement/deletion behavior, and released-media loading.
 
-- wedding A data cannot be read through wedding B,
-- guests do not leak,
-- RSVP does not leak,
-- wishes do not leak,
-- assets cannot be mutated across wedding scope,
-- collaborator cannot use owner-only actions,
-- public endpoints cannot enumerate all weddings by omitting an identifier.
+### URL/domain
 
-**Target cross-tenant incident count: 0.**
+Verify path mode first, then optional subdomain mode, canonical redirects, reserved slugs, forwarded host, wildcard DNS/TLS, and absence of localhost hard-coding.
 
-## 9.8 Asset Test
+### SEO/social
 
-Verify:
+Verify title, description, canonical URL, OG metadata, guest-token exclusion, and no draft indexing.
 
-- allowed image types work,
-- unsupported file type rejected,
-- >5 MB image rejected,
-- file signature validation,
-- asset namespace uses correct wedding ID,
-- replaced/deleted asset behavior,
-- public released media loads without admin authentication.
+### Device/browser
 
-## 9.9 URL / Domain Test
-
-Path mode first:
-
-```text
-https://domain.id/invite/{slug}
-```
-
-Then, if subdomain mode is enabled:
-
-```text
-https://{slug}.domain.id/
-```
-
-Verify:
-
-- canonical redirect,
-- reserved slugs,
-- nested subdomain rejection,
-- `x-forwarded-host` behavior,
-- wildcard certificate,
-- wildcard DNS,
-- no localhost hard-code,
-- guest token preserved only where valid.
-
-## 9.10 SEO / Social Preview Test
-
-Verify on the deployed invitation:
-
-- page title,
-- description,
-- canonical URL,
-- OG image,
-- OG title/description,
-- no guest token in canonical,
-- no draft wedding indexing.
-
-## 9.11 Device & Browser QA
-
-Minimum target:
+At minimum:
 
 - Android Chrome,
 - iPhone Safari where available,
 - desktop Chrome/Edge,
-- common mobile viewport sizes,
-- slow network simulation,
+- common mobile viewports,
+- slower network simulation,
 - reduced-motion mode.
 
-Verify:
+### Negative scenarios
 
-- opening interaction,
-- typography,
-- images,
-- countdown,
-- maps,
-- gallery,
-- music behavior,
-- gift copy actions,
-- QRIS display,
-- RSVP,
-- wishes,
-- scroll/performance,
-- no horizontal overflow,
-- no unusable controls.
+Include nonexistent/draft slug, inactive template, duplicate/reserved slug, invalid/inactive guest, over-quota RSVP, malformed message, oversized/unsupported upload, unauthorized API/dashboard access, collaborator owner-action attempt, and released-wedding direct mutation.
 
-## 9.12 Failure / Negative Scenarios
+## 9.4 Evidence
 
-At minimum test:
+Keep appropriate evidence:
 
-- nonexistent slug,
-- draft slug,
-- inactive template,
-- reserved slug,
-- duplicate slug,
-- invalid guest token,
-- inactive guest,
-- over-quota RSVP,
-- malformed public message,
-- oversized upload,
-- unsupported MIME type,
-- unauthorized dashboard/API request,
-- collaborator attempting owner-only action,
-- released wedding direct mutation attempt,
-- unavailable database/storage response where practical.
-
-## 9.13 Acceptance Evidence
-
-Store testing evidence as appropriate:
-
-- test checklist/result document,
-- screenshots for major flows,
-- CI links/commit SHA,
-- migration verifier result,
+- acceptance checklist,
+- screenshots for important flows,
+- CI/commit SHA,
+- migration verifier results,
 - browser/device notes,
-- discovered defects and resolution commits.
+- defects and resolution commits.
 
-Phase 9 ends only when critical and high-severity defects are resolved or explicitly accepted.
+Phase 9 ends only when critical/high-severity defects are fixed or explicitly accepted.
 
 ---
 
@@ -626,120 +616,54 @@ Phase 9 ends only when critical and high-severity defects are resolved or explic
 
 ## Objective
 
-Make the final go/no-go decision for real commercial operation.
+Make the final commercial go/no-go decision.
 
-## Launch Gate
+## Technical Gate
 
-### Technical
-
-- [ ] all required migrations applied,
+- [ ] final migrations applied and reconciled,
 - [ ] production verification passes,
-- [ ] app deploys cleanly,
+- [ ] clean deployment,
 - [ ] HTTPS/domain stable,
-- [ ] E2E primary business journey passes,
+- [ ] primary E2E journey passes,
 - [ ] tenant isolation passes,
-- [ ] RSVP/wishes public behavior passes,
+- [ ] customer/order isolation passes,
+- [ ] RSVP/wishes behavior passes,
 - [ ] mobile/device QA passes,
-- [ ] backup and rollback procedure documented.
+- [ ] backup/rollback documented.
 
-### Operational
+## Operational Gate
 
-- [ ] admin/operator account ready,
+- [ ] operator account ready,
 - [ ] customer intake workflow ready,
-- [ ] order statuses understood,
+- [ ] order workflow understood,
 - [ ] payment tracking process ready,
-- [ ] revision/publish SOP ready,
+- [ ] revision/approval/publish SOP ready,
 - [ ] support/contact process ready.
 
-### Commercial / Legal
+## Commercial / Legal Gate
 
-- [ ] upstream commercial-use rights resolved **or upstream-derived code replaced**,
-- [ ] branding cleared,
-- [ ] bundled asset rights checked,
-- [ ] music policy defined,
-- [ ] privacy policy available,
-- [ ] terms/basic data notice available.
+- [ ] upstream commercial-use rights resolved or upstream-derived implementation replaced,
+- [ ] bundled assets reviewed,
+- [ ] music usage policy ready,
+- [ ] privacy/terms/guest-data notice ready.
 
-If a launch-blocking item remains unchecked, the product must not be described as commercially launch-ready.
+No commercial launch should be marked ready while the upstream source-code rights blocker remains unresolved.
 
 ---
 
-## 4. Testing Rule During Phases 5–8
-
-The decision to postpone full E2E testing must never be interpreted as permission to merge broken code.
-
-For every meaningful implementation increment:
+## Current Project Position
 
 ```text
-Implement
-   ↓
-Validate input/security boundary
-   ↓
-Add/update focused verifier where useful
-   ↓
-Build
-   ↓
-Database smoke/migration verification if applicable
-   ↓
-Docker/health smoke remains green
-   ↓
-Document phase status
-   ↓
-Continue to next scope
+Phase 1  ✅
+Phase 2  ✅
+Phase 3  ✅
+Phase 4  ✅ code / ⏳ environment verification deferred
+Phase 5  ✅
+Phase 6  ▶ NEXT
+Phase 7  ⏳
+Phase 8  ⏳
+Phase 9  ⏳ full integration/E2E
+Phase 10 ⏳ launch gate
 ```
 
-If CI is red, fix it before continuing to the next major phase.
-
----
-
-## 5. Current Project Position
-
-As of this decision:
-
-```text
-Phase 1  Foundation / Security              IMPLEMENTED
-Phase 2  Multi-tenant Operational Base      IMPLEMENTED
-Phase 3  Wedding Engine                     IMPLEMENTED
-Phase 4  Public Delivery & Publishing       IMPLEMENTED
-                                             Deployment verification deferred to Phase 9
-Phase 5  Commerce Operations                NEXT
-Phase 6  Commercial/Admin Workflow          PLANNED
-Phase 7  Template Catalog Scaling           PLANNED
-Phase 8  Production Hardening               PLANNED
-Phase 9  Full Integration & E2E Testing      PLANNED
-Phase 10 Launch Readiness                   PLANNED
-```
-
-The immediate next development target is **Phase 5 — Commerce Operations**.
-
----
-
-## 6. Change Control
-
-This document is the master sequencing reference.
-
-When a future decision changes:
-
-- phase numbering,
-- scope boundaries,
-- testing strategy,
-- launch gate,
-- what is deferred vs required immediately,
-
-update this document first or in the same commit as the implementation change.
-
-Do not silently redefine a phase only in chat or source code.
-
----
-
-## 7. Related Documents
-
-- `README.md` — documentation index
-- `PRD_V1.md` — product requirements
-- `TECHNICAL_ARCHITECTURE_V1.md` — architecture baseline
-- `P0_IMPLEMENTATION_STATUS.md` — technical foundation status
-- `PHASE3_WEDDING_ENGINE.md` — Phase 3 implementation record
-- `PHASE4_PUBLIC_DELIVERY.md` — Phase 4 implementation record
-- `PRODUCTION_P0_RUNBOOK.md` — production verification baseline
-- `SELF_HOST_DOCKER.md` — Docker/self-host runbook
-- `UPSTREAM_LICENSE_STATUS.md` — commercial license blocker
+**Next implementation reference: Phase 6 — Commercial/Admin Workflow.**
