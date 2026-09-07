@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase";
 import { withTenantDb } from "@/lib/db";
 import { getSessionUser, hasWeddingAccess } from "@/lib/commerce/access";
+import { logServerError } from "@/lib/commerce/observability";
 import {
   WEDDING_ASSET_BUCKET,
   WEDDING_ASSET_MAX_BYTES,
@@ -51,9 +52,6 @@ export async function POST(
       );
     }
 
-    // Service-role is intentionally used only after Better Auth + tenant membership
-    // authorization. The object path itself is generated server-side and cannot be
-    // supplied by the browser.
     const path = buildWeddingAssetPath({
       weddingId,
       extension: detected.extension,
@@ -91,7 +89,7 @@ export async function POST(
       size: bytes.byteLength,
     });
   } catch (error) {
-    console.error("POST wedding asset upload failed", error);
+    logServerError("wedding_asset_upload_failed", request, error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
