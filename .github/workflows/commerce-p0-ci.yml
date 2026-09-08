@@ -115,6 +115,9 @@ jobs:
       - name: Verify Phase 8.4 product and legal baseline
         run: bun scripts/phase8_4_product_legal_verify.ts
 
+      - name: Verify Phase 9 acceptance contract
+        run: bun scripts/phase9_acceptance_contract_verify.ts
+
       - name: Build
         run: bun run build
 
