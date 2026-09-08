@@ -1,6 +1,6 @@
 services:
   wedding-app:
-    image: attimo-wedding:local
+    image: ${APP_IMAGE:-attimo-wedding:local}
     build:
       context: .
       dockerfile: Dockerfile
