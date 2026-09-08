@@ -44,7 +44,8 @@ for (const marker of [
   "P0_PREFLIGHT_ALLOW_PLACEHOLDERS=false",
   "ALLOW_PUBLIC_SIGNUP=false",
   "PUBLIC_INVITATION_MODE=path",
-  "Use a dedicated staging project/database. Do not reuse production credentials.",
+  "NEXT_PUBLIC_SUPABASE_URL=https://itgpywqrbvgsrjtibdle.supabase.co",
+  "Private runtime credentials. Fill these only in .env.staging on the server.",
 ]) {
   assert(stagingEnv.includes(marker), `Staging environment contract missing: ${marker}`);
 }
