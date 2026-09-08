@@ -108,7 +108,6 @@ BEGIN
     RAISE EXCEPTION 'Phase 9 integration failed: owner cannot read own guest';
   END IF;
 
-  -- Order insert must have produced immutable operator-visible activity.
   IF NOT EXISTS (
     SELECT 1 FROM public.order_activity
     WHERE order_id = order_a AND event_type = 'created'
@@ -133,7 +132,6 @@ BEGIN
     RAISE EXCEPTION 'Phase 9 integration failed: order transition activity missing';
   END IF;
 
-  -- Tenant A must see none of tenant B's operational resources.
   IF EXISTS (SELECT 1 FROM public.weddings WHERE id = '90000000-0000-4000-8000-000000000002')
      OR EXISTS (SELECT 1 FROM public.customers WHERE id = '91000000-0000-4000-8000-000000000002')
      OR EXISTS (SELECT 1 FROM public.orders WHERE id = '92000000-0000-4000-8000-000000000002')
@@ -172,7 +170,7 @@ BEGIN
       'yes',
       1
     );
-  EXCEPTION WHEN check_violation, insufficient_privilege THEN
+  EXCEPTION WHEN check_violation OR insufficient_privilege THEN
     blocked := TRUE;
   END;
   IF NOT blocked THEN
