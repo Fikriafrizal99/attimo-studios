@@ -3,7 +3,7 @@
 **Status:** ACTIVE PROJECT REFERENCE  
 **Branch:** `develop/commerce-foundation`  
 **Decision date:** 2026-09-07  
-**Last roadmap update:** Phase 7 completed; Phase 8 is next.  
+**Last roadmap update:** Phase 8 completed at repository level; Phase 9 is next.  
 **Purpose:** authoritative reference for implementation order, phase status, deferred testing, and launch gates.
 
 ---
@@ -65,8 +65,8 @@ The phase/product cannot be considered launch-ready because a dependency or issu
 | Phase 5 | Customers, Orders, Payment Status, RSVP Analytics, Wishes Moderation | `IMPLEMENTED` |
 | Phase 6 | Commercial/Admin Workflow | `IMPLEMENTED` |
 | Phase 7 | Template Catalog Scaling | `IMPLEMENTED` |
-| Phase 8 | Production Hardening | **NEXT — PLANNED** |
-| Phase 9 | Full Integration & End-to-End Acceptance Testing | `PLANNED` |
+| Phase 8 | Production Hardening | `IMPLEMENTED — PRODUCTION/DEVICE VERIFICATION PENDING` |
+| Phase 9 | Full Integration & End-to-End Acceptance Testing | **NEXT — PLANNED** |
 | Phase 10 | Launch Readiness & Release Gate | `PLANNED` |
 
 If scope or sequencing materially changes, update this document before implementation.
@@ -408,57 +408,98 @@ Reference: `PHASE7_TEMPLATE_CATALOG.md` and `TEMPLATE_AUTHORING_GUIDE.md`.
 
 # Phase 8 — Production Hardening
 
-**Status:** `NEXT — PLANNED`
+**Status:** `IMPLEMENTED — PRODUCTION/DEVICE VERIFICATION PENDING`
 
 ## Objective
 
-Close technical, operational, performance, and legal risks before full acceptance testing.
+Close repository-level technical, operational, performance, and product/legal risks before full environment and end-to-end acceptance testing.
 
-## Planned Scope
+## Implemented Scope
 
 ### Security
 
-- auth/session review,
-- stronger/shared rate limiting where needed,
-- RSVP/wishes spam-control review,
-- tenant authorization audit,
-- storage mutation audit,
-- secret/config review,
-- security headers/CSP where appropriate.
+- Better Auth database-backed rate limiting,
+- shared PostgreSQL-backed RSVP/wishes abuse controls,
+- production signup and auth-secret gates,
+- released-wedding and personalized-guest scope enforcement,
+- tenant-authorized server upload boundary,
+- upload size, file-signature and MIME/content validation,
+- server-only service-role storage operations,
+- CSP and baseline browser security headers.
 
 ### Reliability
 
-- production environment preflight,
-- error-handling review,
-- observability/logging baseline,
-- backup/recovery runbook,
-- canonical migration procedure,
-- deployment rollback procedure.
+- liveness endpoint `/api/health`,
+- readiness endpoint `/api/ready`,
+- database/schema readiness checks,
+- request correlation IDs,
+- structured server logging,
+- strict environment preflight,
+- backup/restore guidance,
+- migration reconciliation guidance,
+- application rollback guidance.
 
 ### Performance
 
-- image optimization,
-- mobile invitation performance,
-- template bundle/performance checks,
-- animation degradation/fallback,
-- basic public-form concurrency/load checks.
+- renderer-free template metadata registry,
+- explicit `next/dynamic` code splitting per active renderer,
+- 2D experiences isolated from 2.5D/3D renderer bundles,
+- declared performance budgets per experience class,
+- lazy/async gallery media loading,
+- animation-frame-throttled 2.5D parallax,
+- mandatory reduced-motion fallbacks,
+- Clay WebGL DPR cap `1.5`,
+- Clay DOM fallback when WebGL is unavailable.
 
-### Product / Legal
+### Product / Legal Baseline
 
-- remove remaining upstream branding,
-- review bundled asset rights,
-- music-rights policy,
-- privacy policy,
-- terms/basic guest-data notice,
-- resolve commercial source-code rights or replace upstream-derived implementation.
+- public `/privacy` guest-data notice,
+- public `/terms` baseline,
+- landing links to privacy/terms,
+- asset-rights register,
+- music-usage policy,
+- Google Fonts provenance/OFL metadata,
+- CI gate against remaining public/product `Attimo` branding,
+- remaining detected public/product legacy branding replaced with ENDRIYA naming.
+
+## Phase 8 Completion Verification
+
+```text
+Phase 8.1 security verifier             PASS
+Phase 8.2 reliability verifier          PASS
+Phase 8.3 performance verifier          PASS
+Phase 8.4 product/legal verifier        PASS
+Production Next.js build                PASS
+Canonical database migration chain      PASS
+Tenant/integrity database smoke         PASS
+Phase 8 shared rate-limit database test PASS
+Docker image build                      PASS
+Container health smoke                  PASS
+```
+
+## Deferred to Phase 9
+
+- final production environment/secrets,
+- Supabase migration-history reconciliation,
+- staging/production-like deployment,
+- HTTPS/domain and optional wildcard subdomain verification,
+- actual bundle/network measurement,
+- slow-network and real-device QA,
+- public-form concurrency/load acceptance,
+- complete Customer → Order → Wedding → Publish → RSVP/Wishes E2E journey,
+- real production asset/right sampling.
 
 ## External Launch Blocker
 
-Upstream commercial-use/license status remains a launch blocker until resolved according to `UPSTREAM_LICENSE_STATUS.md`.
+**Commercial release remains BLOCKED** until upstream commercial-use/source-code rights are resolved according to `UPSTREAM_LICENSE_STATUS.md`, or upstream-derived implementation is replaced with independently implemented clear-rights equivalents.
+
+Reference: `PHASE8_PRODUCTION_HARDENING.md`.
 
 ---
 
 # Phase 9 — Full Integration & End-to-End Acceptance Testing
+
+**Status:** `NEXT — PLANNED`
 
 ## Objective
 
@@ -577,9 +618,9 @@ Phase 4  ✅ code / ⏳ environment verification deferred
 Phase 5  ✅
 Phase 6  ✅
 Phase 7  ✅
-Phase 8  ▶ NEXT
-Phase 9  ⏳ full integration/E2E
+Phase 8  ✅ repository hardening / ⏳ production-device verification deferred
+Phase 9  ▶ NEXT — full integration/E2E
 Phase 10 ⏳ launch gate
 ```
 
-**Next implementation reference: Phase 8 — Production Hardening.**
+**Next implementation reference: Phase 9 — Full Integration & End-to-End Acceptance Testing.**
