@@ -38,6 +38,44 @@ if (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === process.env.SUPABASE_SERVICE_R
   process.exit(1);
 }
 
+function looksLikePlaceholder(value) {
+  const normalized = String(value ?? '').toLowerCase();
+  return [
+    'replace_with',
+    'your_',
+    'dummy',
+    'placeholder',
+    'change_me',
+    'changeme',
+  ].some((marker) => normalized.includes(marker));
+}
+
+function isPlaceholderHostname(hostname) {
+  const normalized = hostname.toLowerCase();
+  return (
+    ['localhost', '127.0.0.1', 'example.supabase.co', 'example.com', 'example.org', 'example.net'].includes(normalized) ||
+    normalized.endsWith('.example.com') ||
+    normalized.endsWith('.example.org') ||
+    normalized.endsWith('.example.net') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.test')
+  );
+}
+
+if (!allowPlaceholders) {
+  for (const key of [
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'DATABASE_URL',
+    'BETTER_AUTH_SECRET',
+  ]) {
+    if (looksLikePlaceholder(process.env[key])) {
+      console.error(`P0 preflight failed: ${key} still contains a placeholder value`);
+      process.exit(1);
+    }
+  }
+}
+
 for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'BETTER_AUTH_URL', 'NEXT_PUBLIC_APP_URL', 'PUBLIC_INVITATION_BASE_URL']) {
   try {
     new URL(process.env[key]);
@@ -103,14 +141,14 @@ if (strict) {
       console.error(`P0 preflight failed: strict ${appEnv} ${key} must use https`);
       process.exit(1);
     }
-    if (['localhost', '127.0.0.1', 'example.supabase.co'].includes(url.hostname)) {
+    if (isPlaceholderHostname(url.hostname)) {
       console.error(`P0 preflight failed: strict ${appEnv} ${key} still uses a placeholder/local host`);
       process.exit(1);
     }
   }
 
-  if (['localhost', '127.0.0.1'].includes(databaseUrl.hostname)) {
-    console.error(`P0 preflight failed: strict ${appEnv} DATABASE_URL still uses a local host`);
+  if (isPlaceholderHostname(databaseUrl.hostname)) {
+    console.error(`P0 preflight failed: strict ${appEnv} DATABASE_URL still uses a placeholder/local host`);
     process.exit(1);
   }
 
