@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { dbPool } from "@/lib/db";
+import { dbPool } from "./db";
 
 const authSecret = process.env.BETTER_AUTH_SECRET;
 const isProduction = process.env.NODE_ENV === "production";
