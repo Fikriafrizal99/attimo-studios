@@ -19,7 +19,7 @@ Verify ENDRIYA as one integrated product in an isolated staging or production-li
 
 ## Environment Reconciliation — Completed Checkpoint
 
-The connected Supabase project was audited before E2E data creation.
+The primary connected Supabase project was audited before E2E data creation.
 
 Completed:
 
@@ -46,7 +46,7 @@ Remote non-destructive smoke confirmed:
 - order activity/scope/update triggers exist,
 - database-backed public rate limiter rejects the request beyond the configured test limit inside a rolled-back transaction.
 
-A rolled-back integrated database journey was also executed against the connected Supabase project and passed:
+A rolled-back integrated database journey was also executed against the primary connected Supabase project and passed:
 
 ```text
 Tenant A user
@@ -60,35 +60,78 @@ Tenant A user
 → Cross-tenant customer linkage denial
 ```
 
-No Phase 9 test fixture from these checks was committed to the connected database.
+No Phase 9 test fixture from these checks was committed to the primary database.
 
-This is database/environment reconciliation evidence only. It is not the complete browser/API business E2E acceptance.
+## Isolated Staging Supabase — Completed Database Checkpoint
+
+A second Free-plan Supabase project was created specifically for Phase 9:
+
+```text
+Name: ENDRIYA Staging
+Project ref: itgpywqrbvgsrjtibdle
+Region: ap-south-1
+```
+
+The complete canonical repository migration chain was applied to this project. Migration history was then reconciled to the repository timestamps from:
+
+```text
+20250225000000 rsvp_wishes_baseline
+...
+20260906000800 storage_isolation
+20260907000100 phase5_commerce_operations
+20260907000200 phase6_order_activity
+20260907000300 phase8_security_rate_limits
+```
+
+A staging-only rolled-back acceptance smoke passed for:
+
+```text
+Tenant A / Tenant B isolation
+Wedding creation
+Customer creation
+Order linkage
+Guest linkage
+Order activity
+Payment / production transitions
+Cross-tenant visibility denial
+Cross-tenant linkage denial
+Shared database rate limiting
+```
+
+No smoke fixture was committed by this staging DB acceptance run.
 
 ## Repository Acceptance Gate — Completed Checkpoint
 
-Repository artifacts now include:
+Repository artifacts include:
 
 ```text
 scripts/phase9_acceptance_contract_verify.ts
+scripts/phase9_3_staging_deployment_verify.ts
 supabase/tests/phase9_1_integration_journey_verify.sql
+scripts/deploy-staging.sh
+docs/commerce/PHASE9_STAGING_DEPLOYMENT.md
 ```
 
 The CI acceptance contract verifies the expected API/public routes, strict staging environment contract, canonical migrations, centralized publish-readiness/public-resolver/rate-limit/storage boundaries, and the required Phase 9 acceptance families.
 
 The integrated database test creates two temporary tenants inside one transaction and verifies Customer → Order → Wedding → Guest integration, order-activity transitions, and cross-tenant negative cases before rolling everything back.
 
-GitHub Actions run `#369` on commit `c89d4dd638482e1135982038a2bbd68fbafcbadc` completed successfully with:
+The staging deployment profile adds:
 
 ```text
-Phase 9 acceptance contract             PASS
-Phase 9 integrated database journey     PASS
-Previous phase verifier chain           PASS
-Production Next.js build                PASS
-Canonical migration chain               PASS
-Database smoke                          PASS
-Docker image build                      PASS
-Container health smoke                  PASS
+Compose project: endriya-staging
+Image: endriya-wedding:staging
+Host bind: 127.0.0.1
+Port: 3100
+Supabase project: itgpywqrbvgsrjtibdle
+Strict environment preflight
+Container health gate
+/api/ready database readiness gate
 ```
+
+Private runtime credentials remain server-only and are intentionally absent from GitHub.
+
+GitHub Actions run `#369` on commit `c89d4dd638482e1135982038a2bbd68fbafcbadc` completed successfully with the initial Phase 9 contract and DB integration gate. Later Phase 9 staging-profile commits continue to require the same previous-phase build/database/Docker gates.
 
 ## Acceptance Journey
 
@@ -236,7 +279,12 @@ Phase 9 may only move to `VERIFIED` when critical/high defects are fixed or expl
 ```text
 9.1 Environment + migration reconciliation     ✅
 9.2 Acceptance contract + CI/DB integration     ✅
-9.3 Isolated staging deployment                ▶ NEXT
+9.3 Isolated staging deployment                ▶ IN PROGRESS
+    Supabase staging project + schema/history  ✅
+    Staging DB acceptance smoke                ✅
+    App deployment profile + readiness runner  ✅ IMPLEMENTED
+    Real server secrets + HTTPS runtime         ⏳
+    /api/ready through deployed staging app     ⏳
 9.4 Primary business journey E2E               ⏳
 9.5 Cross-tenant / asset / abuse negatives     ⏳
 9.6 Routing / metadata acceptance              ⏳
