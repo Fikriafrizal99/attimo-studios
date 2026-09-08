@@ -118,6 +118,9 @@ jobs:
       - name: Verify Phase 9 acceptance contract
         run: bun scripts/phase9_acceptance_contract_verify.ts
 
+      - name: Verify Phase 9.3 staging deployment profile
+        run: bun scripts/phase9_3_staging_deployment_verify.ts
+
       - name: Build
         run: bun run build
 
