@@ -48,6 +48,7 @@ COPY --from=builder --chown=bun:bun /app/public ./public
 COPY --chown=bun:bun scripts/p0-preflight.mjs ./scripts/p0-preflight.mjs
 COPY --chown=bun:bun scripts/bootstrap-admin.ts ./scripts/bootstrap-admin.ts
 COPY --chown=bun:bun lib/auth.ts ./lib/auth.ts
+COPY --chown=bun:bun lib/db.ts ./lib/db.ts
 
 USER bun
 EXPOSE 3000
