@@ -17,7 +17,7 @@ Verify ENDRIYA as one integrated product in an isolated staging or production-li
 - Record evidence by environment, commit SHA, migration state, device/browser, and acceptance family.
 - Commercial rights remain a Phase 10 blocker even if all technical Phase 9 acceptance passes.
 
-## Environment Reconciliation — Current Checkpoint
+## Environment Reconciliation — Completed Checkpoint
 
 The connected Supabase project was audited before E2E data creation.
 
@@ -37,7 +37,7 @@ Completed:
 20260907000300 phase8_security_rate_limits
 ```
 
-Remote non-destructive smoke also confirmed:
+Remote non-destructive smoke confirmed:
 
 - customers/orders/order_activity tables exist,
 - Better Auth and public rate-limit tables exist,
@@ -46,7 +46,49 @@ Remote non-destructive smoke also confirmed:
 - order activity/scope/update triggers exist,
 - database-backed public rate limiter rejects the request beyond the configured test limit inside a rolled-back transaction.
 
-This is schema/environment reconciliation evidence only. It is not the complete Phase 9 business E2E acceptance.
+A rolled-back integrated database journey was also executed against the connected Supabase project and passed:
+
+```text
+Tenant A user
+→ Wedding
+→ Customer
+→ Order
+→ Guest
+→ Order activity
+→ Payment/production/revision transitions
+→ Cross-tenant visibility denial
+→ Cross-tenant customer linkage denial
+```
+
+No Phase 9 test fixture from these checks was committed to the connected database.
+
+This is database/environment reconciliation evidence only. It is not the complete browser/API business E2E acceptance.
+
+## Repository Acceptance Gate — Completed Checkpoint
+
+Repository artifacts now include:
+
+```text
+scripts/phase9_acceptance_contract_verify.ts
+supabase/tests/phase9_1_integration_journey_verify.sql
+```
+
+The CI acceptance contract verifies the expected API/public routes, strict staging environment contract, canonical migrations, centralized publish-readiness/public-resolver/rate-limit/storage boundaries, and the required Phase 9 acceptance families.
+
+The integrated database test creates two temporary tenants inside one transaction and verifies Customer → Order → Wedding → Guest integration, order-activity transitions, and cross-tenant negative cases before rolling everything back.
+
+GitHub Actions run `#369` on commit `c89d4dd638482e1135982038a2bbd68fbafcbadc` completed successfully with:
+
+```text
+Phase 9 acceptance contract             PASS
+Phase 9 integrated database journey     PASS
+Previous phase verifier chain           PASS
+Production Next.js build                PASS
+Canonical migration chain               PASS
+Database smoke                          PASS
+Docker image build                      PASS
+Container health smoke                  PASS
+```
 
 ## Acceptance Journey
 
@@ -192,9 +234,9 @@ Phase 9 may only move to `VERIFIED` when critical/high defects are fixed or expl
 ## Current Position
 
 ```text
-9.1 Environment + migration reconciliation     ✅ connected DB schema/history checkpoint
-9.2 Acceptance contract / CI gate              ▶ IN PROGRESS
-9.3 Isolated staging deployment                ⏳
+9.1 Environment + migration reconciliation     ✅
+9.2 Acceptance contract + CI/DB integration     ✅
+9.3 Isolated staging deployment                ▶ NEXT
 9.4 Primary business journey E2E               ⏳
 9.5 Cross-tenant / asset / abuse negatives     ⏳
 9.6 Routing / metadata acceptance              ⏳
