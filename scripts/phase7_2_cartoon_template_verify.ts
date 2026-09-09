@@ -16,9 +16,8 @@ const cartoon = resolveTemplate("cartoon-001");
 assert(cartoon.status === "active", "cartoon-001 must be active");
 assert(cartoon.category === "Illustrated", "cartoon-001 must be in Illustrated category");
 assert(cartoon.family === "cartoon-love-story", "cartoon-001 family mismatch");
-assert(cartoon.visualTier === "2d", "cartoon-001 must be Motion 2D");
+assert(cartoon.visualTier === "2d", "cartoon-001 must remain 2D");
 assert(cartoon.performance.renderingMode === "dom", "cartoon-001 should remain DOM based");
-assert(cartoon.performance.motionLevel === "rich", "cartoon-001 must declare rich motion");
 assert(cartoon.performance.mobileProfile === "full", "cartoon-001 should be fully supported on mobile");
 assert(cartoon.performance.reducedMotionFallback, "cartoon-001 needs reduced-motion fallback");
 assert(cartoon.typography.display === "parisienne", "cartoon display font should be Parisienne");
@@ -48,6 +47,12 @@ assert(
 );
 
 const source = readFileSync("templates/cartoon-001/CartoonLoveStoryTemplate.tsx", "utf8");
+assert(source.includes("Studio2DTemplate"), "cartoon renderer must use the shared Studio2D renderer");
+assert(source.includes('variant: "cartoon"'), "cartoon studio variant missing");
+assert(source.includes('experience: "studio-illustrated-photo"'), "cartoon experience marker missing");
+assert(!source.includes('fetch("/api/'), "cartoon renderer must not duplicate public business API logic");
+
+const sharedSource = readFileSync("templates/studio-2d/Studio2DTemplate.tsx", "utf8");
 for (const sharedComponent of [
   "CoupleSection",
   "DateSection",
@@ -59,15 +64,15 @@ for (const sharedComponent of [
   "GiftSection",
   "MusicPlayer",
 ]) {
-  assert(source.includes(sharedComponent), `cartoon renderer must reuse shared ${sharedComponent}`);
+  assert(sharedSource.includes(sharedComponent), `Studio2D renderer must reuse shared ${sharedComponent}`);
 }
-assert(!source.includes('fetch("/api/'), "cartoon renderer must not duplicate public business API logic");
-assert(source.includes('data-endriya-experience="illustrated-motion"'), "cartoon experience marker missing");
+assert(sharedSource.includes("hero?.coverImage"), "Studio2D hero must support customer cover photos");
+assert(sharedSource.includes("guest?.displayName"), "Studio2D hero must preserve guest personalization");
 
-const css = readFileSync("templates/cartoon-001/CartoonLoveStoryTemplate.module.css", "utf8");
-assert(css.includes("prefers-reduced-motion: reduce"), "cartoon CSS must honor reduced motion");
-assert(css.includes("character-bob"), "cartoon template should have character motion");
-assert(css.includes("heart-pulse"), "cartoon template should have playful micro-motion");
+const css = readFileSync("templates/studio-2d/Studio2DTemplate.module.css", "utf8");
+assert(css.includes("prefers-reduced-motion:reduce"), "Studio2D CSS must honor reduced motion");
+assert(css.includes('[data-studio-variant="cartoon"]'), "Studio2D CSS must preserve a cartoon-specific art direction");
+assert(css.includes("object-fit:cover"), "Studio2D cover photos must use cover framing");
 
 const registryEntry = TEMPLATE_REGISTRY["cartoon-001"];
 assert(registryEntry.tags.includes("cartoon"), "cartoon catalog tag missing");
