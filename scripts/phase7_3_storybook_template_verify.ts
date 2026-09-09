@@ -16,9 +16,8 @@ const storybook = resolveTemplate("storybook-001");
 assert(storybook.status === "active", "storybook-001 must be active");
 assert(storybook.category === "Illustrated", "storybook-001 must be in Illustrated category");
 assert(storybook.family === "storybook-romance", "storybook-001 family mismatch");
-assert(storybook.visualTier === "2d", "storybook-001 must be Motion 2D");
+assert(storybook.visualTier === "2d", "storybook-001 must remain 2D");
 assert(storybook.performance.renderingMode === "dom", "storybook-001 should remain DOM based");
-assert(storybook.performance.motionLevel === "rich", "storybook-001 must declare rich motion");
 assert(storybook.performance.mobileProfile === "full", "storybook-001 should be fully supported on mobile");
 assert(storybook.performance.reducedMotionFallback, "storybook-001 needs reduced-motion fallback");
 assert(storybook.typography.display === "parisienne", "storybook display font should be Parisienne");
@@ -47,6 +46,12 @@ for (const required of ["classic-001", "cartoon-001", "storybook-001"]) {
 }
 
 const source = readFileSync("templates/storybook-001/StorybookRomanceTemplate.tsx", "utf8");
+assert(source.includes("Studio2DTemplate"), "storybook renderer must use the shared Studio2D renderer");
+assert(source.includes('variant: "storybook"'), "storybook studio variant missing");
+assert(source.includes('experience: "studio-storybook-photo"'), "storybook experience marker missing");
+assert(!source.includes('fetch("/api/'), "storybook renderer must not duplicate public business API logic");
+
+const sharedSource = readFileSync("templates/studio-2d/Studio2DTemplate.tsx", "utf8");
 for (const sharedComponent of [
   "CoupleSection",
   "DateSection",
@@ -58,18 +63,15 @@ for (const sharedComponent of [
   "GiftSection",
   "MusicPlayer",
 ]) {
-  assert(source.includes(sharedComponent), `storybook renderer must reuse shared ${sharedComponent}`);
+  assert(sharedSource.includes(sharedComponent), `Studio2D renderer must reuse shared ${sharedComponent}`);
 }
-assert(!source.includes('fetch("/api/'), "storybook renderer must not duplicate public business API logic");
-assert(source.includes('data-endriya-experience="storybook-motion"'), "storybook experience marker missing");
-assert(source.includes("ChapterFrame"), "storybook must provide chapter framing");
-assert(source.includes("heroBook"), "storybook must provide a book-based hero composition");
+assert(sharedSource.includes("Chapter I · The Two of Us"), "storybook variant must preserve chapter language");
+assert(sharedSource.includes("ClosingPanel"), "Studio2D story must include a closing composition");
 
-const css = readFileSync("templates/storybook-001/StorybookRomanceTemplate.module.css", "utf8");
-assert(css.includes("prefers-reduced-motion: reduce"), "storybook CSS must honor reduced motion");
-assert(css.includes("bookArrive"), "storybook should define book entrance motion");
-assert(css.includes("pageReveal"), "storybook should define chapter/page reveal motion");
-assert(css.includes("bookSpine"), "storybook should include a desktop book-spread treatment");
+const css = readFileSync("templates/studio-2d/Studio2DTemplate.module.css", "utf8");
+assert(css.includes("prefers-reduced-motion:reduce"), "Studio2D CSS must honor reduced motion");
+assert(css.includes('[data-studio-variant="storybook"]'), "Studio2D CSS must preserve a storybook-specific art direction");
+assert(css.includes("❦"), "storybook treatment should retain a restrained botanical/book accent");
 
 const registryEntry = TEMPLATE_REGISTRY["storybook-001"];
 for (const tag of ["storybook", "romance", "illustrated", "chapter", "motion"]) {
